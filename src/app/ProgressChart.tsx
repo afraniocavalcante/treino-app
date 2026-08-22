@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 import { C, DISPLAY } from "@/lib/styles";
-import { formatDateDisplay, type ExercisePoint, type ExerciseUnit } from "@/lib/workouts";
+import { formatDateDisplay, type ExercisePoint, type ExerciseUnit } from "@/lib/program";
 
 const W = 320;
 const H = 140;

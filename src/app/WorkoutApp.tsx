@@ -2,35 +2,42 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { getHistory, getLastWeights, saveSession as saveSessionRemote, upsertLastWeights } from "@/lib/data";
 import {
-  WORKOUTS,
-  REST_SECONDS,
-  getCurrentWeek,
-  getPhaseInfo,
-  getTodayWorkout,
+  getActiveProgram,
+  getExerciseLibrary,
+  getHistory,
+  getLastWeights,
+  saveSession as saveSessionRemote,
+  upsertLastWeights,
+} from "@/lib/data";
+import {
   formatDate,
   formatDateDisplay,
-  getSessionId,
+  getCurrentWeek,
   getExerciseSeries,
-  getAllExercisesFlat,
-  type WorkoutKey,
-  type SessionLog,
+  getNextWorkoutIndex,
+  getPhaseInfo,
+  getSessionLabel,
   type HistoryEntry,
-  type Exercise,
-} from "@/lib/workouts";
+  type LibraryExercise,
+  type Program,
+  type ProgramWorkout,
+  type ProgramWorkoutExercise,
+  type SessionLog,
+} from "@/lib/program";
 import { C, DISPLAY, EASE, styles } from "@/lib/styles";
 import { signOut } from "./actions";
 import ProgressChart from "./ProgressChart";
+import ProgramManager from "./ProgramManager";
 
 const RING_R = 74;
 const RING_CIRC = 2 * Math.PI * RING_R;
 const PHASE_OUT_MS = 170;
 
-type Screen = "home" | "workout" | "done" | "history";
+type Screen = "home" | "workout" | "done" | "history" | "program";
 type Phase = "active" | "rest" | "input" | "hold";
 
-function initialPhaseFor(ex: Exercise): Phase {
+function initialPhaseFor(ex: ProgramWorkoutExercise): Phase {
   if (ex.holdSeconds) return "active";
   if (ex.unit === "corpo") return "active";
   return "input";
@@ -41,7 +48,9 @@ export default function WorkoutApp() {
 
   const [loading, setLoading] = useState(true);
   const [screen, setScreen] = useState<Screen>("home");
-  const [workoutKey, setWorkoutKey] = useState<WorkoutKey | null>(null);
+  const [program, setProgram] = useState<Program | null>(null);
+  const [library, setLibrary] = useState<LibraryExercise[]>([]);
+  const [activeWorkoutId, setActiveWorkoutId] = useState<string | null>(null);
   const [exerciseIndex, setExerciseIndex] = useState(0);
   const [currentSet, setCurrentSet] = useState(0);
   const [phase, setPhase] = useState<Phase>("active");
@@ -56,7 +65,7 @@ export default function WorkoutApp() {
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
   const [completedExercises, setCompletedExercises] = useState<Set<number>>(new Set());
   const [lastWeights, setLastWeights] = useState<Record<string, number>>({});
-  const [sessionId, setSessionId] = useState("");
+  const [sessionLabel, setSessionLabel] = useState("");
   const [holdTime, setHoldTime] = useState(0);
   const [saving, setSaving] = useState(false);
 
@@ -64,15 +73,24 @@ export default function WorkoutApp() {
   const holdTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const phaseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  async function loadAll() {
+    const [p, lib, h, w] = await Promise.all([
+      getActiveProgram(supabase),
+      getExerciseLibrary(supabase),
+      getHistory(supabase),
+      getLastWeights(supabase),
+    ]);
+    setProgram(p);
+    setLibrary(lib);
+    setHistory(h);
+    setLastWeights(w);
+  }
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const [h, w] = await Promise.all([getHistory(supabase), getLastWeights(supabase)]);
-        if (!cancelled) {
-          setHistory(h);
-          setLastWeights(w);
-        }
+        await loadAll();
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -86,23 +104,28 @@ export default function WorkoutApp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function persistSession(log: SessionLog, wKey: WorkoutKey) {
-    const entry: HistoryEntry = {
+  const currentWorkout = program?.workouts.find((w) => w.id === activeWorkoutId) ?? null;
+
+  async function persistSession(log: SessionLog, workout: ProgramWorkout) {
+    if (!program) return;
+    const entry = {
       date: formatDate(new Date()),
-      workout: wKey,
-      week: getCurrentWeek(),
-      sessionId,
+      week: getCurrentWeek(program),
+      programId: program.id,
+      programWorkoutId: workout.id,
+      workoutLabel: workout.name,
+      sessionLabel,
       exercises: log,
     };
     setSaving(true);
     try {
-      await saveSessionRemote(supabase, entry);
+      const id = await saveSessionRemote(supabase, entry);
       const newLastWeights = { ...lastWeights };
       Object.entries(log).forEach(([exId, sets]) => {
         if (sets && sets.length > 0) newLastWeights[exId] = Math.max(...sets.map((s) => s.kg || 0));
       });
       await upsertLastWeights(supabase, newLastWeights);
-      setHistory((prev) => [...prev, entry]);
+      setHistory((prev) => [...prev, { id, ...entry }]);
       setLastWeights(newLastWeights);
     } finally {
       setSaving(false);
@@ -125,53 +148,55 @@ export default function WorkoutApp() {
     }, PHASE_OUT_MS);
   }
 
-  function startWorkout(key: WorkoutKey) {
-    const firstEx = WORKOUTS[key].exercises[0];
+  function startWorkout(workout: ProgramWorkout) {
+    if (!program || workout.exercises.length === 0) return;
+    const firstEx = workout.exercises[0];
     const firstPhase = initialPhaseFor(firstEx);
-    setWorkoutKey(key);
+    setActiveWorkoutId(workout.id);
     setExerciseIndex(0);
     setCurrentSet(0);
     setPhase(firstPhase);
-    setKgInput(firstPhase === "input" && lastWeights[firstEx.id] ? String(lastWeights[firstEx.id]) : "");
+    setKgInput(firstPhase === "input" && lastWeights[firstEx.exerciseId] ? String(lastWeights[firstEx.exerciseId]) : "");
     setPhaseExiting(false);
     setSessionLog({});
     setCompletedExercises(new Set());
-    setSessionId(getSessionId(key, history));
+    setSessionLabel(getSessionLabel(program, workout, history));
     goScreen("workout");
   }
 
-  function getCurrentExercise(): Exercise | null {
-    if (!workoutKey) return null;
-    return WORKOUTS[workoutKey].exercises[exerciseIndex];
+  function getCurrentExercise(): ProgramWorkoutExercise | null {
+    if (!currentWorkout) return null;
+    return currentWorkout.exercises[exerciseIndex] ?? null;
   }
 
   function findNextExercise(fromIdx: number, completed: Set<number> = completedExercises): number {
-    if (!workoutKey) return -1;
-    const exercises = WORKOUTS[workoutKey].exercises;
+    if (!currentWorkout) return -1;
+    const exercises = currentWorkout.exercises;
     for (let i = fromIdx + 1; i < exercises.length; i++) if (!completed.has(i)) return i;
     for (let i = 0; i <= fromIdx; i++) if (!completed.has(i)) return i;
     return -1;
   }
 
   function goToStep(nextIdx: number, nextSet: number) {
-    if (!workoutKey) return;
-    const nextEx = WORKOUTS[workoutKey].exercises[nextIdx];
+    if (!currentWorkout) return;
+    const nextEx = currentWorkout.exercises[nextIdx];
     const nextPhase = initialPhaseFor(nextEx);
     toPhase(nextPhase, () => {
       setExerciseIndex(nextIdx);
       setCurrentSet(nextSet);
       if (nextPhase === "input") {
-        const loggedSets = sessionLog[nextEx.id];
+        const loggedSets = sessionLog[nextEx.exerciseId];
         const lastLoggedKg = loggedSets && loggedSets.length > 0 ? loggedSets[loggedSets.length - 1].kg : undefined;
-        const prefillKg = lastLoggedKg ?? lastWeights[nextEx.id];
+        const prefillKg = lastLoggedKg ?? lastWeights[nextEx.exerciseId];
         setKgInput(prefillKg ? String(prefillKg) : "");
       }
     });
   }
 
   function startTimer(onDone: () => void) {
+    if (!program) return;
     if (timerRef.current) clearInterval(timerRef.current);
-    let t = REST_SECONDS;
+    let t = program.restSeconds;
     setRestTime(t);
     timerRef.current = setInterval(() => {
       t -= 1;
@@ -186,7 +211,7 @@ export default function WorkoutApp() {
 
   function handleSetDone() {
     const ex = getCurrentExercise();
-    if (!ex || !workoutKey) return;
+    if (!ex || !currentWorkout) return;
 
     if (ex.holdSeconds) {
       setPhase("hold");
@@ -199,15 +224,15 @@ export default function WorkoutApp() {
         if (t <= 0) {
           if (holdTimerRef.current) clearInterval(holdTimerRef.current);
           const newLog = { ...sessionLog };
-          if (!newLog[ex.id]) newLog[ex.id] = [];
-          newLog[ex.id].push({ set: currentSet + 1, kg: 0 });
+          if (!newLog[ex.exerciseId]) newLog[ex.exerciseId] = [];
+          newLog[ex.exerciseId].push({ set: currentSet + 1, kg: 0 });
           setSessionLog(newLog);
           if (currentSet + 1 >= ex.sets) {
             const completed = new Set([...completedExercises, exerciseIndex]);
             setCompletedExercises(completed);
             const nextIdx = findNextExercise(exerciseIndex, completed);
             if (nextIdx === -1) {
-              persistSession(newLog, workoutKey);
+              persistSession(newLog, currentWorkout);
               goScreen("done");
             } else {
               toPhase("rest");
@@ -224,15 +249,15 @@ export default function WorkoutApp() {
 
     if (ex.unit === "corpo") {
       const newLog = { ...sessionLog };
-      if (!newLog[ex.id]) newLog[ex.id] = [];
-      newLog[ex.id].push({ set: currentSet + 1, kg: 0 });
+      if (!newLog[ex.exerciseId]) newLog[ex.exerciseId] = [];
+      newLog[ex.exerciseId].push({ set: currentSet + 1, kg: 0 });
       setSessionLog(newLog);
       if (currentSet + 1 >= ex.sets) {
         const completed = new Set([...completedExercises, exerciseIndex]);
         setCompletedExercises(completed);
         const nextIdx = findNextExercise(exerciseIndex, completed);
         if (nextIdx === -1) {
-          persistSession(newLog, workoutKey);
+          persistSession(newLog, currentWorkout);
           goScreen("done");
           return;
         }
@@ -248,11 +273,11 @@ export default function WorkoutApp() {
 
   function handleKgSubmit() {
     const ex = getCurrentExercise();
-    if (!ex || !workoutKey) return;
+    if (!ex || !currentWorkout) return;
     const kg = parseFloat(kgInput) || 0;
     const newLog = { ...sessionLog };
-    if (!newLog[ex.id]) newLog[ex.id] = [];
-    newLog[ex.id].push({ set: currentSet + 1, kg });
+    if (!newLog[ex.exerciseId]) newLog[ex.exerciseId] = [];
+    newLog[ex.exerciseId].push({ set: currentSet + 1, kg });
     setSessionLog(newLog);
 
     if (currentSet + 1 >= ex.sets) {
@@ -260,7 +285,7 @@ export default function WorkoutApp() {
       setCompletedExercises(completed);
       const nextIdx = findNextExercise(exerciseIndex, completed);
       if (nextIdx === -1) {
-        persistSession(newLog, workoutKey);
+        persistSession(newLog, currentWorkout);
         goScreen("done");
         return;
       }
@@ -282,11 +307,11 @@ export default function WorkoutApp() {
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = null;
     const ex = getCurrentExercise();
-    if (!ex || !workoutKey) return;
+    if (!ex || !currentWorkout) return;
     if (currentSet + 1 >= ex.sets) {
       const nextIdx = findNextExercise(exerciseIndex);
       if (nextIdx === -1) {
-        persistSession(sessionLog, workoutKey);
+        persistSession(sessionLog, currentWorkout);
         goScreen("done");
         return;
       }
@@ -299,13 +324,13 @@ export default function WorkoutApp() {
   function finishEarly() {
     if (timerRef.current) clearInterval(timerRef.current);
     if (holdTimerRef.current) clearInterval(holdTimerRef.current);
-    if (workoutKey && Object.keys(sessionLog).length > 0) persistSession(sessionLog, workoutKey);
+    if (currentWorkout && Object.keys(sessionLog).length > 0) persistSession(sessionLog, currentWorkout);
     goScreen("done");
   }
 
   function getUpcomingExercises() {
-    if (!workoutKey) return [];
-    return WORKOUTS[workoutKey].exercises
+    if (!currentWorkout) return [];
+    return currentWorkout.exercises
       .map((ex, idx) => ({ ...ex, idx }))
       .filter((ex) => ex.idx !== exerciseIndex);
   }
@@ -323,9 +348,47 @@ export default function WorkoutApp() {
     return shell(<div style={styles.loadingWrap}>Carregando…</div>);
   }
 
+  if (screen === "program") {
+    return shell(
+      <ProgramManager
+        supabase={supabase}
+        program={program}
+        library={library}
+        onBack={() => goScreen("home")}
+        onChanged={loadAll}
+      />
+    );
+  }
+
   if (screen === "home") {
-    const week = getCurrentWeek();
-    const { phase: phaseName, desc, color } = getPhaseInfo(week);
+    if (!program) {
+      return shell(
+        <div key={screenTick} style={{ animation: screenAnim }}>
+          <div style={styles.accentBar} />
+          <div style={styles.homeHeader}>
+            <form action={signOut}>
+              <button type="submit" style={styles.signOutBtn}>Sair</button>
+            </form>
+            <h1 style={styles.logoTitle}>TREINO</h1>
+            <p style={styles.logoSub}>Nenhum programa ativo</p>
+          </div>
+          <div style={{ padding: "0 24px", textAlign: "center" }}>
+            <p style={{ color: C.midGray, fontSize: 13, marginBottom: 20 }}>
+              Crie um programa com seus treinos e exercícios para começar.
+            </p>
+            <button className="tab-press" onClick={() => goScreen("program")} style={styles.okBtn}>
+              Criar programa
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    const week = getCurrentWeek(program);
+    const { name: phaseName, desc, color } = getPhaseInfo(program, week);
+    const nextIdx = getNextWorkoutIndex(program, history);
+    const todayStr = formatDate(new Date());
+
     return shell(
       <div key={screenTick} style={{ animation: screenAnim }}>
         <div style={styles.accentBar} />
@@ -333,55 +396,65 @@ export default function WorkoutApp() {
           <form action={signOut}>
             <button type="submit" style={styles.signOutBtn}>Sair</button>
           </form>
-          <h1 style={styles.logoTitle}>TREINO A/B</h1>
-          <p style={styles.logoSub}>4 Semanas — Plano de Adaptação</p>
+          <h1 style={styles.logoTitle}>{program.name.toUpperCase()}</h1>
+          <p style={styles.logoSub}>{program.weeks} Semanas</p>
         </div>
         <div style={styles.weekCard}>
           <div style={styles.weekDotsRow}>
-            {[1, 2, 3, 4].map((w, i) => (
-              <div key={w} style={{ ...styles.weekDot, background: w <= week ? color : C.bgHeader, animation: stagger(i, 0.05) }}>
-                <span style={{ ...styles.weekDotText, color: w <= week ? C.bgDark : C.midGray }}>{w}</span>
-              </div>
-            ))}
+            {Array.from({ length: program.weeks }).map((_, i) => {
+              const w = i + 1;
+              return (
+                <div key={w} style={{ ...styles.weekDot, background: w <= week ? color : C.bgHeader, animation: stagger(i, 0.05) }}>
+                  <span style={{ ...styles.weekDotText, color: w <= week ? C.bgDark : C.midGray }}>{w}</span>
+                </div>
+              );
+            })}
           </div>
           <div style={styles.weekInfo}>
             <span style={{ ...styles.weekPhase, color }}>{`Semana ${week} — ${phaseName}`}</span>
-            <span style={styles.weekDesc}>{desc}</span>
+            {desc && <span style={styles.weekDesc}>{desc}</span>}
           </div>
         </div>
         <div style={styles.homeCards}>
-          {(["A", "B"] as WorkoutKey[]).map((k, i) => {
-            const isToday = getTodayWorkout() === k;
-            const todayStr = formatDate(new Date());
+          {program.workouts.length === 0 && (
+            <div style={{ ...styles.emptyState, padding: "20px 0" }}>
+              Nenhum treino cadastrado ainda.
+              <br />
+              <span style={{ color: C.midGray }}>Adicione treinos e exercícios no gerenciador do programa.</span>
+            </div>
+          )}
+          {program.workouts.map((workout, i) => {
+            const isNext = i === nextIdx;
             const doneToday = history
-              .filter((e) => e.workout === k && e.date === todayStr)
+              .filter((e) => e.programWorkoutId === workout.id && e.date === todayStr)
               .slice(-1)[0];
+            const empty = workout.exercises.length === 0;
             return (
               <button
-                key={k}
+                key={workout.id}
                 className="tab-press"
+                disabled={empty}
                 onClick={() => {
                   if (doneToday) {
                     setHistoryView(doneToday);
                     goScreen("history");
                   } else {
-                    startWorkout(k);
+                    startWorkout(workout);
                   }
                 }}
-                style={{ ...styles.workoutCard, borderColor: isToday ? C.accent : C.bgHeader, animation: stagger(i, 0.14) }}
+                style={{ ...styles.workoutCard, borderColor: isNext ? C.accent : C.bgHeader, animation: stagger(i, 0.14), opacity: empty ? 0.5 : 1, cursor: empty ? "default" : "pointer" }}
               >
-                <span style={styles.cardEmoji}>{WORKOUTS[k].emoji}</span>
+                <span style={styles.cardEmoji}>{workout.emoji}</span>
                 <span style={styles.cardBody}>
                   <span style={styles.cardTitleRow}>
-                    <span style={styles.cardTitle}>{WORKOUTS[k].name}</span>
+                    <span style={styles.cardTitle}>{workout.name}</span>
                     {doneToday ? (
                       <span style={{ ...styles.todayTag, background: C.green }}>✓ FEITO</span>
                     ) : (
-                      isToday && <span style={styles.todayTag}>HOJE</span>
+                      isNext && <span style={styles.todayTag}>PRÓXIMO</span>
                     )}
                   </span>
-                  <span style={styles.cardSub}>{WORKOUTS[k].subtitle}</span>
-                  <span style={styles.cardCount}>{`${WORKOUTS[k].exercises.length} exercícios`}</span>
+                  <span style={styles.cardCount}>{empty ? "sem exercícios" : `${workout.exercises.length} exercícios`}</span>
                 </span>
                 <span style={styles.playIcon}>{doneToday ? "👁" : "▶"}</span>
               </button>
@@ -389,6 +462,9 @@ export default function WorkoutApp() {
           })}
         </div>
         <button className="tab-press" onClick={() => goScreen("history")} style={styles.historyBtn}>Progressão de Carga</button>
+        <button className="tab-press" onClick={() => goScreen("program")} style={{ ...styles.historyBtn, marginTop: 12, border: "none", color: C.midGray }}>
+          ⚙︎ Editar programa
+        </button>
       </div>
     );
   }
@@ -409,7 +485,7 @@ export default function WorkoutApp() {
           <div style={styles.doneCheck}>✓</div>
         </div>
         <h2 style={styles.doneTitle}>Treino Concluído</h2>
-        <p style={styles.doneSub}>{workoutKey ? `${WORKOUTS[workoutKey].name} — ${sessionId}` : ""}</p>
+        <p style={styles.doneSub}>{currentWorkout ? `${currentWorkout.name} — ${sessionLabel}` : ""}</p>
         <div style={styles.doneStats}>
           {stats.map((s, i) => (
             <div key={s.label} style={{ ...styles.doneStat, animation: stagger(i, 0.2) }}>
@@ -428,21 +504,26 @@ export default function WorkoutApp() {
   if (screen === "history") {
     if (historyView) {
       const entry = historyView;
-      const workout = WORKOUTS[entry.workout];
-      const rows = workout.exercises.filter((ex) => (entry.exercises[ex.id] || []).length > 0);
+      const workout = program?.workouts.find((w) => w.id === entry.programWorkoutId);
+      const rows = workout
+        ? workout.exercises.filter((ex) => (entry.exercises[ex.exerciseId] || []).length > 0)
+        : Object.keys(entry.exercises).map((exId) => {
+            const lib = library.find((l) => l.id === exId);
+            return { exerciseId: exId, name: lib?.name ?? exId, id: exId, unit: lib?.unit ?? "total", sets: 0, reps: "", holdSeconds: null, orderIndex: 0 };
+          });
       return shell(
         <div key={screenTick} style={{ animation: screenAnim }}>
           <div style={styles.topNav}>
             <button onClick={() => setHistoryView(null)} style={styles.backBtn}>← Voltar</button>
           </div>
           <div style={styles.histBody}>
-            <h2 style={styles.detailTitle}>{`${workout.emoji}  ${workout.name}`}</h2>
-            <p style={styles.detailSub}>{`${formatDateDisplay(entry.date)}${entry.sessionId ? `  •  ${entry.sessionId}` : `  •  Semana ${entry.week}`}`}</p>
+            <h2 style={styles.detailTitle}>{workout ? `${workout.emoji}  ${workout.name}` : entry.workoutLabel}</h2>
+            <p style={styles.detailSub}>{`${formatDateDisplay(entry.date)}  •  ${entry.sessionLabel}`}</p>
             {rows.map((ex, i) => (
-              <div key={ex.id} style={{ ...styles.histExCard, animation: stagger(i) }}>
+              <div key={ex.exerciseId} style={{ ...styles.histExCard, animation: stagger(i) }}>
                 <div style={styles.histExName}>{ex.name}</div>
                 <div style={styles.histSetsRow}>
-                  {entry.exercises[ex.id].map((s, j) => (
+                  {entry.exercises[ex.exerciseId].map((s, j) => (
                     <div key={j} style={styles.histSetBadge}>
                       <span style={styles.histSetLabel}>{`S${s.set}`}</span>
                       <span style={styles.histSetKg}>{`${s.kg}kg`}</span>
@@ -451,16 +532,18 @@ export default function WorkoutApp() {
                 </div>
               </div>
             ))}
-            <button
-              className="tab-press"
-              onClick={() => {
-                setHistoryView(null);
-                startWorkout(entry.workout);
-              }}
-              style={{ ...styles.historyBtn, marginTop: 6, marginBottom: 24 }}
-            >
-              Treinar novamente
-            </button>
+            {workout && (
+              <button
+                className="tab-press"
+                onClick={() => {
+                  setHistoryView(null);
+                  startWorkout(workout);
+                }}
+                style={{ ...styles.historyBtn, marginTop: 6, marginBottom: 24 }}
+              >
+                Treinar novamente
+              </button>
+            )}
           </div>
         </div>
       );
@@ -468,9 +551,18 @@ export default function WorkoutApp() {
 
     const grouped: Record<string, HistoryEntry[]> = {};
     history.forEach((e) => {
-      if (!grouped[e.workout]) grouped[e.workout] = [];
-      grouped[e.workout].push(e);
+      const key = e.programWorkoutId ?? e.workoutLabel;
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(e);
     });
+
+    const exercisesWithData = library.filter((ex) =>
+      history.some((e) => (e.exercises[ex.id]?.length ?? 0) > 0)
+    );
+    const activeId = selectedExerciseId && exercisesWithData.some((ex) => ex.id === selectedExerciseId)
+      ? selectedExerciseId
+      : exercisesWithData[0]?.id ?? null;
+    const activeEx = exercisesWithData.find((ex) => ex.id === activeId) ?? null;
 
     return shell(
       <div key={screenTick} style={{ animation: screenAnim }}>
@@ -486,64 +578,53 @@ export default function WorkoutApp() {
               <span style={{ color: C.midGray }}>Finalize um treino para ver a evolução das cargas.</span>
             </div>
           )}
-          {(() => {
-            const exercisesWithData = getAllExercisesFlat().filter((ex) =>
-              history.some((e) => (e.exercises[ex.id]?.length ?? 0) > 0)
-            );
-            if (exercisesWithData.length === 0) return null;
-            const activeId = selectedExerciseId && exercisesWithData.some((ex) => ex.id === selectedExerciseId)
-              ? selectedExerciseId
-              : exercisesWithData[0].id;
-            const activeEx = exercisesWithData.find((ex) => ex.id === activeId)!;
-            const series = getExerciseSeries(history, activeId);
-            return (
-              <div style={{ marginBottom: 30 }}>
-                <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 12, marginBottom: 4 }}>
-                  {exercisesWithData.map((ex) => {
-                    const isActive = ex.id === activeId;
-                    return (
-                      <button
-                        key={ex.id}
-                        onClick={() => setSelectedExerciseId(ex.id)}
-                        style={{
-                          flexShrink: 0,
-                          padding: "8px 14px",
-                          borderRadius: 10,
-                          fontSize: 12,
-                          fontWeight: 600,
-                          whiteSpace: "nowrap",
-                          cursor: "pointer",
-                          border: `1px solid ${isActive ? C.accent : C.bgHeader}`,
-                          background: isActive ? "rgba(232,255,71,0.1)" : "transparent",
-                          color: isActive ? C.accent : C.lightGray,
-                        }}
-                      >
-                        {ex.name}
-                      </button>
-                    );
-                  })}
-                </div>
-                <ProgressChart points={series} exerciseName={activeEx.name} unit={activeEx.unit} />
+          {activeEx && (
+            <div style={{ marginBottom: 30 }}>
+              <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 12, marginBottom: 4 }}>
+                {exercisesWithData.map((ex) => {
+                  const isActive = ex.id === activeId;
+                  return (
+                    <button
+                      key={ex.id}
+                      onClick={() => setSelectedExerciseId(ex.id)}
+                      style={{
+                        flexShrink: 0,
+                        padding: "8px 14px",
+                        borderRadius: 10,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        whiteSpace: "nowrap",
+                        cursor: "pointer",
+                        border: `1px solid ${isActive ? C.accent : C.bgHeader}`,
+                        background: isActive ? "rgba(232,255,71,0.1)" : "transparent",
+                        color: isActive ? C.accent : C.lightGray,
+                      }}
+                    >
+                      {ex.name}
+                    </button>
+                  );
+                })}
               </div>
-            );
-          })()}
-          {(["A", "B"] as WorkoutKey[]).map((k) => {
-            const entries = grouped[k];
+              <ProgressChart points={getExerciseSeries(history, activeEx.id)} exerciseName={activeEx.name} unit={activeEx.unit} />
+            </div>
+          )}
+          {Object.entries(grouped).map(([key, entries]) => {
             if (!entries || entries.length === 0) return null;
-            const workout = WORKOUTS[k];
+            const first = entries[0];
+            const workout = program?.workouts.find((w) => w.id === first.programWorkoutId);
+            const label = workout ? `${workout.emoji} ${workout.name}` : first.workoutLabel;
             return (
-              <div key={k} style={{ marginBottom: 34 }}>
+              <div key={key} style={{ marginBottom: 34 }}>
                 <div style={styles.groupHeader}>
-                  <span style={{ fontSize: 19 }}>{workout.emoji}</span>
-                  <span style={styles.groupName}>{workout.name}</span>
+                  <span style={styles.groupName}>{label}</span>
                   <span style={styles.groupRule} />
                   <span style={styles.groupCount}>{`${entries.length} ${entries.length === 1 ? "SESSÃO" : "SESSÕES"}`}</span>
                 </div>
                 {entries.slice().reverse().map((e, i) => (
-                  <button key={i} onClick={() => setHistoryView(e)} style={styles.histEntry}>
+                  <button key={e.id ?? i} onClick={() => setHistoryView(e)} style={styles.histEntry}>
                     <span style={styles.histEntryLeft}>
                       <span style={styles.histEntryDate}>{formatDateDisplay(e.date)}</span>
-                      <span style={styles.histEntryWeek}>{e.sessionId || `S${e.week}`}</span>
+                      <span style={styles.histEntryWeek}>{e.sessionLabel}</span>
                     </span>
                     <span style={styles.histEntryCount}>{`${Object.keys(e.exercises).length} ex. →`}</span>
                   </button>
@@ -556,16 +637,16 @@ export default function WorkoutApp() {
     );
   }
 
-  if (!workoutKey) return shell(<div style={styles.loadingWrap}>—</div>);
+  if (!program || !currentWorkout) return shell(<div style={styles.loadingWrap}>—</div>);
 
-  const workout = WORKOUTS[workoutKey];
+  const workout = currentWorkout;
   const exercise = getCurrentExercise();
   if (!exercise) return shell(<div style={styles.loadingWrap}>—</div>);
   const upcoming = getUpcomingExercises();
-  const lastKg = lastWeights[exercise.id];
-  const week = getCurrentWeek();
-  const badgeColor = getPhaseInfo(week).color;
-  const doneSets = sessionLog[exercise.id] || [];
+  const lastKg = lastWeights[exercise.exerciseId];
+  const week = getCurrentWeek(program);
+  const badgeColor = getPhaseInfo(program, week).color;
+  const doneSets = sessionLog[exercise.exerciseId] || [];
   const phaseAnim = phaseExiting ? "tabPhaseOut .17s ease forwards" : `tabPhaseIn .38s ${EASE} both`;
 
   return shell(
@@ -573,7 +654,7 @@ export default function WorkoutApp() {
       <div style={styles.workoutNav}>
         <span style={styles.workoutNavLeft}>
           <span style={styles.workoutNavTitle}>{`${workout.emoji}  ${workout.name}`}</span>
-          <span style={{ ...styles.weekBadge, background: badgeColor }}>{sessionId}</span>
+          <span style={{ ...styles.weekBadge, background: badgeColor }}>{sessionLabel}</span>
         </span>
         <button onClick={finishEarly} style={styles.exitBtn}>Encerrar</button>
       </div>
@@ -637,7 +718,7 @@ export default function WorkoutApp() {
               <div style={styles.ringWrap}>
                 <svg width="168" height="168" viewBox="0 0 168 168" style={{ transform: "rotate(-90deg)" }}>
                   <circle cx="84" cy="84" r={RING_R} fill="none" stroke={C.bgHeader} strokeWidth="8" />
-                  <circle cx="84" cy="84" r={RING_R} fill="none" stroke={C.accent} strokeWidth="8" strokeLinecap="round" strokeDasharray={RING_CIRC} strokeDashoffset={RING_CIRC * (1 - restTime / REST_SECONDS)} style={{ transition: "stroke-dashoffset 1s linear" }} />
+                  <circle cx="84" cy="84" r={RING_R} fill="none" stroke={C.accent} strokeWidth="8" strokeLinecap="round" strokeDasharray={RING_CIRC} strokeDashoffset={RING_CIRC * (1 - restTime / program.restSeconds)} style={{ transition: "stroke-dashoffset 1s linear" }} />
                 </svg>
                 <div style={styles.ringCenter}>
                   <span style={styles.restTimer}>{restTime}</span>
@@ -658,7 +739,7 @@ export default function WorkoutApp() {
         <div style={styles.upcomingList}>
           {upcoming.map((ex) => {
             const isDone = completedExercises.has(ex.idx);
-            const lw = lastWeights[ex.id];
+            const lw = lastWeights[ex.exerciseId];
             return (
               <div key={ex.idx} style={{ ...styles.upcomingItem, opacity: isDone ? 0.32 : 1 }}>
                 <span style={styles.upcomingNum}>{String(ex.idx + 1).padStart(2, "0")}</span>

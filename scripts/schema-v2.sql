@@ -31,7 +31,7 @@ create table if not exists public.programs (
   start_date date not null,
   weeks integer not null,
   rest_seconds integer not null default 90,
-  status text not null default 'active' check (status in ('active', 'archived')),
+  status text not null default 'active' check (status in ('active', 'completed')),
   created_at timestamptz not null default now()
 );
 
