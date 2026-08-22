@@ -62,6 +62,7 @@ export default function WorkoutApp() {
   const [sessionLog, setSessionLog] = useState<SessionLog>({});
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [historyView, setHistoryView] = useState<HistoryEntry | null>(null);
+  const [historyViewOrigin, setHistoryViewOrigin] = useState<"home" | "history">("history");
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
   const [completedExercises, setCompletedExercises] = useState<Set<number>>(new Set());
   const [lastWeights, setLastWeights] = useState<Record<string, number>>({});
@@ -437,6 +438,7 @@ export default function WorkoutApp() {
                 onClick={() => {
                   if (doneToday) {
                     setHistoryView(doneToday);
+                    setHistoryViewOrigin("home");
                     goScreen("history");
                   } else {
                     startWorkout(workout);
@@ -514,7 +516,19 @@ export default function WorkoutApp() {
       return shell(
         <div key={screenTick} style={{ animation: screenAnim }}>
           <div style={styles.topNav}>
-            <button onClick={() => setHistoryView(null)} style={styles.backBtn}>← Voltar</button>
+            <button
+              onClick={() => {
+                if (historyViewOrigin === "home") {
+                  setHistoryView(null);
+                  goScreen("home");
+                } else {
+                  setHistoryView(null);
+                }
+              }}
+              style={styles.backBtn}
+            >
+              ← Voltar
+            </button>
           </div>
           <div style={styles.histBody}>
             <h2 style={styles.detailTitle}>{workout ? `${workout.emoji}  ${workout.name}` : entry.workoutLabel}</h2>
@@ -621,7 +635,14 @@ export default function WorkoutApp() {
                   <span style={styles.groupCount}>{`${entries.length} ${entries.length === 1 ? "SESSÃO" : "SESSÕES"}`}</span>
                 </div>
                 {entries.slice().reverse().map((e, i) => (
-                  <button key={e.id ?? i} onClick={() => setHistoryView(e)} style={styles.histEntry}>
+                  <button
+                    key={e.id ?? i}
+                    onClick={() => {
+                      setHistoryView(e);
+                      setHistoryViewOrigin("history");
+                    }}
+                    style={styles.histEntry}
+                  >
                     <span style={styles.histEntryLeft}>
                       <span style={styles.histEntryDate}>{formatDateDisplay(e.date)}</span>
                       <span style={styles.histEntryWeek}>{e.sessionLabel}</span>
