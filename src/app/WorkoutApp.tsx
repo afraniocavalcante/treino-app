@@ -203,7 +203,9 @@ export default function WorkoutApp() {
           newLog[ex.id].push({ set: currentSet + 1, kg: 0 });
           setSessionLog(newLog);
           if (currentSet + 1 >= ex.sets) {
-            const nextIdx = findNextExercise(exerciseIndex, new Set([...completedExercises, exerciseIndex]));
+            const completed = new Set([...completedExercises, exerciseIndex]);
+            setCompletedExercises(completed);
+            const nextIdx = findNextExercise(exerciseIndex, completed);
             if (nextIdx === -1) {
               persistSession(newLog, workoutKey);
               goScreen("done");
