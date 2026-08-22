@@ -157,7 +157,10 @@ export default function WorkoutApp() {
       setExerciseIndex(nextIdx);
       setCurrentSet(nextSet);
       if (nextPhase === "input") {
-        setKgInput(lastWeights[nextEx.id] ? String(lastWeights[nextEx.id]) : "");
+        const loggedSets = sessionLog[nextEx.id];
+        const lastLoggedKg = loggedSets && loggedSets.length > 0 ? loggedSets[loggedSets.length - 1].kg : undefined;
+        const prefillKg = lastLoggedKg ?? lastWeights[nextEx.id];
+        setKgInput(prefillKg ? String(prefillKg) : "");
       }
     });
   }
@@ -531,10 +534,10 @@ export default function WorkoutApp() {
                   <circle cx="84" cy="84" r={RING_R} fill="none" stroke={C.bgHeader} strokeWidth="8" />
                   <circle cx="84" cy="84" r={RING_R} fill="none" stroke={C.accent} strokeWidth="8" strokeLinecap="round" strokeDasharray={RING_CIRC} strokeDashoffset={RING_CIRC * (1 - holdTime / (exercise.holdSeconds || 40))} style={{ transition: "stroke-dashoffset 1s linear" }} />
                 </svg>
-              </div>
-              <div style={styles.ringCenter}>
-                <span style={styles.restTimer}>{holdTime}</span>
-                <span style={styles.restUnit}>SEG</span>
+                <div style={styles.ringCenter}>
+                  <span style={styles.restTimer}>{holdTime}</span>
+                  <span style={styles.restUnit}>SEG</span>
+                </div>
               </div>
               <div style={{ ...styles.nextUp, color: C.accent }}>{`${currentSet + 1}ª de ${exercise.sets} séries`}</div>
             </div>
@@ -544,7 +547,7 @@ export default function WorkoutApp() {
               <label style={styles.inputLabel}>{exercise.unit === "halter" ? "KG por halter" : "KG total"}</label>
               <div style={styles.inputRow}>
                 <button className="tab-press" onClick={() => setKgInput(String(Math.max(0, (parseFloat(kgInput) || 0) - 2.5)))} style={styles.kgAdjBtn}>−</button>
-                <input type="number" inputMode="decimal" value={kgInput} onChange={(e) => setKgInput(e.target.value)} style={styles.kgInput} autoFocus placeholder="0" />
+                <input type="number" inputMode="decimal" value={kgInput} onChange={(e) => setKgInput(e.target.value)} onFocus={(e) => e.target.select()} style={styles.kgInput} autoFocus placeholder="0" />
                 <button className="tab-press" onClick={() => setKgInput(String((parseFloat(kgInput) || 0) + 2.5))} style={styles.kgAdjBtn}>+</button>
               </div>
               <div style={styles.unitHint}>{exercise.unit === "halter" ? "🏋️ cada halter" : "🏋️ peso total na máquina/barra"}</div>
@@ -559,10 +562,10 @@ export default function WorkoutApp() {
                   <circle cx="84" cy="84" r={RING_R} fill="none" stroke={C.bgHeader} strokeWidth="8" />
                   <circle cx="84" cy="84" r={RING_R} fill="none" stroke={C.accent} strokeWidth="8" strokeLinecap="round" strokeDasharray={RING_CIRC} strokeDashoffset={RING_CIRC * (1 - restTime / REST_SECONDS)} style={{ transition: "stroke-dashoffset 1s linear" }} />
                 </svg>
-              </div>
-              <div style={styles.ringCenter}>
-                <span style={styles.restTimer}>{restTime}</span>
-                <span style={styles.restUnit}>SEG</span>
+                <div style={styles.ringCenter}>
+                  <span style={styles.restTimer}>{restTime}</span>
+                  <span style={styles.restUnit}>SEG</span>
+                </div>
               </div>
               <div style={styles.nextUp}>{upcoming.length > 0 ? `A seguir: ${upcoming[0].name}` : "Última série"}</div>
               <button className="tab-press" onClick={skipRest} style={styles.skipBtn}>PULAR →</button>
