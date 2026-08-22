@@ -352,18 +352,38 @@ export default function WorkoutApp() {
         <div style={styles.homeCards}>
           {(["A", "B"] as WorkoutKey[]).map((k, i) => {
             const isToday = getTodayWorkout() === k;
+            const todayStr = formatDate(new Date());
+            const doneToday = history
+              .filter((e) => e.workout === k && e.date === todayStr)
+              .slice(-1)[0];
             return (
-              <button key={k} className="tab-press" onClick={() => startWorkout(k)} style={{ ...styles.workoutCard, borderColor: isToday ? C.accent : C.bgHeader, animation: stagger(i, 0.14) }}>
+              <button
+                key={k}
+                className="tab-press"
+                onClick={() => {
+                  if (doneToday) {
+                    setHistoryView(doneToday);
+                    goScreen("history");
+                  } else {
+                    startWorkout(k);
+                  }
+                }}
+                style={{ ...styles.workoutCard, borderColor: isToday ? C.accent : C.bgHeader, animation: stagger(i, 0.14) }}
+              >
                 <span style={styles.cardEmoji}>{WORKOUTS[k].emoji}</span>
                 <span style={styles.cardBody}>
                   <span style={styles.cardTitleRow}>
                     <span style={styles.cardTitle}>{WORKOUTS[k].name}</span>
-                    {isToday && <span style={styles.todayTag}>HOJE</span>}
+                    {doneToday ? (
+                      <span style={{ ...styles.todayTag, background: C.green }}>✓ FEITO</span>
+                    ) : (
+                      isToday && <span style={styles.todayTag}>HOJE</span>
+                    )}
                   </span>
                   <span style={styles.cardSub}>{WORKOUTS[k].subtitle}</span>
                   <span style={styles.cardCount}>{`${WORKOUTS[k].exercises.length} exercícios`}</span>
                 </span>
-                <span style={styles.playIcon}>▶</span>
+                <span style={styles.playIcon}>{doneToday ? "👁" : "▶"}</span>
               </button>
             );
           })}
@@ -431,6 +451,16 @@ export default function WorkoutApp() {
                 </div>
               </div>
             ))}
+            <button
+              className="tab-press"
+              onClick={() => {
+                setHistoryView(null);
+                startWorkout(entry.workout);
+              }}
+              style={{ ...styles.historyBtn, marginTop: 6, marginBottom: 24 }}
+            >
+              Treinar novamente
+            </button>
           </div>
         </div>
       );
