@@ -34,7 +34,7 @@ const RING_R = 74;
 const RING_CIRC = 2 * Math.PI * RING_R;
 const PHASE_OUT_MS = 170;
 
-type Screen = "home" | "workout" | "done" | "history" | "program";
+type Screen = "home" | "workout" | "done" | "history" | "program" | "conflict" | "preview";
 type Phase = "active" | "rest" | "input" | "hold";
 
 function initialPhaseFor(ex: ProgramWorkoutExercise): Phase {
@@ -63,6 +63,8 @@ export default function WorkoutApp() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [historyView, setHistoryView] = useState<HistoryEntry | null>(null);
   const [historyViewOrigin, setHistoryViewOrigin] = useState<"home" | "history">("history");
+  const [conflictWorkout, setConflictWorkout] = useState<ProgramWorkout | null>(null);
+  const [previewWorkout, setPreviewWorkout] = useState<ProgramWorkout | null>(null);
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
   const [completedExercises, setCompletedExercises] = useState<Set<number>>(new Set());
   const [lastWeights, setLastWeights] = useState<Record<string, number>>({});
@@ -361,6 +363,81 @@ export default function WorkoutApp() {
     );
   }
 
+  if (screen === "conflict" && conflictWorkout && program) {
+    const todayStr = formatDate(new Date());
+    const doneEntry = history.filter((e) => e.date === todayStr).slice(-1)[0];
+    const doneWorkout = doneEntry ? program.workouts.find((w) => w.id === doneEntry.programWorkoutId) : null;
+    return shell(
+      <div key={screenTick} style={{ ...styles.doneWrap, animation: screenAnim }}>
+        <h2 style={styles.doneTitle}>Treino de hoje já feito</h2>
+        <p style={styles.doneSub}>
+          {doneWorkout ? `Você já treinou ${doneWorkout.name} hoje.` : "Você já treinou hoje."} Seu próximo treino é amanhã.
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, width: "100%", marginTop: 10 }}>
+          <button className="tab-press" onClick={() => startWorkout(conflictWorkout)} style={styles.okBtn}>
+            Treinar {conflictWorkout.name} mesmo assim
+          </button>
+          {doneEntry && (
+            <button
+              className="tab-press"
+              onClick={() => {
+                setHistoryView(doneEntry);
+                setHistoryViewOrigin("home");
+                goScreen("history");
+              }}
+              style={styles.historyBtn}
+            >
+              Ver treino feito hoje
+            </button>
+          )}
+          <button
+            className="tab-press"
+            onClick={() => {
+              setPreviewWorkout(conflictWorkout);
+              goScreen("preview");
+            }}
+            style={styles.historyBtn}
+          >
+            Ver {conflictWorkout.name}
+          </button>
+          <button onClick={() => goScreen("home")} style={{ ...styles.historyBtn, border: "none", color: C.midGray }}>
+            Cancelar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (screen === "preview" && previewWorkout) {
+    return shell(
+      <div key={screenTick} style={{ animation: screenAnim }}>
+        <div style={styles.topNav}>
+          <button onClick={() => goScreen("home")} style={styles.backBtn}>← Início</button>
+        </div>
+        <div style={styles.histBody}>
+          <h2 style={styles.detailTitle}>{`${previewWorkout.emoji}  ${previewWorkout.name}`}</h2>
+          <p style={styles.detailSub}>{`${previewWorkout.exercises.length} exercícios`}</p>
+          {previewWorkout.exercises.map((ex, i) => (
+            <div key={ex.id} style={{ ...styles.histExCard, animation: stagger(i) }}>
+              <div style={styles.histExName}>{ex.name}</div>
+              <div style={{ fontSize: 11.5, color: C.midGray }}>
+                {ex.holdSeconds ? `${ex.sets}×${ex.holdSeconds}s` : `${ex.sets}×${ex.reps}`}
+                {ex.unit === "halter" ? " (cada halter)" : ""}
+              </div>
+            </div>
+          ))}
+          <button
+            className="tab-press"
+            onClick={() => startWorkout(previewWorkout)}
+            style={{ ...styles.historyBtn, marginTop: 6, marginBottom: 24 }}
+          >
+            Treinar agora
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (screen === "home") {
     if (!program) {
       return shell(
@@ -426,9 +503,8 @@ export default function WorkoutApp() {
           )}
           {program.workouts.map((workout, i) => {
             const isNext = i === nextIdx;
-            const doneToday = history
-              .filter((e) => e.programWorkoutId === workout.id && e.date === todayStr)
-              .slice(-1)[0];
+            const todayEntries = history.filter((e) => e.date === todayStr);
+            const doneToday = todayEntries.filter((e) => e.programWorkoutId === workout.id).slice(-1)[0];
             const empty = workout.exercises.length === 0;
             return (
               <button
@@ -440,6 +516,9 @@ export default function WorkoutApp() {
                     setHistoryView(doneToday);
                     setHistoryViewOrigin("home");
                     goScreen("history");
+                  } else if (todayEntries.length > 0) {
+                    setConflictWorkout(workout);
+                    goScreen("conflict");
                   } else {
                     startWorkout(workout);
                   }
