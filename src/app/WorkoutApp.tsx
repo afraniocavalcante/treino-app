@@ -27,6 +27,12 @@ const PHASE_OUT_MS = 170;
 type Screen = "home" | "workout" | "done" | "history";
 type Phase = "active" | "rest" | "input" | "hold";
 
+function initialPhaseFor(ex: Exercise): Phase {
+  if (ex.holdSeconds) return "active";
+  if (ex.unit === "corpo") return "active";
+  return "input";
+}
+
 export default function WorkoutApp() {
   const supabase = createClient();
 
@@ -116,10 +122,13 @@ export default function WorkoutApp() {
   }
 
   function startWorkout(key: WorkoutKey) {
+    const firstEx = WORKOUTS[key].exercises[0];
+    const firstPhase = initialPhaseFor(firstEx);
     setWorkoutKey(key);
     setExerciseIndex(0);
     setCurrentSet(0);
-    setPhase("active");
+    setPhase(firstPhase);
+    setKgInput(firstPhase === "input" && lastWeights[firstEx.id] ? String(lastWeights[firstEx.id]) : "");
     setPhaseExiting(false);
     setSessionLog({});
     setCompletedExercises(new Set());
@@ -138,6 +147,19 @@ export default function WorkoutApp() {
     for (let i = fromIdx + 1; i < exercises.length; i++) if (!completed.has(i)) return i;
     for (let i = 0; i <= fromIdx; i++) if (!completed.has(i)) return i;
     return -1;
+  }
+
+  function goToStep(nextIdx: number, nextSet: number) {
+    if (!workoutKey) return;
+    const nextEx = WORKOUTS[workoutKey].exercises[nextIdx];
+    const nextPhase = initialPhaseFor(nextEx);
+    toPhase(nextPhase, () => {
+      setExerciseIndex(nextIdx);
+      setCurrentSet(nextSet);
+      if (nextPhase === "input") {
+        setKgInput(lastWeights[nextEx.id] ? String(lastWeights[nextEx.id]) : "");
+      }
+    });
   }
 
   function startTimer(onDone: () => void) {
@@ -180,11 +202,11 @@ export default function WorkoutApp() {
               goScreen("done");
             } else {
               toPhase("rest");
-              startTimer(() => toPhase("active", () => { setExerciseIndex(nextIdx); setCurrentSet(0); }));
+              startTimer(() => goToStep(nextIdx, 0));
             }
           } else {
             toPhase("rest");
-            startTimer(() => toPhase("active", () => setCurrentSet((s) => s + 1)));
+            startTimer(() => goToStep(exerciseIndex, currentSet + 1));
           }
         }
       }, 1000);
@@ -206,15 +228,13 @@ export default function WorkoutApp() {
           return;
         }
         toPhase("rest");
-        startTimer(() => toPhase("active", () => { setExerciseIndex(nextIdx); setCurrentSet(0); }));
+        startTimer(() => goToStep(nextIdx, 0));
       } else {
         toPhase("rest");
-        startTimer(() => toPhase("active", () => setCurrentSet((s) => s + 1)));
+        startTimer(() => goToStep(exerciseIndex, currentSet + 1));
       }
       return;
     }
-
-    toPhase("input", () => setKgInput(ex && lastWeights[ex.id] ? String(lastWeights[ex.id]) : ""));
   }
 
   function handleKgSubmit() {
@@ -236,17 +256,17 @@ export default function WorkoutApp() {
         return;
       }
       toPhase("rest");
-      startTimer(() => toPhase("active", () => { setExerciseIndex(nextIdx); setCurrentSet(0); }));
+      startTimer(() => goToStep(nextIdx, 0));
     } else {
       toPhase("rest");
-      startTimer(() => toPhase("active", () => setCurrentSet((s) => s + 1)));
+      startTimer(() => goToStep(exerciseIndex, currentSet + 1));
     }
   }
 
   function jumpToExercise(idx: number) {
     if (completedExercises.has(idx)) return;
     if (timerRef.current) clearInterval(timerRef.current);
-    toPhase("active", () => { setExerciseIndex(idx); setCurrentSet(0); });
+    goToStep(idx, 0);
   }
 
   function skipRest() {
@@ -261,9 +281,9 @@ export default function WorkoutApp() {
         goScreen("done");
         return;
       }
-      toPhase("active", () => { setExerciseIndex(nextIdx); setCurrentSet(0); });
+      goToStep(nextIdx, 0);
     } else {
-      toPhase("active", () => setCurrentSet((s) => s + 1));
+      goToStep(exerciseIndex, currentSet + 1);
     }
   }
 
