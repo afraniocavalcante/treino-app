@@ -111,3 +111,24 @@ export function getSessionId(wKey: WorkoutKey, historyEntries: HistoryEntry[]): 
   ).length;
   return `${wKey}${count + 1}S${week}`;
 }
+
+export interface ExercisePoint {
+  date: string;
+  kg: number;
+}
+
+export function getExerciseSeries(history: HistoryEntry[], exerciseId: string): ExercisePoint[] {
+  return history
+    .filter((e) => e.exercises[exerciseId] && e.exercises[exerciseId].length > 0)
+    .map((e) => ({
+      date: e.date,
+      kg: Math.max(...e.exercises[exerciseId].map((s) => s.kg || 0)),
+    }))
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+}
+
+export function getAllExercisesFlat(): (Exercise & { workout: WorkoutKey })[] {
+  return (Object.keys(WORKOUTS) as WorkoutKey[]).flatMap((k) =>
+    WORKOUTS[k].exercises.map((ex) => ({ ...ex, workout: k }))
+  );
+}

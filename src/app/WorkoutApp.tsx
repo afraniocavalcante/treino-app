@@ -12,6 +12,8 @@ import {
   formatDate,
   formatDateDisplay,
   getSessionId,
+  getExerciseSeries,
+  getAllExercisesFlat,
   type WorkoutKey,
   type SessionLog,
   type HistoryEntry,
@@ -19,6 +21,7 @@ import {
 } from "@/lib/workouts";
 import { C, DISPLAY, EASE, styles } from "@/lib/styles";
 import { signOut } from "./actions";
+import ProgressChart from "./ProgressChart";
 
 const RING_R = 74;
 const RING_CIRC = 2 * Math.PI * RING_R;
@@ -50,6 +53,7 @@ export default function WorkoutApp() {
   const [sessionLog, setSessionLog] = useState<SessionLog>({});
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [historyView, setHistoryView] = useState<HistoryEntry | null>(null);
+  const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
   const [completedExercises, setCompletedExercises] = useState<Set<number>>(new Set());
   const [lastWeights, setLastWeights] = useState<Record<string, number>>({});
   const [sessionId, setSessionId] = useState("");
@@ -450,6 +454,47 @@ export default function WorkoutApp() {
               <span style={{ color: C.midGray }}>Finalize um treino para ver a evolução das cargas.</span>
             </div>
           )}
+          {(() => {
+            const exercisesWithData = getAllExercisesFlat().filter((ex) =>
+              history.some((e) => (e.exercises[ex.id]?.length ?? 0) > 0)
+            );
+            if (exercisesWithData.length === 0) return null;
+            const activeId = selectedExerciseId && exercisesWithData.some((ex) => ex.id === selectedExerciseId)
+              ? selectedExerciseId
+              : exercisesWithData[0].id;
+            const activeEx = exercisesWithData.find((ex) => ex.id === activeId)!;
+            const series = getExerciseSeries(history, activeId);
+            return (
+              <div style={{ marginBottom: 30 }}>
+                <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 12, marginBottom: 4 }}>
+                  {exercisesWithData.map((ex) => {
+                    const isActive = ex.id === activeId;
+                    return (
+                      <button
+                        key={ex.id}
+                        onClick={() => setSelectedExerciseId(ex.id)}
+                        style={{
+                          flexShrink: 0,
+                          padding: "8px 14px",
+                          borderRadius: 10,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          whiteSpace: "nowrap",
+                          cursor: "pointer",
+                          border: `1px solid ${isActive ? C.accent : C.bgHeader}`,
+                          background: isActive ? "rgba(232,255,71,0.1)" : "transparent",
+                          color: isActive ? C.accent : C.lightGray,
+                        }}
+                      >
+                        {ex.name}
+                      </button>
+                    );
+                  })}
+                </div>
+                <ProgressChart points={series} exerciseName={activeEx.name} unit={activeEx.unit} />
+              </div>
+            );
+          })()}
           {(["A", "B"] as WorkoutKey[]).map((k) => {
             const entries = grouped[k];
             if (!entries || entries.length === 0) return null;
