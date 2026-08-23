@@ -110,8 +110,41 @@ function workoutLetter(orderIndex: number): string {
 
 export function getNextWorkoutIndex(program: Program, history: HistoryEntry[]): number {
   if (program.workouts.length === 0) return -1;
-  const count = history.filter((e) => e.programId === program.id).length;
-  return count % program.workouts.length;
+  const relevant = history.filter((e) => e.programId === program.id && e.programWorkoutId);
+  if (relevant.length === 0) return 0;
+  const last = relevant[relevant.length - 1];
+  const lastIdx = program.workouts.findIndex((w) => w.id === last.programWorkoutId);
+  if (lastIdx === -1) return 0;
+  return (lastIdx + 1) % program.workouts.length;
+}
+
+const TRAINING_STREAK_LEN = 6;
+
+export function isRestDay(program: Program, history: HistoryEntry[], dateStr: string): boolean {
+  const trainedDates = new Set(history.filter((e) => e.programId === program.id).map((e) => e.date));
+  const today = formatDate(new Date());
+  const restDays = new Set<string>();
+  let streak = 0;
+  const cursor = new Date(program.startDate);
+  const target = new Date(dateStr);
+  while (cursor <= target) {
+    const cStr = formatDate(cursor);
+    if (!restDays.has(cStr)) {
+      if (trainedDates.has(cStr)) {
+        streak += 1;
+        if (streak >= TRAINING_STREAK_LEN) {
+          const rest = new Date(cursor);
+          rest.setDate(rest.getDate() + 1);
+          restDays.add(formatDate(rest));
+          streak = 0;
+        }
+      } else if (cStr < today) {
+        streak = 0;
+      }
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return restDays.has(dateStr);
 }
 
 export function getSessionLabel(program: Program, workout: ProgramWorkout, history: HistoryEntry[]): string {

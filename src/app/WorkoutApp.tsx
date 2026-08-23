@@ -18,6 +18,7 @@ import {
   getNextWorkoutIndex,
   getPhaseInfo,
   getSessionLabel,
+  isRestDay,
   type HistoryEntry,
   type LibraryExercise,
   type Program,
@@ -327,8 +328,10 @@ export default function WorkoutApp() {
   function finishEarly() {
     if (timerRef.current) clearInterval(timerRef.current);
     if (holdTimerRef.current) clearInterval(holdTimerRef.current);
-    if (currentWorkout && Object.keys(sessionLog).length > 0) persistSession(sessionLog, currentWorkout);
-    goScreen("done");
+    if (currentWorkout && Object.keys(sessionLog).length > 0) {
+      persistSession(sessionLog, currentWorkout);
+    }
+    goScreen("home");
   }
 
   function getUpcomingExercises() {
@@ -466,6 +469,7 @@ export default function WorkoutApp() {
     const { name: phaseName, desc, color } = getPhaseInfo(program, week);
     const nextIdx = getNextWorkoutIndex(program, history);
     const todayStr = formatDate(new Date());
+    const restToday = isRestDay(program, history, todayStr);
 
     return shell(
       <div key={screenTick} style={{ animation: screenAnim }}>
@@ -493,6 +497,12 @@ export default function WorkoutApp() {
             {desc && <span style={styles.weekDesc}>{desc}</span>}
           </div>
         </div>
+        {restToday && (
+          <div style={{ margin: "0 24px 16px", background: C.bgCard, border: `1px solid ${C.bgHeader}`, borderRadius: 16, padding: "16px 18px", textAlign: "center" }}>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: C.lightGray }}>😌 Hoje é dia de descanso</div>
+            <div style={{ fontSize: 11.5, color: C.midGray, marginTop: 4 }}>Seu próximo treino é amanhã</div>
+          </div>
+        )}
         <div style={styles.homeCards}>
           {program.workouts.length === 0 && (
             <div style={{ ...styles.emptyState, padding: "20px 0" }}>
@@ -532,7 +542,7 @@ export default function WorkoutApp() {
                     {doneToday ? (
                       <span style={{ ...styles.todayTag, background: C.green }}>✓ FEITO</span>
                     ) : (
-                      isNext && <span style={styles.todayTag}>PRÓXIMO</span>
+                      isNext && <span style={styles.todayTag}>{restToday ? "AMANHÃ" : "HOJE"}</span>
                     )}
                   </span>
                   <span style={styles.cardCount}>{empty ? "sem exercícios" : `${workout.exercises.length} exercícios`}</span>
@@ -805,7 +815,7 @@ export default function WorkoutApp() {
               <label style={styles.inputLabel}>{exercise.unit === "halter" ? "KG por halter" : "KG total"}</label>
               <div style={styles.inputRow}>
                 <button className="tab-press" onClick={() => setKgInput(String(Math.max(0, (parseFloat(kgInput) || 0) - 2.5)))} style={styles.kgAdjBtn}>−</button>
-                <input type="number" inputMode="decimal" value={kgInput} onChange={(e) => setKgInput(e.target.value)} onFocus={(e) => e.target.select()} style={styles.kgInput} autoFocus placeholder="0" />
+                <input type="number" inputMode="decimal" value={kgInput} onChange={(e) => setKgInput(e.target.value)} onFocus={(e) => e.target.select()} style={styles.kgInput} placeholder="0" />
                 <button className="tab-press" onClick={() => setKgInput(String((parseFloat(kgInput) || 0) + 2.5))} style={styles.kgAdjBtn}>+</button>
               </div>
               <div style={styles.unitHint}>{exercise.unit === "halter" ? "🏋️ cada halter" : "🏋️ peso total na máquina/barra"}</div>
