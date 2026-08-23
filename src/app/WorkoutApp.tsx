@@ -771,12 +771,12 @@ export default function WorkoutApp() {
       </div>
       <div style={styles.currentCard}>
         <div key={exerciseIndex} style={{ animation: `tabExIn .42s ${EASE} both` }}>
-          {exerciseGifUrl && (
+          {exerciseGifUrl && phase === "active" && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={exerciseGifUrl}
               alt={exercise.name}
-              style={{ width: "100%", maxHeight: 200, objectFit: "contain", borderRadius: 14, background: C.bgHeader, marginBottom: 16 }}
+              style={{ width: "100%", maxHeight: 120, objectFit: "contain", borderRadius: 14, background: C.bgHeader, marginBottom: 10 }}
             />
           )}
           <div style={styles.currentLabel}>EXERCÍCIO ATUAL</div>
