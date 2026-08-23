@@ -758,6 +758,7 @@ export default function WorkoutApp() {
   const badgeColor = getPhaseInfo(program, week).color;
   const doneSets = sessionLog[exercise.exerciseId] || [];
   const phaseAnim = phaseExiting ? "tabPhaseOut .17s ease forwards" : `tabPhaseIn .38s ${EASE} both`;
+  const exerciseGifUrl = library.find((l) => l.id === exercise.exerciseId)?.gifUrl ?? null;
 
   return shell(
     <div key={screenTick} style={{ animation: screenAnim }}>
@@ -770,6 +771,14 @@ export default function WorkoutApp() {
       </div>
       <div style={styles.currentCard}>
         <div key={exerciseIndex} style={{ animation: `tabExIn .42s ${EASE} both` }}>
+          {exerciseGifUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={exerciseGifUrl}
+              alt={exercise.name}
+              style={{ width: "100%", maxHeight: 200, objectFit: "contain", borderRadius: 14, background: C.bgHeader, marginBottom: 16 }}
+            />
+          )}
           <div style={styles.currentLabel}>EXERCÍCIO ATUAL</div>
           <h2 style={styles.currentName}>{exercise.name}</h2>
           <div style={styles.currentReps}>{exercise.holdSeconds ? exercise.reps + " por série" : exercise.reps + " reps"}</div>

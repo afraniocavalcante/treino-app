@@ -83,7 +83,7 @@ export async function upsertLastWeights(
 export async function getExerciseLibrary(supabase: SupabaseClient): Promise<LibraryExercise[]> {
   const { data, error } = await supabase
     .from("exercise_library")
-    .select("id, name, unit, hold_seconds")
+    .select("id, name, unit, hold_seconds, gif_url")
     .order("name", { ascending: true });
   if (error) throw error;
   return (data ?? []).map((row) => ({
@@ -91,7 +91,29 @@ export async function getExerciseLibrary(supabase: SupabaseClient): Promise<Libr
     name: row.name,
     unit: row.unit as ExerciseUnit,
     holdSeconds: row.hold_seconds,
+    gifUrl: row.gif_url,
   }));
+}
+
+export async function uploadExerciseGif(
+  supabase: SupabaseClient,
+  exerciseId: string,
+  file: File
+): Promise<string> {
+  const ext = file.name.split(".").pop()?.toLowerCase() || "gif";
+  const path = `${exerciseId}-${Date.now()}.${ext}`;
+  const { error: uploadError } = await supabase.storage
+    .from("exercise-gifs")
+    .upload(path, file, { contentType: file.type || "image/gif" });
+  if (uploadError) throw uploadError;
+
+  const { data: pub } = supabase.storage.from("exercise-gifs").getPublicUrl(path);
+  const gifUrl = pub.publicUrl;
+
+  const { error } = await supabase.from("exercise_library").update({ gif_url: gifUrl }).eq("id", exerciseId);
+  if (error) throw error;
+
+  return gifUrl;
 }
 
 export async function addLibraryExercise(
@@ -102,10 +124,10 @@ export async function addLibraryExercise(
   const { data, error } = await supabase
     .from("exercise_library")
     .insert({ id, name: ex.name, unit: ex.unit, hold_seconds: ex.holdSeconds })
-    .select("id, name, unit, hold_seconds")
+    .select("id, name, unit, hold_seconds, gif_url")
     .single();
   if (error) throw error;
-  return { id: data.id, name: data.name, unit: data.unit as ExerciseUnit, holdSeconds: data.hold_seconds };
+  return { id: data.id, name: data.name, unit: data.unit as ExerciseUnit, holdSeconds: data.hold_seconds, gifUrl: data.gif_url };
 }
 
 async function loadProgramWorkouts(supabase: SupabaseClient, programId: string): Promise<ProgramWorkout[]> {

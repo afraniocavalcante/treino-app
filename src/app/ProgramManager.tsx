@@ -11,6 +11,7 @@ import {
   deleteProgramPhase,
   deleteProgramWorkout,
   deleteProgramWorkoutExercise,
+  uploadExerciseGif,
 } from "@/lib/data";
 import {
   formatDate,
@@ -102,13 +103,7 @@ export default function ProgramManager({
           <SectionHeader title="Biblioteca de Exercícios" />
           <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
             {library.map((ex) => (
-              <div key={ex.id} style={libRowStyle}>
-                <span style={{ fontSize: 13, fontWeight: 600 }}>{ex.name}</span>
-                <span style={{ fontSize: 10.5, color: C.midGray }}>
-                  {UNIT_LABEL[ex.unit]}
-                  {ex.holdSeconds ? ` · ${ex.holdSeconds}s` : ""}
-                </span>
-              </div>
+              <ExerciseLibraryRow key={ex.id} supabase={supabase} exercise={ex} busy={busy} run={run} />
             ))}
             {library.length === 0 && <div style={{ fontSize: 12, color: C.midGray }}>Nenhum exercício ainda.</div>}
           </div>
@@ -262,6 +257,58 @@ function ProgramSection({
       >
         Concluir este programa e criar um novo
       </button>
+    </div>
+  );
+}
+
+function ExerciseLibraryRow({
+  supabase,
+  exercise,
+  busy,
+  run,
+}: {
+  supabase: SupabaseClient;
+  exercise: LibraryExercise;
+  busy: boolean;
+  run: (fn: () => Promise<void>) => Promise<void>;
+}) {
+  const inputId = `gif-upload-${exercise.id}`;
+
+  return (
+    <div style={{ ...libRowStyle, alignItems: "center" }}>
+      <span style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+        {exercise.gifUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={exercise.gifUrl} alt={exercise.name} style={{ width: 40, height: 40, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
+        ) : (
+          <span style={{ width: 40, height: 40, borderRadius: 8, background: C.bgHeader, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🎬</span>
+        )}
+        <span style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{exercise.name}</span>
+          <span style={{ fontSize: 10.5, color: C.midGray }}>
+            {UNIT_LABEL[exercise.unit]}
+            {exercise.holdSeconds ? ` · ${exercise.holdSeconds}s` : ""}
+          </span>
+        </span>
+      </span>
+      <label htmlFor={inputId} style={{ fontSize: 10.5, fontWeight: 700, color: C.accent, cursor: busy ? "default" : "pointer", opacity: busy ? 0.5 : 1, flexShrink: 0 }}>
+        {exercise.gifUrl ? "trocar gif" : "+ gif"}
+      </label>
+      <input
+        id={inputId}
+        type="file"
+        accept="image/gif,image/*"
+        disabled={busy}
+        style={{ display: "none" }}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.target.value = "";
+          if (!file) return;
+          run(async () => {
+            await uploadExerciseGif(supabase, exercise.id, file);
+          });
+        }}
+      />
     </div>
   );
 }

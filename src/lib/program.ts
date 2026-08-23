@@ -15,6 +15,7 @@ export interface LibraryExercise {
   name: string;
   unit: ExerciseUnit;
   holdSeconds: number | null;
+  gifUrl: string | null;
 }
 
 export interface ProgramWorkoutExercise {
