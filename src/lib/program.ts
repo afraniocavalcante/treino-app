@@ -77,13 +77,18 @@ export function formatDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+function parseDate(dateStr: string): Date {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
 export function formatDateDisplay(str: string): string {
   const [, m, d] = str.split("-");
   return `${d}/${m}`;
 }
 
 export function getProgramEndDate(program: Program): Date {
-  const end = new Date(program.startDate);
+  const end = parseDate(program.startDate);
   end.setDate(end.getDate() + program.weeks * 7);
   return end;
 }
@@ -93,7 +98,7 @@ export function isProgramEnded(program: Program): boolean {
 }
 
 export function getCurrentWeek(program: Program): number {
-  const start = new Date(program.startDate);
+  const start = parseDate(program.startDate);
   const days = Math.floor((Date.now() - start.getTime()) / 86400000);
   return Math.min(program.weeks, Math.max(1, Math.floor(days / 7) + 1));
 }
@@ -121,16 +126,22 @@ export function getNextWorkoutIndex(program: Program, history: HistoryEntry[]): 
 const TRAINING_STREAK_LEN = 6;
 
 export function isRestDay(program: Program, history: HistoryEntry[], dateStr: string): boolean {
-  const trainedDates = new Set(history.filter((e) => e.programId === program.id).map((e) => e.date));
+  const trainedDates = new Set(history.map((e) => e.date));
+  const trackedDates = [...trainedDates].sort();
+  const trackingStart = trackedDates[0] ?? null;
   const today = formatDate(new Date());
   const restDays = new Set<string>();
   let streak = 0;
-  const cursor = new Date(program.startDate);
-  const target = new Date(dateStr);
+  const cursor = parseDate(program.startDate);
+  const target = parseDate(dateStr);
   while (cursor <= target) {
     const cStr = formatDate(cursor);
     if (!restDays.has(cStr)) {
-      if (trainedDates.has(cStr)) {
+      const trained = trainedDates.has(cStr);
+      const verifiableMiss = !trained && trackingStart !== null && cStr >= trackingStart && cStr < today;
+      if (verifiableMiss) {
+        streak = 0;
+      } else {
         streak += 1;
         if (streak >= TRAINING_STREAK_LEN) {
           const rest = new Date(cursor);
@@ -138,8 +149,6 @@ export function isRestDay(program: Program, history: HistoryEntry[], dateStr: st
           restDays.add(formatDate(rest));
           streak = 0;
         }
-      } else if (cStr < today) {
-        streak = 0;
       }
     }
     cursor.setDate(cursor.getDate() + 1);
@@ -149,7 +158,7 @@ export function isRestDay(program: Program, history: HistoryEntry[], dateStr: st
 
 export function getSessionLabel(program: Program, workout: ProgramWorkout, history: HistoryEntry[]): string {
   const week = getCurrentWeek(program);
-  const start = new Date(program.startDate);
+  const start = parseDate(program.startDate);
   start.setDate(start.getDate() + (week - 1) * 7);
   const end = new Date(start);
   end.setDate(end.getDate() + 7);
