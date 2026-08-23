@@ -72,6 +72,7 @@ export default function WorkoutApp() {
   const [sessionLabel, setSessionLabel] = useState("");
   const [holdTime, setHoldTime] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [gifModalUrl, setGifModalUrl] = useState<string | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const holdTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -137,11 +138,13 @@ export default function WorkoutApp() {
   }
 
   function goScreen(next: Screen) {
+    setGifModalUrl(null);
     setScreenTick((t) => t + 1);
     setScreen(next);
   }
 
   function toPhase(next: Phase, after?: () => void) {
+    setGifModalUrl(null);
     setPhaseExiting(true);
     if (phaseTimeoutRef.current) clearTimeout(phaseTimeoutRef.current);
     phaseTimeoutRef.current = setTimeout(() => {
@@ -776,7 +779,8 @@ export default function WorkoutApp() {
             <img
               src={exerciseGifUrl}
               alt={exercise.name}
-              style={{ width: "100%", maxHeight: 90, objectFit: "contain", borderRadius: 12, background: C.bgHeader, marginBottom: 8 }}
+              onClick={() => setGifModalUrl(exerciseGifUrl)}
+              style={{ width: "100%", maxHeight: 90, objectFit: "contain", borderRadius: 12, background: C.bgHeader, marginBottom: 8, cursor: "pointer" }}
             />
           )}
           <div style={styles.currentLabel}>EXERCÍCIO ATUAL</div>
@@ -874,6 +878,30 @@ export default function WorkoutApp() {
           })}
         </div>
       </div>
+      {gifModalUrl && (
+        <div
+          onClick={() => setGifModalUrl(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.85)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            padding: 24,
+            animation: "tabFadeUp .25s ease both",
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={gifModalUrl}
+            alt={exercise.name}
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: "100%", maxHeight: "100%", borderRadius: 16, objectFit: "contain" }}
+          />
+        </div>
+      )}
     </div>
   );
 }
