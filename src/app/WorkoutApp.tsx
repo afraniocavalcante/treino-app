@@ -73,6 +73,7 @@ export default function WorkoutApp() {
   const [holdTime, setHoldTime] = useState(0);
   const [saving, setSaving] = useState(false);
   const [gifModalUrl, setGifModalUrl] = useState<string | null>(null);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const holdTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -139,6 +140,7 @@ export default function WorkoutApp() {
 
   function goScreen(next: Screen) {
     setGifModalUrl(null);
+    setShowExitConfirm(false);
     setScreenTick((t) => t + 1);
     setScreen(next);
   }
@@ -328,13 +330,20 @@ export default function WorkoutApp() {
     }
   }
 
-  function finishEarly() {
+  function requestExit() {
+    setShowExitConfirm(true);
+  }
+
+  function confirmExit(completed: boolean) {
+    setShowExitConfirm(false);
     if (timerRef.current) clearInterval(timerRef.current);
     if (holdTimerRef.current) clearInterval(holdTimerRef.current);
-    if (currentWorkout && Object.keys(sessionLog).length > 0) {
+    if (completed && currentWorkout && Object.keys(sessionLog).length > 0) {
       persistSession(sessionLog, currentWorkout);
+      goScreen("done");
+    } else {
+      goScreen("home");
     }
-    goScreen("home");
   }
 
   function getUpcomingExercises() {
@@ -473,6 +482,13 @@ export default function WorkoutApp() {
     const nextIdx = getNextWorkoutIndex(program, history);
     const todayStr = formatDate(new Date());
     const restToday = isRestDay(program, history, todayStr);
+    const todayEntries = history.filter((e) => e.date === todayStr);
+    const trainedTodayAny = todayEntries.length > 0;
+    const tomorrowDate = new Date();
+    tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+    const tomorrowStr = formatDate(tomorrowDate);
+    const tomorrowIsRest = isRestDay(program, history, tomorrowStr);
+    const nextTag = trainedTodayAny ? (tomorrowIsRest ? null : "AMANHÃ") : restToday ? "AMANHÃ" : "HOJE";
 
     return shell(
       <div key={screenTick} style={{ animation: screenAnim }}>
@@ -516,7 +532,6 @@ export default function WorkoutApp() {
           )}
           {program.workouts.map((workout, i) => {
             const isNext = i === nextIdx;
-            const todayEntries = history.filter((e) => e.date === todayStr);
             const doneToday = todayEntries.filter((e) => e.programWorkoutId === workout.id).slice(-1)[0];
             const empty = workout.exercises.length === 0;
             return (
@@ -545,7 +560,7 @@ export default function WorkoutApp() {
                     {doneToday ? (
                       <span style={{ ...styles.todayTag, background: C.green }}>✓ FEITO</span>
                     ) : (
-                      isNext && <span style={styles.todayTag}>{restToday ? "AMANHÃ" : "HOJE"}</span>
+                      isNext && nextTag && <span style={styles.todayTag}>{nextTag}</span>
                     )}
                   </span>
                   <span style={styles.cardCount}>{empty ? "sem exercícios" : `${workout.exercises.length} exercícios`}</span>
@@ -770,7 +785,7 @@ export default function WorkoutApp() {
           <span style={styles.workoutNavTitle}>{`${workout.emoji}  ${workout.name}`}</span>
           <span style={{ ...styles.weekBadge, background: badgeColor }}>{sessionLabel}</span>
         </span>
-        <button onClick={finishEarly} style={styles.exitBtn}>Encerrar</button>
+        <button onClick={requestExit} style={styles.exitBtn}>Encerrar</button>
       </div>
       <div style={styles.currentCard}>
         <div key={exerciseIndex} style={{ animation: `tabExIn .42s ${EASE} both` }}>
@@ -878,6 +893,34 @@ export default function WorkoutApp() {
           })}
         </div>
       </div>
+      {showExitConfirm && (
+        <div
+          onClick={() => setShowExitConfirm(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.75)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            padding: 24,
+            animation: "tabFadeUp .2s ease both",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: C.bgCard, border: `1px solid ${C.bgHeader}`, borderRadius: 18, padding: 22, width: "100%", maxWidth: 340, textAlign: "center" }}
+          >
+            <div style={{ fontFamily: DISPLAY, fontSize: 17, fontWeight: 700, marginBottom: 8 }}>Você concluiu o treino?</div>
+            <div style={{ fontSize: 12.5, color: C.midGray, marginBottom: 20 }}>Isso decide se essa sessão conta como um treino feito.</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <button className="tab-press" onClick={() => confirmExit(true)} style={styles.okBtn}>Sim, concluí</button>
+              <button className="tab-press" onClick={() => confirmExit(false)} style={{ ...styles.historyBtn, margin: 0 }}>Não, só sair</button>
+            </div>
+          </div>
+        </div>
+      )}
       {gifModalUrl && (
         <div
           onClick={() => setGifModalUrl(null)}
