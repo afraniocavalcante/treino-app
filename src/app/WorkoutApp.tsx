@@ -18,6 +18,8 @@ import {
   getNextWorkoutIndex,
   getPhaseInfo,
   getSessionLabel,
+  getTrainedDateSet,
+  getTrainingStreak,
   isRestDay,
   type HistoryEntry,
   type LibraryExercise,
@@ -30,12 +32,17 @@ import { C, DISPLAY, EASE, styles } from "@/lib/styles";
 import { signOut } from "./actions";
 import ProgressChart from "./ProgressChart";
 import ProgramManager from "./ProgramManager";
+import Heatmap from "./Heatmap";
 
 const RING_R = 74;
 const RING_CIRC = 2 * Math.PI * RING_R;
 const PHASE_OUT_MS = 170;
+const MONTH_NAMES_FULL = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+];
 
-type Screen = "home" | "workout" | "done" | "history" | "program" | "conflict" | "preview";
+type Screen = "home" | "workout" | "done" | "history" | "program" | "conflict" | "preview" | "stats";
 type Phase = "active" | "rest" | "input" | "hold";
 
 function initialPhaseFor(ex: ProgramWorkoutExercise): Phase {
@@ -571,6 +578,7 @@ export default function WorkoutApp() {
           })}
         </div>
         <button className="tab-press" onClick={() => goScreen("history")} style={styles.historyBtn}>Progressão de Carga</button>
+        <button className="tab-press" onClick={() => goScreen("stats")} style={{ ...styles.historyBtn, marginTop: 12 }}>📅 Consistência</button>
         <button className="tab-press" onClick={() => goScreen("program")} style={{ ...styles.historyBtn, marginTop: 12, border: "none", color: C.midGray }}>
           ⚙︎ Editar programa
         </button>
@@ -606,6 +614,64 @@ export default function WorkoutApp() {
         <button className="tab-press" onClick={() => goScreen("home")} style={styles.doneBtn} disabled={saving}>
           {saving ? "Salvando…" : "Voltar ao Início"}
         </button>
+      </div>
+    );
+  }
+
+  if (screen === "stats" && program) {
+    const trainedDates = getTrainedDateSet(history);
+    const streak = getTrainingStreak(program, history);
+    const todayD = new Date();
+
+    const weekStart = new Date(todayD);
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    const weekTrained = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(weekStart);
+      d.setDate(d.getDate() + i);
+      return d <= todayD && trainedDates.has(formatDate(d));
+    }).filter(Boolean).length;
+
+    const monthStart = new Date(todayD.getFullYear(), todayD.getMonth(), 1);
+    const daysElapsedThisMonth = Math.floor((todayD.getTime() - monthStart.getTime()) / 86400000) + 1;
+    let monthTrained = 0;
+    const mCursor = new Date(monthStart);
+    while (mCursor <= todayD) {
+      if (trainedDates.has(formatDate(mCursor))) monthTrained += 1;
+      mCursor.setDate(mCursor.getDate() + 1);
+    }
+    const expectedThisMonth = Math.max(1, Math.round(daysElapsedThisMonth * (6 / 7)));
+    const adherencePct = Math.min(100, Math.round((monthTrained / expectedThisMonth) * 100));
+    const monthName = MONTH_NAMES_FULL[todayD.getMonth()];
+
+    return shell(
+      <div key={screenTick} style={{ animation: screenAnim }}>
+        <div style={styles.topNav}>
+          <button onClick={() => goScreen("home")} style={styles.backBtn}>← Início</button>
+        </div>
+        <div style={styles.histBody}>
+          <h2 style={styles.histTitle}>Consistência</h2>
+
+          <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
+            <div style={{ flex: 1, background: C.bgCard, border: `1px solid ${C.bgHeader}`, borderRadius: 16, padding: "16px 14px", textAlign: "center" }}>
+              <div style={{ fontFamily: DISPLAY, fontSize: 24, fontWeight: 700, color: C.accent }}>{streak > 0 ? `🔥 ${streak}` : "0"}</div>
+              <div style={{ fontSize: 9.5, color: C.midGray, letterSpacing: 0.8, fontWeight: 700, marginTop: 4 }}>SEQUÊNCIA (DIAS)</div>
+            </div>
+            <div style={{ flex: 1, background: C.bgCard, border: `1px solid ${C.bgHeader}`, borderRadius: 16, padding: "16px 14px", textAlign: "center" }}>
+              <div style={{ fontFamily: DISPLAY, fontSize: 24, fontWeight: 700 }}>{weekTrained}<span style={{ fontSize: 14, color: C.midGray }}>/6</span></div>
+              <div style={{ fontSize: 9.5, color: C.midGray, letterSpacing: 0.8, fontWeight: 700, marginTop: 4 }}>ESSA SEMANA</div>
+            </div>
+            <div style={{ flex: 1, background: C.bgCard, border: `1px solid ${C.bgHeader}`, borderRadius: 16, padding: "16px 14px", textAlign: "center" }}>
+              <div style={{ fontFamily: DISPLAY, fontSize: 24, fontWeight: 700, color: adherencePct >= 80 ? C.green : C.accent }}>{adherencePct}%</div>
+              <div style={{ fontSize: 9.5, color: C.midGray, letterSpacing: 0.8, fontWeight: 700, marginTop: 4 }}>{monthName.toUpperCase()}</div>
+            </div>
+          </div>
+
+          <Heatmap trainedDates={trainedDates} />
+
+          <div style={{ fontSize: 11.5, color: C.midGray, textAlign: "center", marginTop: 14, marginBottom: 24 }}>
+            {monthTrained} dias treinados em {monthName} · meta ~{expectedThisMonth} (ritmo de 6 em cada 7 dias)
+          </div>
+        </div>
       </div>
     );
   }

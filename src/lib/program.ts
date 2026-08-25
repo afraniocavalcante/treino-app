@@ -126,15 +126,19 @@ export function getNextWorkoutIndex(program: Program, history: HistoryEntry[]): 
 
 const TRAINING_STREAK_LEN = 6;
 
-export function isRestDay(program: Program, history: HistoryEntry[], dateStr: string): boolean {
-  const trainedDates = new Set(history.map((e) => e.date));
+export function getTrainedDateSet(history: HistoryEntry[]): Set<string> {
+  return new Set(history.map((e) => e.date));
+}
+
+function simulateSchedule(program: Program, history: HistoryEntry[], uptoDateStr: string) {
+  const trainedDates = getTrainedDateSet(history);
   const trackedDates = [...trainedDates].sort();
   const trackingStart = trackedDates[0] ?? null;
   const today = formatDate(new Date());
   const restDays = new Set<string>();
   let streak = 0;
   const cursor = parseDate(program.startDate);
-  const target = parseDate(dateStr);
+  const target = parseDate(uptoDateStr);
   while (cursor <= target) {
     const cStr = formatDate(cursor);
     if (!restDays.has(cStr)) {
@@ -154,7 +158,22 @@ export function isRestDay(program: Program, history: HistoryEntry[], dateStr: st
     }
     cursor.setDate(cursor.getDate() + 1);
   }
-  return restDays.has(dateStr);
+  return { restDays, streak };
+}
+
+export function isRestDay(program: Program, history: HistoryEntry[], dateStr: string): boolean {
+  return simulateSchedule(program, history, dateStr).restDays.has(dateStr);
+}
+
+export function getTrainingStreak(program: Program, history: HistoryEntry[]): number {
+  const todayDate = new Date();
+  const today = formatDate(todayDate);
+  if (getTrainedDateSet(history).has(today)) {
+    return simulateSchedule(program, history, today).streak;
+  }
+  const yesterday = new Date(todayDate);
+  yesterday.setDate(yesterday.getDate() - 1);
+  return simulateSchedule(program, history, formatDate(yesterday)).streak;
 }
 
 export function getSessionLabel(program: Program, workout: ProgramWorkout, history: HistoryEntry[]): string {
