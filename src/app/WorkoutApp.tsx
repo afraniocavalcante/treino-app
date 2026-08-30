@@ -4,9 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
   getActiveProgram,
+  getCompletedPrograms,
   getExerciseLibrary,
   getHistory,
   getLastWeights,
+  getProgramSequence,
   getScheduledProgram,
   saveSession as saveSessionRemote,
   upsertLastWeights,
@@ -43,8 +45,18 @@ const MONTH_NAMES_FULL = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
 ];
+const confirmBtnSmall: React.CSSProperties = {
+  background: C.accent,
+  color: C.bgDark,
+  border: "none",
+  borderRadius: 10,
+  padding: "9px 14px",
+  fontSize: 12,
+  fontWeight: 700,
+  cursor: "pointer",
+};
 
-type Screen = "home" | "workout" | "done" | "history" | "program" | "conflict" | "preview" | "stats";
+type Screen = "home" | "workout" | "done" | "history" | "program" | "conflict" | "preview" | "stats" | "completed";
 type Phase = "active" | "rest" | "input" | "hold";
 
 function initialPhaseFor(ex: ProgramWorkoutExercise): Phase {
@@ -85,24 +97,31 @@ export default function WorkoutApp() {
   const [gifModalUrl, setGifModalUrl] = useState<string | null>(null);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [wantScheduleForm, setWantScheduleForm] = useState(false);
+  const [completedPrograms, setCompletedPrograms] = useState<Program[]>([]);
+  const [programSeq, setProgramSeq] = useState<Map<string, number>>(new Map());
+  const [copiedWorkoutId, setCopiedWorkoutId] = useState<string | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const holdTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const phaseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   async function loadAll() {
-    const [p, lib, h, w, sp] = await Promise.all([
+    const [p, lib, h, w, sp, cp, seq] = await Promise.all([
       getActiveProgram(supabase),
       getExerciseLibrary(supabase),
       getHistory(supabase),
       getLastWeights(supabase),
       getScheduledProgram(supabase),
+      getCompletedPrograms(supabase),
+      getProgramSequence(supabase),
     ]);
     setProgram(p);
     setLibrary(lib);
     setHistory(h);
     setLastWeights(w);
     setScheduledProgram(sp);
+    setCompletedPrograms(cp);
+    setProgramSeq(seq);
   }
 
   useEffect(() => {
@@ -157,6 +176,18 @@ export default function WorkoutApp() {
     setShowExitConfirm(false);
     setScreenTick((t) => t + 1);
     setScreen(next);
+  }
+
+  async function copyWorkoutExercises(seq: number, workout: ProgramWorkout) {
+    const lines = [...workout.exercises].sort((a, b) => a.orderIndex - b.orderIndex).map((ex) => ex.name);
+    const text = [`P${seq} ${workout.name.toUpperCase()}`, ...lines].join("\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedWorkoutId(workout.id);
+      setTimeout(() => setCopiedWorkoutId((id) => (id === workout.id ? null : id)), 1500);
+    } catch {
+      // clipboard access denied — nothing to fall back to silently, ignore
+    }
   }
 
   function toPhase(next: Phase, after?: () => void) {
@@ -617,6 +648,11 @@ export default function WorkoutApp() {
           <Heatmap trainedDates={getTrainedDateSet(history)} weekByDate={getTrainingWeekMap(program, history)} compact weeks={14} onClick={() => goScreen("stats")} />
         </div>
         <button className="tab-press" onClick={() => goScreen("history")} style={styles.historyBtn}>Progressão de Carga</button>
+        {completedPrograms.length > 0 && (
+          <button className="tab-press" onClick={() => goScreen("completed")} style={{ ...styles.historyBtn, marginTop: 12 }}>
+            📁 Programas Concluídos
+          </button>
+        )}
         <button className="tab-press" onClick={() => goScreen("program")} style={{ ...styles.historyBtn, marginTop: 12, border: "none", color: C.midGray }}>
           ⚙︎ Editar programa
         </button>
@@ -652,6 +688,53 @@ export default function WorkoutApp() {
         <button className="tab-press" onClick={() => goScreen("home")} style={styles.doneBtn} disabled={saving}>
           {saving ? "Salvando…" : "Voltar ao Início"}
         </button>
+      </div>
+    );
+  }
+
+  if (screen === "completed") {
+    return shell(
+      <div key={screenTick} style={{ animation: screenAnim }}>
+        <div style={styles.topNav}>
+          <button onClick={() => goScreen("home")} style={styles.backBtn}>← Início</button>
+        </div>
+        <div style={styles.histBody}>
+          <h2 style={styles.histTitle}>Programas Concluídos</h2>
+          {completedPrograms.length === 0 && (
+            <div style={styles.emptyState}>Nenhum programa concluído ainda.</div>
+          )}
+          {[...completedPrograms].reverse().map((p) => {
+            const seq = programSeq.get(p.id) ?? 0;
+            return (
+              <div key={p.id} style={{ marginBottom: 30 }}>
+                <div style={styles.groupHeader}>
+                  <span style={styles.groupName}>{`P${seq} · ${p.name}`}</span>
+                  <span style={styles.groupRule} />
+                  <span style={styles.groupCount}>{`${p.weeks} SEMANAS`}</span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {p.workouts.map((w) => (
+                    <div key={w.id} style={{ ...styles.histExCard, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                      <span style={{ minWidth: 0 }}>
+                        <div style={styles.histExName}>{`${w.emoji} P${seq} ${w.name}`}</div>
+                        <div style={{ fontSize: 11, color: C.midGray, marginTop: 2 }}>{`${w.exercises.length} exercícios`}</div>
+                      </span>
+                      <button
+                        className="tab-press"
+                        disabled={w.exercises.length === 0}
+                        onClick={() => copyWorkoutExercises(seq, w)}
+                        style={{ ...confirmBtnSmall, flexShrink: 0, opacity: w.exercises.length === 0 ? 0.4 : 1 }}
+                      >
+                        {copiedWorkoutId === w.id ? "Copiado ✓" : "Copiar"}
+                      </button>
+                    </div>
+                  ))}
+                  {p.workouts.length === 0 && <div style={{ fontSize: 12, color: C.midGray }}>Sem treinos registrados.</div>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     );
   }
@@ -742,7 +825,9 @@ export default function WorkoutApp() {
             </button>
           </div>
           <div style={styles.histBody}>
-            <h2 style={styles.detailTitle}>{`${entry.workoutEmoji ?? workout?.emoji ?? ""} ${entry.workoutLabel}`.trim()}</h2>
+            <h2 style={styles.detailTitle}>
+              {`${entry.workoutEmoji ?? workout?.emoji ?? ""} ${entry.programId && programSeq.has(entry.programId) ? `P${programSeq.get(entry.programId)} ` : ""}${entry.workoutLabel}`.trim()}
+            </h2>
             <p style={styles.detailSub}>{`${formatDateDisplay(entry.date)}  •  ${entry.sessionLabel}`}</p>
             {rows.map((ex, i) => (
               <div key={ex.exerciseId} style={{ ...styles.histExCard, animation: stagger(i) }}>
@@ -837,7 +922,8 @@ export default function WorkoutApp() {
             if (!entries || entries.length === 0) return null;
             const first = entries[0];
             const workout = program?.workouts.find((w) => w.id === first.programWorkoutId);
-            const label = `${first.workoutEmoji ?? workout?.emoji ?? ""} ${first.workoutLabel}`.trim();
+            const seqPrefix = first.programId && programSeq.has(first.programId) ? `P${programSeq.get(first.programId)} ` : "";
+            const label = `${first.workoutEmoji ?? workout?.emoji ?? ""} ${seqPrefix}${first.workoutLabel}`.trim();
             return (
               <div key={key} style={{ marginBottom: 34 }}>
                 <div style={styles.groupHeader}>

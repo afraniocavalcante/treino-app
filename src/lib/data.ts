@@ -208,6 +208,22 @@ async function loadProgram(supabase: SupabaseClient, row: {
 
 const PROGRAM_COLUMNS = "id, name, start_date, weeks, rest_seconds, status";
 
+export async function getProgramSequence(supabase: SupabaseClient): Promise<Map<string, number>> {
+  const { data, error } = await supabase.from("programs").select("id, created_at").order("created_at", { ascending: true });
+  if (error) throw error;
+  return new Map((data ?? []).map((row, i) => [row.id as string, i + 1]));
+}
+
+export async function getCompletedPrograms(supabase: SupabaseClient): Promise<Program[]> {
+  const { data, error } = await supabase
+    .from("programs")
+    .select(PROGRAM_COLUMNS)
+    .eq("status", "completed")
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return Promise.all((data ?? []).map((row) => loadProgram(supabase, row)));
+}
+
 export async function getActiveProgram(supabase: SupabaseClient): Promise<Program | null> {
   const { data, error } = await supabase
     .from("programs")
