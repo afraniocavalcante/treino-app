@@ -41,7 +41,7 @@ import { CopyWorkoutButton } from "./programShared";
 import ExerciseLibrary from "./ExerciseLibrary";
 import Heatmap from "./Heatmap";
 
-const RING_R = 74;
+const RING_R = 44;
 const RING_CIRC = 2 * Math.PI * RING_R;
 const PHASE_OUT_MS = 170;
 const MONTH_NAMES_FULL = [
@@ -565,9 +565,19 @@ export default function WorkoutApp() {
           <div style={styles.weekDotsRow}>
             {Array.from({ length: program.weeks }).map((_, i) => {
               const w = i + 1;
+              const isCurrent = w === week;
+              const isIdle = w > week;
               return (
-                <div key={w} style={{ ...styles.weekDot, background: w <= week ? color : C.bgHeader, animation: stagger(i, 0.05) }}>
-                  <span style={{ ...styles.weekDotText, color: w <= week ? C.bgDark : C.midGray }}>{w}</span>
+                <div
+                  key={w}
+                  style={{
+                    ...styles.weekDot,
+                    ...(isIdle ? styles.weekDotIdle : { background: color }),
+                    ...(isCurrent ? { boxShadow: "0 0 18px rgba(232,255,71,.55)" } : null),
+                    animation: stagger(i, 0.05),
+                  }}
+                >
+                  <span style={{ ...styles.weekDotText, color: isIdle ? C.midGray : C.bgDark }}>{w}</span>
                 </div>
               );
             })}
@@ -584,7 +594,7 @@ export default function WorkoutApp() {
           </div>
         )}
         {isLastWeek && scheduledProgram && (
-          <div style={{ margin: "0 24px 16px", background: "rgba(46,213,115,0.08)", border: `1px solid ${C.green}`, borderRadius: 16, padding: "16px 18px", textAlign: "center" }}>
+          <div style={{ margin: "0 24px 16px", background: C.accentSoft, border: `1px solid ${C.accentEdge}`, borderRadius: 16, padding: "16px 18px", textAlign: "center" }}>
             <div style={{ fontSize: 13.5, fontWeight: 700, color: C.green }}>✓ Próximo programa pronto</div>
             <div style={{ fontSize: 11.5, color: C.midGray, marginTop: 4 }}>
               {`"${scheduledProgram.name}" começa automaticamente quando este terminar.`}
@@ -592,7 +602,7 @@ export default function WorkoutApp() {
           </div>
         )}
         {isLastWeek && !scheduledProgram && (
-          <div style={{ margin: "0 24px 16px", background: "rgba(232,255,71,0.08)", border: `1px solid ${C.accent}`, borderRadius: 16, padding: "16px 18px", textAlign: "center" }}>
+          <div style={{ margin: "0 24px 16px", background: C.accentSoft, border: `1px solid ${C.accentEdge}`, borderRadius: 16, padding: "16px 18px", textAlign: "center" }}>
             <div style={{ fontSize: 13.5, fontWeight: 700, color: C.accent }}>⚠️ Última semana deste programa</div>
             <div style={{ fontSize: 11.5, color: C.midGray, marginTop: 4, marginBottom: 12 }}>
               Cadastre o próximo programa agora — ele entra em sequência automaticamente quando este terminar, sem interromper nada.
@@ -639,14 +649,21 @@ export default function WorkoutApp() {
                     startWorkout(workout);
                   }
                 }}
-                style={{ ...styles.workoutCard, borderColor: isNext ? C.accent : C.bgHeader, animation: stagger(i, 0.14), opacity: empty ? 0.5 : 1, cursor: empty ? "default" : "pointer" }}
+                style={{
+                  ...styles.workoutCard,
+                  ...(isNext ? styles.workoutCardToday : null),
+                  animation: stagger(i, 0.14),
+                  opacity: empty ? 0.5 : 1,
+                  cursor: empty ? "default" : "pointer",
+                }}
               >
-                <span style={styles.cardEmoji}>{workout.emoji}</span>
+                {isNext && !doneToday && <span style={styles.sheen} />}
+                <span style={{ ...styles.cardEmoji, ...(isNext ? styles.cardEmojiToday : null) }}>{workout.emoji}</span>
                 <span style={styles.cardBody}>
                   <span style={styles.cardTitleRow}>
                     <span style={styles.cardTitle}>{workout.name}</span>
                     {doneToday ? (
-                      <span style={{ ...styles.todayTag, background: C.green }}>✓ FEITO</span>
+                      <span style={styles.todayTag}>✓ FEITO</span>
                     ) : (
                       isNext && nextTag && <span style={styles.todayTag}>{nextTag}</span>
                     )}
@@ -678,6 +695,13 @@ export default function WorkoutApp() {
       { value: sets, label: "SÉRIES" },
       { value: `${volume}kg`, label: "CARGA SOMADA" },
     ];
+    const recentVolumes = currentWorkout
+      ? history
+          .filter((e) => e.programWorkoutId === currentWorkout.id)
+          .slice(-5)
+          .map((e) => Object.values(e.exercises).reduce((s, arr) => s + arr.reduce((s2, x) => s2 + (x.kg || 0), 0), 0))
+      : [];
+    const maxVol = Math.max(1, ...recentVolumes);
     return shell(
       <div key={screenTick} style={{ ...styles.doneWrap, animation: screenAnim }}>
         <div style={styles.doneBadgeWrap}>
@@ -694,6 +718,21 @@ export default function WorkoutApp() {
             </div>
           ))}
         </div>
+        {recentVolumes.length > 1 && (
+          <div style={styles.doneChart}>
+            {recentVolumes.map((v, i) => (
+              <div
+                key={i}
+                style={{
+                  ...styles.doneBar,
+                  ...(i === recentVolumes.length - 1 ? styles.doneBarLast : null),
+                  height: `${Math.max(8, (v / maxVol) * 100)}%`,
+                  animation: `tabBarGrow 600ms ${EASE} ${(i * 0.08).toFixed(2)}s both`,
+                }}
+              />
+            ))}
+          </div>
+        )}
         <button className="tab-press" onClick={() => goScreen("home")} style={styles.doneBtn} disabled={saving}>
           {saving ? "Salvando…" : "Voltar ao Início"}
         </button>
@@ -908,7 +947,7 @@ export default function WorkoutApp() {
                         whiteSpace: "nowrap",
                         cursor: "pointer",
                         border: `1px solid ${isActive ? C.accent : C.bgHeader}`,
-                        background: isActive ? "rgba(232,255,71,0.1)" : "transparent",
+                        background: isActive ? C.accentSoft : "transparent",
                         color: isActive ? C.accent : C.lightGray,
                       }}
                     >
@@ -969,6 +1008,13 @@ export default function WorkoutApp() {
   const doneSets = sessionLog[exercise.exerciseId] || [];
   const phaseAnim = phaseExiting ? "tabPhaseOut .17s ease forwards" : `tabPhaseIn .38s ${EASE} both`;
   const exerciseGifUrl = library.find((l) => l.id === exercise.exerciseId)?.gifUrl ?? null;
+  const totalSets = workout.exercises.reduce((s, e) => s + e.sets, 0);
+  const doneSetsCount = workout.exercises.reduce((sum, ex, idx) => {
+    if (completedExercises.has(idx)) return sum + ex.sets;
+    if (idx === exerciseIndex) return sum + doneSets.length;
+    return sum;
+  }, 0);
+  const workoutProgressPct = totalSets > 0 ? Math.round((doneSetsCount / totalSets) * 100) : 0;
 
   return shell(
     <div key={screenTick} style={{ animation: screenAnim }}>
@@ -978,6 +1024,9 @@ export default function WorkoutApp() {
           <span style={{ ...styles.weekBadge, background: badgeColor }}>{sessionLabel}</span>
         </span>
         <button onClick={requestExit} style={styles.exitBtn}>Encerrar</button>
+      </div>
+      <div style={styles.progressTrack}>
+        <div style={{ ...styles.progressFill, width: `${workoutProgressPct}%` }} />
       </div>
       <div style={styles.currentCard}>
         <div key={exerciseIndex} style={{ animation: `tabExIn .42s ${EASE} both` }}>
@@ -1002,8 +1051,8 @@ export default function WorkoutApp() {
             const isDone = doneSets.some((s) => s.set === i + 1);
             const isCurrent = i === currentSet && !isDone;
             return (
-              <div key={i} style={{ ...styles.setDot, background: isDone ? C.green : isCurrent ? C.accent : C.bgHeader, borderColor: isCurrent ? C.accent : "transparent", transform: isCurrent ? "scale(1.06)" : "scale(1)", animation: isCurrent ? "tabDotPulse 2.2s ease-in-out infinite" : "none" }}>
-                <span style={{ ...styles.setDotText, color: isDone || isCurrent ? C.bgDark : C.midGray }}>{`${i + 1}ª`}</span>
+              <div key={i} style={{ ...styles.setDot, ...(isDone ? styles.setDotDone : isCurrent ? styles.setDotCurrent : null) }}>
+                <span style={{ ...styles.setDotText, color: isDone ? "#0A0A0B" : isCurrent ? C.accent : C.faint }}>{`${i + 1}ª`}</span>
               </div>
             );
           })}
@@ -1018,9 +1067,10 @@ export default function WorkoutApp() {
             <div style={styles.restWrap}>
               <div style={{ ...styles.restLabel, color: C.accent }}>SEGURA!</div>
               <div style={styles.ringWrap}>
-                <svg width="168" height="168" viewBox="0 0 168 168" style={{ transform: "rotate(-90deg)" }}>
-                  <circle cx="84" cy="84" r={RING_R} fill="none" stroke={C.bgHeader} strokeWidth="8" />
-                  <circle cx="84" cy="84" r={RING_R} fill="none" stroke={C.accent} strokeWidth="8" strokeLinecap="round" strokeDasharray={RING_CIRC} strokeDashoffset={RING_CIRC * (1 - holdTime / (exercise.holdSeconds || 40))} style={{ transition: "stroke-dashoffset 1s linear" }} />
+                <div style={styles.ringGlow} />
+                <svg width="216" height="216" viewBox="0 0 100 100" style={{ transform: "rotate(-90deg)" }}>
+                  <circle cx="50" cy="50" r={RING_R} fill="none" stroke="rgba(255,255,255,.08)" strokeWidth="4" />
+                  <circle cx="50" cy="50" r={RING_R} fill="none" stroke={C.accent} strokeWidth="4" strokeLinecap="round" strokeDasharray={RING_CIRC} strokeDashoffset={RING_CIRC * (1 - holdTime / (exercise.holdSeconds || 40))} style={{ transition: "stroke-dashoffset 1s linear" }} />
                 </svg>
                 <div style={styles.ringCenter}>
                   <span style={styles.restTimer}>{holdTime}</span>
@@ -1034,9 +1084,13 @@ export default function WorkoutApp() {
             <div>
               <label style={styles.inputLabel}>{exercise.unit === "halter" ? "KG por halter" : "KG total"}</label>
               <div style={styles.inputRow}>
-                <button className="tab-press" onClick={() => setKgInput(String(Math.max(0, (parseFloat(kgInput) || 0) - 2.5)))} style={styles.kgAdjBtn}>−</button>
                 <input type="number" inputMode="decimal" value={kgInput} onChange={(e) => setKgInput(e.target.value)} onFocus={(e) => e.target.select()} style={styles.kgInput} placeholder="0" />
-                <button className="tab-press" onClick={() => setKgInput(String((parseFloat(kgInput) || 0) + 2.5))} style={styles.kgAdjBtn}>+</button>
+                <span style={styles.kgUnit}>kg</span>
+              </div>
+              <div style={{ height: 1, background: "rgba(255,255,255,.08)", margin: "0 0 16px" }} />
+              <div style={styles.kgAdjRow}>
+                <button className="tab-press" onClick={() => setKgInput(String(Math.max(0, (parseFloat(kgInput) || 0) - 2.5)))} style={styles.kgAdjBtn}>− 2,5</button>
+                <button className="tab-press" onClick={() => setKgInput(String((parseFloat(kgInput) || 0) + 2.5))} style={styles.kgAdjBtn}>+ 2,5</button>
               </div>
               <div style={styles.unitHint}>{exercise.unit === "halter" ? "🏋️ cada halter" : "🏋️ peso total na máquina/barra"}</div>
               <button className="tab-press" onClick={handleKgSubmit} style={styles.confirmBtn}>CONFIRMAR</button>
@@ -1046,9 +1100,10 @@ export default function WorkoutApp() {
             <div style={styles.restWrap}>
               <div style={styles.restLabel}>DESCANSO</div>
               <div style={styles.ringWrap}>
-                <svg width="168" height="168" viewBox="0 0 168 168" style={{ transform: "rotate(-90deg)" }}>
-                  <circle cx="84" cy="84" r={RING_R} fill="none" stroke={C.bgHeader} strokeWidth="8" />
-                  <circle cx="84" cy="84" r={RING_R} fill="none" stroke={C.accent} strokeWidth="8" strokeLinecap="round" strokeDasharray={RING_CIRC} strokeDashoffset={RING_CIRC * (1 - restTime / program.restSeconds)} style={{ transition: "stroke-dashoffset 1s linear" }} />
+                <div style={styles.ringGlow} />
+                <svg width="216" height="216" viewBox="0 0 100 100" style={{ transform: "rotate(-90deg)" }}>
+                  <circle cx="50" cy="50" r={RING_R} fill="none" stroke="rgba(255,255,255,.08)" strokeWidth="4" />
+                  <circle cx="50" cy="50" r={RING_R} fill="none" stroke={C.accent} strokeWidth="4" strokeLinecap="round" strokeDasharray={RING_CIRC} strokeDashoffset={RING_CIRC * (1 - restTime / program.restSeconds)} style={{ transition: "stroke-dashoffset 1s linear" }} />
                 </svg>
                 <div style={styles.ringCenter}>
                   <span style={styles.restTimer}>{restTime}</span>
