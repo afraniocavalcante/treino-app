@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import { C } from "@/lib/styles";
-import { formatDate, type ProgramWorkout } from "@/lib/program";
+import { formatDate, type ExerciseUnit, type ProgramWorkout } from "@/lib/program";
+
+export const UNIT_LABEL: Record<ExerciseUnit, string> = {
+  total: "Peso total",
+  halter: "Por halter",
+  corpo: "Peso do corpo",
+};
 
 export function SectionHeader({ title }: { title: string }) {
   return <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.2, color: C.midGray, marginBottom: 10 }}>{title.toUpperCase()}</div>;

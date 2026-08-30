@@ -5,13 +5,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { addLibraryExercise, uploadExerciseGif } from "@/lib/data";
 import { type ExerciseUnit, type LibraryExercise } from "@/lib/program";
 import { C, styles } from "@/lib/styles";
-import { addBtnStyle, cancelBtn, chipBtn, confirmSmallBtn, inputStyle, libRowStyle } from "./programShared";
-
-const UNIT_LABEL: Record<ExerciseUnit, string> = {
-  total: "Peso total",
-  halter: "Por halter",
-  corpo: "Peso do corpo",
-};
+import { addBtnStyle, cancelBtn, chipBtn, confirmSmallBtn, inputStyle, libRowStyle, UNIT_LABEL } from "./programShared";
 
 export default function ExerciseLibrary({
   supabase,

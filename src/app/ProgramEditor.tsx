@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
+  addLibraryExercise,
   addProgramPhase,
   addProgramWorkout,
   addProgramWorkoutExercise,
@@ -17,6 +18,7 @@ import {
   formatDateDisplay,
   getCurrentWeek,
   PHASE_COLOR_HEX,
+  type ExerciseUnit,
   type HistoryEntry,
   type LibraryExercise,
   type PhaseColor,
@@ -26,6 +28,7 @@ import { C, DISPLAY, styles } from "@/lib/styles";
 import {
   addBtnStyle,
   cancelBtn,
+  chipBtn,
   confirmSmallBtn,
   CopyWorkoutButton,
   inputStyle,
@@ -33,6 +36,7 @@ import {
   NewProgramForm,
   SectionHeader,
   smallDangerBtn,
+  UNIT_LABEL,
 } from "./programShared";
 
 const COLOR_OPTIONS: PhaseColor[] = ["accent", "green", "blue", "red"];
@@ -204,7 +208,9 @@ function ProgramFields({
             ))}
             {addingToWorkout === w.id ? (
               <AddExerciseForm
+                supabase={supabase}
                 busy={busy}
+                run={run}
                 library={library}
                 onCancel={() => setAddingToWorkout(null)}
                 onAdd={(input) =>
@@ -279,48 +285,180 @@ function ProgramFields({
 }
 
 function AddExerciseForm({
+  supabase,
   busy,
+  run,
   library,
   onCancel,
   onAdd,
 }: {
+  supabase: SupabaseClient;
   busy: boolean;
+  run: (fn: () => Promise<void>) => Promise<void>;
   library: LibraryExercise[];
   onCancel: () => void;
   onAdd: (input: { exerciseId: string; sets: number; reps: string; holdSeconds: number | null }) => void;
 }) {
-  const [exerciseId, setExerciseId] = useState(library[0]?.id ?? "");
+  const [query, setQuery] = useState("");
+  const [exerciseId, setExerciseId] = useState<string | null>(null);
+  const [showResults, setShowResults] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const [sets, setSets] = useState("3");
   const [reps, setReps] = useState("10-12");
 
-  const selected = library.find((e) => e.id === exerciseId);
+  const selected = library.find((e) => e.id === exerciseId) ?? null;
+  const q = query.trim().toLowerCase();
+  const matches = (q ? library.filter((e) => e.name.toLowerCase().includes(q)) : library).slice(0, 6);
+
+  function pick(ex: LibraryExercise) {
+    setExerciseId(ex.id);
+    setQuery(ex.name);
+    setShowResults(false);
+  }
 
   return (
     <div style={{ marginTop: 10, padding: 10, background: C.bgPage, borderRadius: 10, display: "flex", flexDirection: "column", gap: 8 }}>
-      <select value={exerciseId} onChange={(e) => setExerciseId(e.target.value)} style={inputStyle}>
-        {library.map((ex) => (
-          <option key={ex.id} value={ex.id}>{ex.name}</option>
-        ))}
-      </select>
+      {showCreateForm ? (
+        <InlineExerciseCreateForm
+          busy={busy}
+          initialName={query}
+          onCancel={() => setShowCreateForm(false)}
+          onCreate={(input) =>
+            run(async () => {
+              const created = await addLibraryExercise(supabase, input);
+              setExerciseId(created.id);
+              setQuery(created.name);
+              setShowCreateForm(false);
+            })
+          }
+        />
+      ) : (
+        <div style={{ position: "relative" }}>
+          <input
+            placeholder="Buscar ou digitar novo exercício..."
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setExerciseId(null);
+              setShowResults(true);
+            }}
+            onFocus={() => setShowResults(true)}
+            onBlur={() => setTimeout(() => setShowResults(false), 150)}
+            style={inputStyle}
+          />
+          {showResults && (
+            <div
+              style={{
+                position: "absolute",
+                top: "100%",
+                left: 0,
+                right: 0,
+                zIndex: 10,
+                background: C.bgDark,
+                border: `1px solid ${C.bgHeader}`,
+                borderRadius: 10,
+                marginTop: 4,
+                maxHeight: 200,
+                overflowY: "auto",
+              }}
+            >
+              {matches.map((ex) => (
+                <button
+                  key={ex.id}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => pick(ex)}
+                  style={{ display: "block", width: "100%", textAlign: "left", padding: "9px 12px", background: "transparent", border: "none", color: C.white, fontSize: 12.5, cursor: "pointer" }}
+                >
+                  {ex.name}
+                </button>
+              ))}
+              {matches.length === 0 && (
+                <div style={{ padding: "9px 12px", fontSize: 12, color: C.midGray }}>Nenhum exercício encontrado.</div>
+              )}
+              <button
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => setShowCreateForm(true)}
+                style={{ display: "block", width: "100%", textAlign: "left", padding: "9px 12px", background: "transparent", border: "none", borderTop: `1px solid ${C.bgHeader}`, color: C.accent, fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}
+              >
+                {`+ Criar novo exercício${query.trim() ? ` "${query.trim()}"` : ""}`}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {selected && !showCreateForm && (
+        <div style={{ display: "flex", gap: 8 }}>
+          <input type="number" placeholder="Séries" value={sets} onChange={(e) => setSets(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
+          <input placeholder={selected.holdSeconds ? "Segundos" : "Reps (ex: 8-12)"} value={reps} onChange={(e) => setReps(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
+        </div>
+      )}
+      {!showCreateForm && (
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={onCancel} style={cancelBtn}>Cancelar</button>
+          <button
+            disabled={busy || !selected || !sets}
+            onClick={() =>
+              selected &&
+              onAdd({
+                exerciseId: selected.id,
+                sets: Number(sets) || 1,
+                reps,
+                holdSeconds: selected.holdSeconds ?? null,
+              })
+            }
+            style={{ ...confirmSmallBtn, flex: 1 }}
+          >
+            Adicionar
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function InlineExerciseCreateForm({
+  busy,
+  initialName,
+  onCancel,
+  onCreate,
+}: {
+  busy: boolean;
+  initialName: string;
+  onCancel: () => void;
+  onCreate: (input: { name: string; unit: ExerciseUnit; holdSeconds: number | null }) => void;
+}) {
+  const [name, setName] = useState(initialName);
+  const [unit, setUnit] = useState<ExerciseUnit>("total");
+  const [isTimed, setIsTimed] = useState(false);
+  const [seconds, setSeconds] = useState("30");
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ fontSize: 11.5, color: C.midGray, fontWeight: 600 }}>NOVO EXERCÍCIO</div>
+      <input placeholder="Nome do exercício" value={name} onChange={(e) => setName(e.target.value)} style={inputStyle} autoFocus />
       <div style={{ display: "flex", gap: 8 }}>
-        <input type="number" placeholder="Séries" value={sets} onChange={(e) => setSets(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
-        <input placeholder={selected?.holdSeconds ? "Segundos" : "Reps (ex: 8-12)"} value={reps} onChange={(e) => setReps(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
+        {(["total", "halter", "corpo"] as ExerciseUnit[]).map((u) => (
+          <button key={u} onClick={() => setUnit(u)} style={{ ...chipBtn, borderColor: unit === u ? C.accent : C.bgHeader, color: unit === u ? C.accent : C.lightGray }}>
+            {UNIT_LABEL[u]}
+          </button>
+        ))}
       </div>
+      <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: C.lightGray }}>
+        <input type="checkbox" checked={isTimed} onChange={(e) => setIsTimed(e.target.checked)} />
+        É por tempo (ex: prancha)
+      </label>
+      {isTimed && (
+        <input type="number" placeholder="Segundos" value={seconds} onChange={(e) => setSeconds(e.target.value)} style={inputStyle} />
+      )}
       <div style={{ display: "flex", gap: 8 }}>
         <button onClick={onCancel} style={cancelBtn}>Cancelar</button>
         <button
-          disabled={busy || !exerciseId || !sets}
-          onClick={() =>
-            onAdd({
-              exerciseId,
-              sets: Number(sets) || 1,
-              reps,
-              holdSeconds: selected?.holdSeconds ?? null,
-            })
-          }
+          disabled={busy || !name.trim()}
+          onClick={() => onCreate({ name: name.trim(), unit, holdSeconds: isTimed ? Number(seconds) || 30 : null })}
           style={{ ...confirmSmallBtn, flex: 1 }}
         >
-          Adicionar
+          Criar e selecionar
         </button>
       </div>
     </div>
