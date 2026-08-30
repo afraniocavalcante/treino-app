@@ -20,6 +20,7 @@ import {
   getSessionLabel,
   getTrainedDateSet,
   getTrainingStreak,
+  getTrainingWeekMap,
   isRestDay,
   type HistoryEntry,
   type LibraryExercise,
@@ -575,7 +576,7 @@ export default function WorkoutApp() {
           })}
         </div>
         <div style={{ margin: "0 24px 16px" }}>
-          <Heatmap trainedDates={getTrainedDateSet(history)} compact weeks={14} onClick={() => goScreen("stats")} />
+          <Heatmap trainedDates={getTrainedDateSet(history)} weekByDate={getTrainingWeekMap(program, history)} compact weeks={14} onClick={() => goScreen("stats")} />
         </div>
         <button className="tab-press" onClick={() => goScreen("history")} style={styles.historyBtn}>Progressão de Carga</button>
         <button className="tab-press" onClick={() => goScreen("program")} style={{ ...styles.historyBtn, marginTop: 12, border: "none", color: C.midGray }}>
@@ -665,7 +666,7 @@ export default function WorkoutApp() {
             </div>
           </div>
 
-          <Heatmap trainedDates={trainedDates} />
+          <Heatmap trainedDates={trainedDates} weekByDate={getTrainingWeekMap(program, history)} />
 
           <div style={{ fontSize: 11.5, color: C.midGray, textAlign: "center", marginTop: 14, marginBottom: 24 }}>
             {monthTrained} dias treinados em {monthName} · meta ~{expectedThisMonth} (ritmo de 6 em cada 7 dias)

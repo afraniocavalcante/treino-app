@@ -132,6 +132,15 @@ export function getTrainedDateSet(history: HistoryEntry[]): Set<string> {
   return new Set(history.map((e) => e.date));
 }
 
+export function getTrainingWeekMap(program: Program, history: HistoryEntry[]): Map<string, number> {
+  const trainedDatesSorted = [...new Set(history.filter((e) => e.programId === program.id).map((e) => e.date))].sort();
+  const map = new Map<string, number>();
+  trainedDatesSorted.forEach((date, i) => {
+    map.set(date, Math.floor(i / TRAINING_DAYS_PER_WEEK) + 1);
+  });
+  return map;
+}
+
 function simulateSchedule(program: Program, history: HistoryEntry[], uptoDateStr: string) {
   const trainedDates = getTrainedDateSet(history);
   const trackedDates = [...trainedDates].sort();
