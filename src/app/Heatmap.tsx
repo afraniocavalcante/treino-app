@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { C, DISPLAY } from "@/lib/styles";
+import { C, DISPLAY, styles } from "@/lib/styles";
 import { formatDate, formatDateDisplay } from "@/lib/program";
 
 const MONTH_NAMES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
@@ -107,7 +107,7 @@ export default function Heatmap({
       <div
         onClick={onClick}
         className={onClick ? "tab-press" : undefined}
-        style={{ background: C.bgCard, border: `1px solid ${C.bgHeader}`, borderRadius: 16, padding: "16px 18px", cursor: onClick ? "pointer" : "default" }}
+        style={{ ...styles.weekCard, margin: 0, padding: "16px 18px", cursor: onClick ? "pointer" : "default" }}
       >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
           <span style={{ fontSize: 13, fontWeight: 700 }}>📅 Consistência</span>
@@ -119,7 +119,7 @@ export default function Heatmap({
   }
 
   return (
-    <div style={{ background: C.bgCard, border: `1px solid ${C.bgHeader}`, borderRadius: 16, padding: "16px 16px 14px" }}>
+    <div style={{ ...styles.weekCard, margin: 0, padding: "16px 16px 14px" }}>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12 }}>
         <span style={{ fontSize: 13, fontWeight: 700 }}>Consistência</span>
         <span style={{ fontSize: 11, color: C.midGray }}>

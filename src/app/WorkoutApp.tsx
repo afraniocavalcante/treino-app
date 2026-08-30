@@ -447,41 +447,44 @@ export default function WorkoutApp() {
     const doneEntry = history.filter((e) => e.date === todayStr).slice(-1)[0];
     const doneWorkout = doneEntry ? program.workouts.find((w) => w.id === doneEntry.programWorkoutId) : null;
     return shell(
-      <div key={screenTick} style={{ ...styles.doneWrap, animation: screenAnim }}>
-        <h2 style={styles.doneTitle}>Treino de hoje já feito</h2>
-        <p style={styles.doneSub}>
-          {doneWorkout ? `Você já treinou ${doneWorkout.name} hoje.` : "Você já treinou hoje."} O próximo treino está marcado na tela inicial.
-        </p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, width: "100%", marginTop: 10 }}>
-          <button className="tab-press" onClick={() => startWorkout(conflictWorkout)} style={styles.okBtn}>
-            Treinar {conflictWorkout.name} mesmo assim
-          </button>
-          {doneEntry && (
+      <div key={screenTick} style={{ ...styles.scrim, position: "fixed", inset: 0 }}>
+        <div style={styles.sheet}>
+          <div style={styles.sheetIcon}>!</div>
+          <h2 style={styles.sheetTitle}>Treino de hoje já feito</h2>
+          <p style={styles.sheetBody}>
+            {doneWorkout ? `Você já treinou ${doneWorkout.name} hoje.` : "Você já treinou hoje."} O próximo treino está marcado na tela inicial.
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, width: "100%", marginTop: 22 }}>
+            <button className="tab-press" onClick={() => startWorkout(conflictWorkout)} style={styles.okBtn}>
+              Treinar {conflictWorkout.name} mesmo assim
+            </button>
+            {doneEntry && (
+              <button
+                className="tab-press"
+                onClick={() => {
+                  setHistoryView(doneEntry);
+                  setHistoryViewOrigin("home");
+                  goScreen("history");
+                }}
+                style={styles.ghostBtn}
+              >
+                Ver treino feito hoje
+              </button>
+            )}
             <button
               className="tab-press"
               onClick={() => {
-                setHistoryView(doneEntry);
-                setHistoryViewOrigin("home");
-                goScreen("history");
+                setPreviewWorkout(conflictWorkout);
+                goScreen("preview");
               }}
-              style={styles.historyBtn}
+              style={styles.ghostBtn}
             >
-              Ver treino feito hoje
+              Ver {conflictWorkout.name}
             </button>
-          )}
-          <button
-            className="tab-press"
-            onClick={() => {
-              setPreviewWorkout(conflictWorkout);
-              goScreen("preview");
-            }}
-            style={styles.historyBtn}
-          >
-            Ver {conflictWorkout.name}
-          </button>
-          <button onClick={() => goScreen("home")} style={{ ...styles.historyBtn, border: "none", color: C.midGray }}>
-            Cancelar
-          </button>
+            <button onClick={() => goScreen("home")} style={{ ...styles.ghostBtn, border: "none", color: C.midGray }}>
+              Cancelar
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -870,6 +873,24 @@ export default function WorkoutApp() {
               {`${entry.workoutEmoji ?? workout?.emoji ?? ""} ${entry.programId && programSeq.has(entry.programId) ? `P${programSeq.get(entry.programId)} ` : ""}${entry.workoutLabel}`.trim()}
             </h2>
             <p style={styles.detailSub}>{`${formatDateDisplay(entry.date)}  •  ${entry.sessionLabel}`}</p>
+            <div style={styles.detailStatsRow}>
+              {(() => {
+                let entrySets = 0;
+                let entryVolume = 0;
+                Object.values(entry.exercises).forEach((arr) => arr.forEach((s) => { entrySets += 1; entryVolume += s.kg || 0; }));
+                const detailStats = [
+                  { value: Object.keys(entry.exercises).length, label: "EXERCÍCIOS" },
+                  { value: entrySets, label: "SÉRIES" },
+                  { value: `${entryVolume}kg`, label: "CARGA", accent: true },
+                ];
+                return detailStats.map((s) => (
+                  <div key={s.label} style={styles.detailStat}>
+                    <span style={{ fontFamily: DISPLAY, fontSize: 19, fontWeight: 600, fontVariantNumeric: "tabular-nums", color: s.accent ? C.accent : C.white }}>{s.value}</span>
+                    <span style={{ fontSize: 9, color: C.midGray, letterSpacing: 1 }}>{s.label}</span>
+                  </div>
+                ));
+              })()}
+            </div>
             {rows.map((ex, i) => (
               <div key={ex.exerciseId} style={{ ...styles.histExCard, animation: stagger(i) }}>
                 <div style={styles.histExName}>{ex.name}</div>
@@ -981,6 +1002,9 @@ export default function WorkoutApp() {
                     }}
                     style={styles.histEntry}
                   >
+                    <span style={{ ...styles.histEntryBadge, ...(e.sessionLabel.charAt(0) === "A" ? styles.histEntryBadgeA : null) }}>
+                      {e.sessionLabel.charAt(0)}
+                    </span>
                     <span style={styles.histEntryLeft}>
                       <span style={styles.histEntryDate}>{formatDateDisplay(e.date)}</span>
                       <span style={styles.histEntryWeek}>{e.sessionLabel}</span>

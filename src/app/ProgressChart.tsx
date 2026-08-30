@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { C, DISPLAY } from "@/lib/styles";
+import { C, DISPLAY, styles } from "@/lib/styles";
 import { formatDateDisplay, type ExercisePoint, type ExerciseUnit } from "@/lib/program";
 
 const W = 320;
@@ -63,7 +63,7 @@ export default function ProgressChart({
           {active ? active.kg : maxKg}
           <span style={{ fontSize: 12, color: C.midGray, fontWeight: 600 }}> {suffix}</span>
         </span>
-        <span style={{ fontSize: 10.5, fontWeight: 700, color: C.green, background: "rgba(46,213,115,0.12)", padding: "2px 7px", borderRadius: 6 }}>
+        <span style={{ fontSize: 10.5, fontWeight: 700, color: C.accent, background: C.accentSoft, padding: "2px 7px", borderRadius: 6 }}>
           {active ? formatDateDisplay(active.date) : `PR ${maxKg}${suffix === "kg cada" ? " cada" : ""}`}
         </span>
       </div>
@@ -82,14 +82,30 @@ export default function ProgressChart({
           </linearGradient>
         </defs>
 
-        {points.length > 1 && <path d={areaPath} fill={`url(#${gradientId})`} stroke="none" />}
         {points.length > 1 && (
-          <path d={linePath} fill="none" stroke={C.accent} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={areaPath} fill={`url(#${gradientId})`} stroke="none" style={{ animation: "tabFadeIn 900ms ease both" }} />
+        )}
+        {points.length > 1 && (
+          <path
+            d={linePath}
+            fill="none"
+            stroke={C.accent}
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            pathLength={1}
+            style={{
+              filter: "drop-shadow(0 0 8px rgba(232,255,71,.5))",
+              strokeDasharray: 1,
+              animation: "tabChartDraw 900ms cubic-bezier(.2,.8,.2,1) both",
+            }}
+          />
         )}
 
         {points.map((p, i) => {
           const isPR = i === prIdx;
           const isActive = i === activeIdx;
+          const isLast = i === points.length - 1;
           const r = isPR ? 5 : isActive ? 5 : 3.5;
           return (
             <g key={p.date + i}>
@@ -106,9 +122,10 @@ export default function ProgressChart({
                 cx={xAt(i)}
                 cy={yAt(p.kg)}
                 r={r}
-                fill={isPR ? C.green : C.accent}
+                fill={C.accent}
                 stroke={C.bgCard}
                 strokeWidth={isActive || isPR ? 2 : 1.5}
+                style={isLast ? { filter: "drop-shadow(0 0 10px rgba(232,255,71,.9))" } : undefined}
               />
             </g>
           );
@@ -128,8 +145,8 @@ export default function ProgressChart({
 }
 
 const cardStyle: React.CSSProperties = {
-  background: C.bgCard,
-  border: `1px solid ${C.bgHeader}`,
+  ...styles.chartCard,
+  margin: 0,
   borderRadius: 16,
   padding: "16px 16px 10px",
 };

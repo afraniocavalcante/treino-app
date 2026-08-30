@@ -32,7 +32,6 @@ import {
   confirmSmallBtn,
   CopyWorkoutButton,
   inputStyle,
-  libRowStyle,
   NewProgramForm,
   SectionHeader,
   smallDangerBtn,
@@ -245,18 +244,30 @@ function ProgramFields({
       </div>
 
       <SectionHeader title="Fases do programa" />
-      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
-        {program.phases.map((p) => (
-          <div key={p.id} style={libRowStyle}>
-            <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ width: 8, height: 8, borderRadius: 4, background: PHASE_COLOR_HEX[p.color] }} />
-              <span style={{ fontSize: 13, fontWeight: 600 }}>{p.name}</span>
-              <span style={{ fontSize: 11, color: C.midGray }}>sem. {p.startWeek}–{p.endWeek}</span>
-            </span>
-            <button disabled={busy} onClick={() => run(() => deleteProgramPhase(supabase, p.id))} style={smallDangerBtn}>×</button>
-          </div>
-        ))}
-        {program.phases.length === 0 && <div style={{ fontSize: 12, color: C.midGray }}>Nenhuma fase definida.</div>}
+      <div style={{ display: "flex", flexDirection: "column", gap: 0, marginBottom: 10 }}>
+        {program.phases.map((p) => {
+          const isActivePhase = !isScheduled && week >= p.startWeek && week <= p.endWeek;
+          return (
+            <div key={p.id} style={{ ...styles.phaseCard, ...(isActivePhase ? styles.phaseCardActive : null) }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={styles.phaseName}>{p.name}</span>
+                  {isActivePhase && (
+                    <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 0.5, background: C.accent, color: "#0A0A0B", padding: "2px 7px", borderRadius: 6 }}>ATIVA</span>
+                  )}
+                </span>
+                <button disabled={busy} onClick={() => run(() => deleteProgramPhase(supabase, p.id))} style={smallDangerBtn}>×</button>
+              </div>
+              <div style={styles.phaseWeeksRow}>
+                {Array.from({ length: p.endWeek - p.startWeek + 1 }).map((_, i) => (
+                  <div key={i} style={{ ...styles.phaseWeek, ...(p.startWeek + i <= week && !isScheduled ? styles.phaseWeekDone : null) }} />
+                ))}
+              </div>
+              <span style={styles.phaseMeta}>{p.description || `Semanas ${p.startWeek}–${p.endWeek}`}</span>
+            </div>
+          );
+        })}
+        {program.phases.length === 0 && <div style={{ fontSize: 12, color: C.midGray, marginBottom: 10 }}>Nenhuma fase definida.</div>}
       </div>
       {showNewPhase ? (
         <NewPhaseForm

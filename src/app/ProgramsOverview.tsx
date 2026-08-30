@@ -3,8 +3,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createProgram } from "@/lib/data";
 import { getCurrentWeek, type HistoryEntry, type LibraryExercise, type Program } from "@/lib/program";
-import { C, DISPLAY, styles } from "@/lib/styles";
-import { NewProgramForm } from "./programShared";
+import { C, DISPLAY, G, styles } from "@/lib/styles";
+import { addBtnStyle, NewProgramForm } from "./programShared";
 
 export default function ProgramsOverview({
   supabase,
@@ -55,9 +55,10 @@ export default function ProgramsOverview({
             <ProgramCard
               onClick={onOpenActive}
               badge="ATIVO"
-              badgeColor={C.green}
+              badgeColor={C.accent}
               name={program.name}
               detail={`Semana ${getCurrentWeek(program, history)} de ${program.weeks}`}
+              active
             />
 
             {scheduledProgram ? (
@@ -69,7 +70,7 @@ export default function ProgramsOverview({
                 detail="Começa quando o atual terminar"
               />
             ) : (
-              <button onClick={onOpenScheduled} style={dashedCardStyle}>
+              <button onClick={onOpenScheduled} style={{ ...addBtnStyle, textAlign: "left" }}>
                 + Agendar próximo programa
               </button>
             )}
@@ -86,7 +87,7 @@ export default function ProgramsOverview({
           </div>
         )}
 
-        <button onClick={onOpenLibrary} style={dashedCardStyle}>
+        <button onClick={onOpenLibrary} style={{ ...addBtnStyle, textAlign: "left" }}>
           🎬 Biblioteca de Exercícios <span style={{ color: C.midGray, fontWeight: 400 }}>({library.length})</span>
         </button>
       </div>
@@ -100,12 +101,14 @@ function ProgramCard({
   badgeColor,
   name,
   detail,
+  active = false,
 }: {
   onClick: () => void;
   badge: string;
   badgeColor: string;
   name: string;
   detail: string;
+  active?: boolean;
 }) {
   return (
     <button
@@ -116,8 +119,8 @@ function ProgramCard({
         flexDirection: "column",
         gap: 6,
         textAlign: "left",
-        background: C.bgCard,
-        border: `1px solid ${C.bgHeader}`,
+        background: active ? G.glassActive : C.bgCard,
+        border: `1px solid ${active ? C.accentEdge : C.bgHeader}`,
         borderRadius: 16,
         padding: "16px 18px",
         cursor: "pointer",
@@ -134,17 +137,3 @@ function ProgramCard({
   );
 }
 
-const dashedCardStyle: React.CSSProperties = {
-  display: "block",
-  width: "100%",
-  background: "transparent",
-  border: `1px dashed ${C.bgHeader}`,
-  color: C.accent,
-  borderRadius: 14,
-  padding: "14px 16px",
-  fontSize: 13,
-  fontWeight: 600,
-  cursor: "pointer",
-  textAlign: "left",
-  marginBottom: 12,
-};
