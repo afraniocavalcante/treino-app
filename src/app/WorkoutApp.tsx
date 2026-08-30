@@ -1243,16 +1243,6 @@ export default function WorkoutApp() {
                   })}
                 </div>
               )}
-              <div style={{ ...styles.metaRow, margin: "16px 0 0" }}>
-                <div style={styles.metaCell}>
-                  <span style={styles.metaLabel}>REPS</span>
-                  <span style={styles.metaValue}>{exercise.reps}</span>
-                </div>
-                <div style={styles.metaCell}>
-                  <span style={styles.metaLabel}>ANTERIOR</span>
-                  <span style={{ ...styles.metaValue, color: C.midGray }}>{lastKg > 0 ? `${lastKg}kg` : "—"}</span>
-                </div>
-              </div>
               <div style={styles.unitHint}>{exercise.unit === "halter" ? "🏋️ cada halter" : "🏋️ peso total na máquina/barra"}</div>
               <button className="tab-press" onClick={handleKgSubmit} style={styles.confirmBtn}>CONFIRMAR</button>
             </div>
@@ -1277,30 +1267,32 @@ export default function WorkoutApp() {
           )}
         </div>
       </div>
-      <div style={styles.upcomingSection}>
-        <div style={styles.upcomingHeader}>
-          <span style={styles.upcomingLabel}>PRÓXIMOS</span>
-          <span style={styles.upcomingCount}>{`${workout.exercises.length - completedExercises.size} RESTANTES`}</span>
+      {phase === "active" && (
+        <div style={styles.upcomingSection}>
+          <div style={styles.upcomingHeader}>
+            <span style={styles.upcomingLabel}>PRÓXIMOS</span>
+            <span style={styles.upcomingCount}>{`${workout.exercises.length - completedExercises.size} RESTANTES`}</span>
+          </div>
+          <div style={styles.upcomingList}>
+            {upcoming.map((ex) => {
+              const isDone = completedExercises.has(ex.idx);
+              const lw = lastWeights[ex.exerciseId];
+              return (
+                <div key={ex.idx} style={{ ...styles.upcomingItem, opacity: isDone ? 0.32 : 1 }}>
+                  <span style={styles.upcomingNum}>{String(ex.idx + 1).padStart(2, "0")}</span>
+                  <span style={styles.upcomingInfo}>
+                    <span style={{ ...styles.upcomingName, textDecoration: isDone ? "line-through" : "none" }}>{ex.name}</span>
+                    <span style={styles.upcomingMeta}>{`${ex.sets}×${ex.reps}${lw > 0 ? `  •  ${lw}kg` : ""}`}</span>
+                  </span>
+                  {!isDone && (
+                    <button className="tab-press" onClick={() => jumpToExercise(ex.idx)} style={styles.upcomingPlay}>▶</button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
-        <div style={styles.upcomingList}>
-          {upcoming.map((ex) => {
-            const isDone = completedExercises.has(ex.idx);
-            const lw = lastWeights[ex.exerciseId];
-            return (
-              <div key={ex.idx} style={{ ...styles.upcomingItem, opacity: isDone ? 0.32 : 1 }}>
-                <span style={styles.upcomingNum}>{String(ex.idx + 1).padStart(2, "0")}</span>
-                <span style={styles.upcomingInfo}>
-                  <span style={{ ...styles.upcomingName, textDecoration: isDone ? "line-through" : "none" }}>{ex.name}</span>
-                  <span style={styles.upcomingMeta}>{`${ex.sets}×${ex.reps}${lw > 0 ? `  •  ${lw}kg` : ""}`}</span>
-                </span>
-                {!isDone && (
-                  <button className="tab-press" onClick={() => jumpToExercise(ex.idx)} style={styles.upcomingPlay}>▶</button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      )}
       {showExitConfirm && (
         <div
           onClick={() => setShowExitConfirm(false)}
