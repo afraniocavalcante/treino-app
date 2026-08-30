@@ -37,6 +37,7 @@ import { signOut } from "./actions";
 import ProgressChart from "./ProgressChart";
 import ProgramsOverview from "./ProgramsOverview";
 import ProgramEditor from "./ProgramEditor";
+import { CopyWorkoutButton } from "./programShared";
 import ExerciseLibrary from "./ExerciseLibrary";
 import Heatmap from "./Heatmap";
 
@@ -47,16 +48,6 @@ const MONTH_NAMES_FULL = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
 ];
-const confirmBtnSmall: React.CSSProperties = {
-  background: C.accent,
-  color: C.bgDark,
-  border: "none",
-  borderRadius: 10,
-  padding: "9px 14px",
-  fontSize: 12,
-  fontWeight: 700,
-  cursor: "pointer",
-};
 
 type Screen = "home" | "workout" | "done" | "history" | "programs" | "programEditor" | "library" | "conflict" | "preview" | "stats" | "completed";
 type Phase = "active" | "rest" | "input" | "hold";
@@ -102,7 +93,6 @@ export default function WorkoutApp() {
   const [editingTarget, setEditingTarget] = useState<"active" | "scheduled">("active");
   const [completedPrograms, setCompletedPrograms] = useState<Program[]>([]);
   const [programSeq, setProgramSeq] = useState<Map<string, number>>(new Map());
-  const [copiedWorkoutId, setCopiedWorkoutId] = useState<string | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const holdTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -179,18 +169,6 @@ export default function WorkoutApp() {
     setShowExitConfirm(false);
     setScreenTick((t) => t + 1);
     setScreen(next);
-  }
-
-  async function copyWorkoutExercises(seq: number, workout: ProgramWorkout) {
-    const lines = [...workout.exercises].sort((a, b) => a.orderIndex - b.orderIndex).map((ex) => ex.name);
-    const text = [`P${seq} ${workout.name.toUpperCase()}`, ...lines].join("\n");
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedWorkoutId(workout.id);
-      setTimeout(() => setCopiedWorkoutId((id) => (id === workout.id ? null : id)), 1500);
-    } catch {
-      // clipboard access denied — nothing to fall back to silently, ignore
-    }
   }
 
   function toPhase(next: Phase, after?: () => void) {
@@ -447,6 +425,7 @@ export default function WorkoutApp() {
         library={library}
         history={history}
         target={editingTarget}
+        programSeq={programSeq}
         onBack={() => {
           setWantScheduleForm(false);
           goScreen("programs");
@@ -749,14 +728,7 @@ export default function WorkoutApp() {
                         <div style={styles.histExName}>{`${w.emoji} P${seq} ${w.name}`}</div>
                         <div style={{ fontSize: 11, color: C.midGray, marginTop: 2 }}>{`${w.exercises.length} exercícios`}</div>
                       </span>
-                      <button
-                        className="tab-press"
-                        disabled={w.exercises.length === 0}
-                        onClick={() => copyWorkoutExercises(seq, w)}
-                        style={{ ...confirmBtnSmall, flexShrink: 0, opacity: w.exercises.length === 0 ? 0.4 : 1 }}
-                      >
-                        {copiedWorkoutId === w.id ? "Copiado ✓" : "Copiar"}
-                      </button>
+                      <CopyWorkoutButton seq={seq} workout={w} />
                     </div>
                   ))}
                   {p.workouts.length === 0 && <div style={{ fontSize: 12, color: C.midGray }}>Sem treinos registrados.</div>}

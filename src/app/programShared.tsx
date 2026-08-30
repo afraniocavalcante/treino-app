@@ -2,10 +2,38 @@
 
 import { useState } from "react";
 import { C } from "@/lib/styles";
-import { formatDate } from "@/lib/program";
+import { formatDate, type ProgramWorkout } from "@/lib/program";
 
 export function SectionHeader({ title }: { title: string }) {
   return <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.2, color: C.midGray, marginBottom: 10 }}>{title.toUpperCase()}</div>;
+}
+
+export function buildWorkoutCopyText(seq: number, workout: ProgramWorkout): string {
+  const lines = [...workout.exercises].sort((a, b) => a.orderIndex - b.orderIndex).map((ex) => ex.name);
+  return [`P${seq} ${workout.name.toUpperCase()}`, ...lines].join("\n");
+}
+
+export function CopyWorkoutButton({ seq, workout }: { seq: number; workout: ProgramWorkout }) {
+  const [copied, setCopied] = useState(false);
+
+  return (
+    <button
+      className="tab-press"
+      disabled={workout.exercises.length === 0}
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(buildWorkoutCopyText(seq, workout));
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        } catch {
+          // clipboard access denied — nothing to fall back to silently, ignore
+        }
+      }}
+      style={{ ...confirmSmallBtn, flexShrink: 0, opacity: workout.exercises.length === 0 ? 0.4 : 1 }}
+    >
+      {copied ? "Copiado ✓" : "Copiar"}
+    </button>
+  );
 }
 
 export function NewProgramForm({

@@ -27,6 +27,7 @@ import {
   addBtnStyle,
   cancelBtn,
   confirmSmallBtn,
+  CopyWorkoutButton,
   inputStyle,
   libRowStyle,
   NewProgramForm,
@@ -42,6 +43,7 @@ export default function ProgramEditor({
   library,
   history,
   target,
+  programSeq,
   onBack,
   onChanged,
   startWithCreateForm = false,
@@ -51,6 +53,7 @@ export default function ProgramEditor({
   library: LibraryExercise[];
   history: HistoryEntry[];
   target: "active" | "scheduled";
+  programSeq: Map<string, number>;
   onBack: () => void;
   onChanged: () => Promise<void>;
   startWithCreateForm?: boolean;
@@ -87,6 +90,7 @@ export default function ProgramEditor({
             program={program}
             library={library}
             history={history}
+            seq={programSeq.get(program.id) ?? 0}
             busy={busy}
             run={run}
             addingToWorkout={addingToWorkout}
@@ -131,6 +135,7 @@ function ProgramFields({
   program,
   library,
   history,
+  seq,
   busy,
   run,
   addingToWorkout,
@@ -145,6 +150,7 @@ function ProgramFields({
   program: Program;
   library: LibraryExercise[];
   history: HistoryEntry[];
+  seq: number;
   busy: boolean;
   run: (fn: () => Promise<void>) => Promise<void>;
   addingToWorkout: string | null;
@@ -174,15 +180,18 @@ function ProgramFields({
       <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 20 }}>
         {program.workouts.map((w) => (
           <div key={w.id} style={{ background: C.bgCard, border: `1px solid ${C.bgHeader}`, borderRadius: 14, padding: "14px 14px 12px" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-              <span style={{ fontSize: 14, fontWeight: 700 }}>{w.emoji} {w.name}</span>
-              <button
-                disabled={busy}
-                onClick={() => run(() => deleteProgramWorkout(supabase, w.id))}
-                style={smallDangerBtn}
-              >
-                remover
-              </button>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, gap: 8 }}>
+              <span style={{ fontSize: 14, fontWeight: 700, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.emoji} {w.name}</span>
+              <span style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                <CopyWorkoutButton seq={seq} workout={w} />
+                <button
+                  disabled={busy}
+                  onClick={() => run(() => deleteProgramWorkout(supabase, w.id))}
+                  style={smallDangerBtn}
+                >
+                  remover
+                </button>
+              </span>
             </div>
             {w.exercises.map((ex) => (
               <div key={ex.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderTop: `1px solid ${C.line}` }}>
