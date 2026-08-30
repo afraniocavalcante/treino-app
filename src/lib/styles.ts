@@ -116,7 +116,7 @@ export const styles: Record<string, CSSProperties> = {
   inputRow: { display: "flex", alignItems: "baseline", justifyContent: "center", gap: 8, marginBottom: 12 },
   kgInput: { width: 150, border: "none", background: "transparent", color: C.accent, fontFamily: DISPLAY, fontSize: 64, fontWeight: 300, letterSpacing: -2, lineHeight: 1, textAlign: "center", outline: "none", fontVariantNumeric: "tabular-nums", textShadow: "0 0 34px rgba(232,255,71,.45)" },
   kgUnit: { fontSize: 18, fontWeight: 500, color: C.midGray }, // NOVO
-  kgAdjRow: { display: "flex", gap: 10, width: "100%", marginTop: 2 }, // NOVO
+  kgAdjRow: { display: "flex", gap: 10, width: "100%", marginTop: 2, marginBottom: 16 }, // NOVO
   kgAdjBtn: { flex: 1, padding: "12px 0", background: "rgba(255,255,255,.06)", border: `1px solid ${C.bgHeader}`, color: C.white, borderRadius: 14, fontFamily: DISPLAY, fontSize: 14, fontWeight: 600, cursor: "pointer" },
   unitHint: { fontSize: 11, color: C.midGray, textAlign: "center", marginBottom: 10, letterSpacing: 0.3 },
   confirmBtn: { width: "100%", padding: 15, background: G.lime, color: "#0A0A0B", border: "none", borderRadius: 16, fontFamily: DISPLAY, fontSize: 15, fontWeight: 700, cursor: "pointer", boxShadow: G.glowBtn },
