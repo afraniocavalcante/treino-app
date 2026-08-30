@@ -5,6 +5,7 @@ import {
   type ExerciseUnit,
   type HistoryEntry,
   type LibraryExercise,
+  type MuscleGroup,
   type PhaseColor,
   type Program,
   type ProgramWorkout,
@@ -87,7 +88,7 @@ export async function upsertLastWeights(
 export async function getExerciseLibrary(supabase: SupabaseClient): Promise<LibraryExercise[]> {
   const { data, error } = await supabase
     .from("exercise_library")
-    .select("id, name, unit, hold_seconds, gif_url")
+    .select("id, name, unit, hold_seconds, gif_url, muscle_group")
     .order("name", { ascending: true });
   if (error) throw error;
   return (data ?? []).map((row) => ({
@@ -96,6 +97,7 @@ export async function getExerciseLibrary(supabase: SupabaseClient): Promise<Libr
     unit: row.unit as ExerciseUnit,
     holdSeconds: row.hold_seconds,
     gifUrl: row.gif_url,
+    muscleGroup: row.muscle_group as MuscleGroup | null,
   }));
 }
 
@@ -122,16 +124,31 @@ export async function uploadExerciseGif(
 
 export async function addLibraryExercise(
   supabase: SupabaseClient,
-  ex: { name: string; unit: ExerciseUnit; holdSeconds: number | null }
+  ex: { name: string; unit: ExerciseUnit; holdSeconds: number | null; muscleGroup?: MuscleGroup | null }
 ): Promise<LibraryExercise> {
   const id = crypto.randomUUID();
   const { data, error } = await supabase
     .from("exercise_library")
-    .insert({ id, name: ex.name, unit: ex.unit, hold_seconds: ex.holdSeconds })
-    .select("id, name, unit, hold_seconds, gif_url")
+    .insert({ id, name: ex.name, unit: ex.unit, hold_seconds: ex.holdSeconds, muscle_group: ex.muscleGroup ?? null })
+    .select("id, name, unit, hold_seconds, gif_url, muscle_group")
     .single();
   if (error) throw error;
-  return { id: data.id, name: data.name, unit: data.unit as ExerciseUnit, holdSeconds: data.hold_seconds, gifUrl: data.gif_url };
+  return {
+    id: data.id,
+    name: data.name,
+    unit: data.unit as ExerciseUnit,
+    holdSeconds: data.hold_seconds,
+    gifUrl: data.gif_url,
+    muscleGroup: data.muscle_group as MuscleGroup | null,
+  };
+}
+
+export async function reorderProgramWorkoutExercises(supabase: SupabaseClient, orderedIds: string[]): Promise<void> {
+  const results = await Promise.all(
+    orderedIds.map((id, index) => supabase.from("program_workout_exercises").update({ order_index: index }).eq("id", id))
+  );
+  const failed = results.find((r) => r.error);
+  if (failed?.error) throw failed.error;
 }
 
 async function loadProgramWorkouts(supabase: SupabaseClient, programId: string): Promise<ProgramWorkout[]> {

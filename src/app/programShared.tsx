@@ -2,13 +2,39 @@
 
 import { useState } from "react";
 import { C } from "@/lib/styles";
-import { formatDate, type ExerciseUnit, type ProgramWorkout } from "@/lib/program";
+import { formatDate, MUSCLE_GROUPS, type ExerciseUnit, type MuscleGroup, type ProgramWorkout } from "@/lib/program";
 
 export const UNIT_LABEL: Record<ExerciseUnit, string> = {
   total: "Peso total",
   halter: "Por halter",
   corpo: "Peso do corpo",
 };
+
+export function MuscleGroupPicker({ value, onChange }: { value: MuscleGroup | null; onChange: (g: MuscleGroup | null) => void }) {
+  return (
+    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+      {MUSCLE_GROUPS.map((g) => (
+        <button
+          key={g}
+          type="button"
+          onClick={() => onChange(g === value ? null : g)}
+          style={{
+            padding: "6px 11px",
+            borderRadius: 9,
+            fontSize: 11,
+            fontWeight: 600,
+            background: g === value ? C.accentSoft : "transparent",
+            border: `1px solid ${g === value ? "rgba(232,255,71,.45)" : C.bgHeader}`,
+            color: g === value ? C.accent : C.lightGray,
+            cursor: "pointer",
+          }}
+        >
+          {g}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export function SectionHeader({ title }: { title: string }) {
   return <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.2, color: C.midGray, marginBottom: 10 }}>{title.toUpperCase()}</div>;

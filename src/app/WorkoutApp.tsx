@@ -678,7 +678,7 @@ export default function WorkoutApp() {
             );
           })}
         </div>
-        <div style={{ margin: "0 24px 16px" }}>
+        <div style={{ margin: "20px 24px 16px" }}>
           <Heatmap trainedDates={getTrainedDateSet(history)} weekByDate={getTrainingWeekMap(program, history)} compact weeks={14} onClick={() => goScreen("stats")} />
         </div>
         <button className="tab-press" onClick={() => goScreen("history")} style={styles.historyBtn}>Progressão de Carga</button>

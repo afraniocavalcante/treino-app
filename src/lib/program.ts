@@ -10,12 +10,18 @@ export const PHASE_COLOR_HEX: Record<PhaseColor, string> = {
   red: C.red,
 };
 
+export const MUSCLE_GROUPS = [
+  "Peito", "Costas", "Ombro", "Bíceps", "Tríceps", "Pernas", "Glúteo", "Panturrilha", "Core", "Cardio",
+] as const;
+export type MuscleGroup = (typeof MUSCLE_GROUPS)[number];
+
 export interface LibraryExercise {
   id: string;
   name: string;
   unit: ExerciseUnit;
   holdSeconds: number | null;
   gifUrl: string | null;
+  muscleGroup: MuscleGroup | null;
 }
 
 export interface ProgramWorkoutExercise {

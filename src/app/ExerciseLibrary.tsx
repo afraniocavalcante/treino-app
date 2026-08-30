@@ -3,9 +3,9 @@
 import { useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { addLibraryExercise, uploadExerciseGif } from "@/lib/data";
-import { type ExerciseUnit, type LibraryExercise } from "@/lib/program";
+import { MUSCLE_GROUPS, type ExerciseUnit, type LibraryExercise, type MuscleGroup } from "@/lib/program";
 import { C, styles } from "@/lib/styles";
-import { addBtnStyle, cancelBtn, chipBtn, confirmSmallBtn, inputStyle, libRowStyle, UNIT_LABEL } from "./programShared";
+import { addBtnStyle, cancelBtn, chipBtn, confirmSmallBtn, inputStyle, libRowStyle, MuscleGroupPicker, UNIT_LABEL } from "./programShared";
 
 export default function ExerciseLibrary({
   supabase,
@@ -20,6 +20,8 @@ export default function ExerciseLibrary({
 }) {
   const [busy, setBusy] = useState(false);
   const [showNewExercise, setShowNewExercise] = useState(false);
+  const [query, setQuery] = useState("");
+  const [groupFilter, setGroupFilter] = useState<MuscleGroup | null>(null);
 
   async function run(fn: () => Promise<void>) {
     setBusy(true);
@@ -31,6 +33,14 @@ export default function ExerciseLibrary({
     }
   }
 
+  const q = query.trim().toLowerCase();
+  const filtered = library.filter((ex) => {
+    if (groupFilter && ex.muscleGroup !== groupFilter) return false;
+    if (q && !ex.name.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  const groupsInUse = MUSCLE_GROUPS.filter((g) => library.some((ex) => ex.muscleGroup === g));
+
   return (
     <div style={{ animation: "tabScreenIn .45s cubic-bezier(.2,.8,.2,1) both" }}>
       <div style={styles.topNav}>
@@ -38,11 +48,37 @@ export default function ExerciseLibrary({
       </div>
       <div style={{ ...styles.histBody, paddingBottom: 40 }}>
         <h2 style={styles.histTitle}>Biblioteca de Exercícios</h2>
+        <input
+          placeholder="Buscar exercício..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          style={{ ...styles.searchField, marginBottom: 12 }}
+        />
+        {groupsInUse.length > 0 && (
+          <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, marginBottom: 16 }}>
+            <button
+              onClick={() => setGroupFilter(null)}
+              style={{ ...styles.filterChip, ...(groupFilter === null ? styles.filterChipActive : null), flexShrink: 0 }}
+            >
+              Todos
+            </button>
+            {groupsInUse.map((g) => (
+              <button
+                key={g}
+                onClick={() => setGroupFilter(g === groupFilter ? null : g)}
+                style={{ ...styles.filterChip, ...(groupFilter === g ? styles.filterChipActive : null), flexShrink: 0, whiteSpace: "nowrap" }}
+              >
+                {g}
+              </button>
+            ))}
+          </div>
+        )}
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
-          {library.map((ex) => (
+          {filtered.map((ex) => (
             <ExerciseLibraryRow key={ex.id} supabase={supabase} exercise={ex} busy={busy} run={run} />
           ))}
           {library.length === 0 && <div style={{ fontSize: 12, color: C.midGray }}>Nenhum exercício ainda.</div>}
+          {library.length > 0 && filtered.length === 0 && <div style={{ fontSize: 12, color: C.midGray }}>Nenhum exercício encontrado.</div>}
         </div>
         {showNewExercise ? (
           <NewExerciseForm
@@ -88,6 +124,7 @@ function ExerciseLibraryRow({
         <span style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
           <span style={{ fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{exercise.name}</span>
           <span style={{ fontSize: 10.5, color: C.midGray }}>
+            {exercise.muscleGroup ? `${exercise.muscleGroup} · ` : ""}
             {UNIT_LABEL[exercise.unit]}
             {exercise.holdSeconds ? ` · ${exercise.holdSeconds}s` : ""}
           </span>
@@ -122,10 +159,11 @@ function NewExerciseForm({
 }: {
   busy: boolean;
   onCancel: () => void;
-  onCreate: (input: { name: string; unit: ExerciseUnit; holdSeconds: number | null }) => void;
+  onCreate: (input: { name: string; unit: ExerciseUnit; holdSeconds: number | null; muscleGroup: MuscleGroup | null }) => void;
 }) {
   const [name, setName] = useState("");
   const [unit, setUnit] = useState<ExerciseUnit>("total");
+  const [muscleGroup, setMuscleGroup] = useState<MuscleGroup | null>(null);
   const [isTimed, setIsTimed] = useState(false);
   const [seconds, setSeconds] = useState("30");
 
@@ -139,6 +177,7 @@ function NewExerciseForm({
           </button>
         ))}
       </div>
+      <MuscleGroupPicker value={muscleGroup} onChange={setMuscleGroup} />
       <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: C.lightGray }}>
         <input type="checkbox" checked={isTimed} onChange={(e) => setIsTimed(e.target.checked)} />
         É por tempo (ex: prancha)
@@ -150,7 +189,7 @@ function NewExerciseForm({
         <button onClick={onCancel} style={cancelBtn}>Cancelar</button>
         <button
           disabled={busy || !name.trim()}
-          onClick={() => onCreate({ name: name.trim(), unit, holdSeconds: isTimed ? Number(seconds) || 30 : null })}
+          onClick={() => onCreate({ name: name.trim(), unit, holdSeconds: isTimed ? Number(seconds) || 30 : null, muscleGroup })}
           style={{ ...confirmSmallBtn, flex: 1 }}
         >
           Adicionar

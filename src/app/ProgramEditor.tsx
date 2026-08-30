@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   addLibraryExercise,
@@ -12,6 +12,7 @@ import {
   deleteProgramPhase,
   deleteProgramWorkout,
   deleteProgramWorkoutExercise,
+  reorderProgramWorkoutExercises,
   scheduleNextProgram,
 } from "@/lib/data";
 import {
@@ -21,8 +22,10 @@ import {
   type ExerciseUnit,
   type HistoryEntry,
   type LibraryExercise,
+  type MuscleGroup,
   type PhaseColor,
   type Program,
+  type ProgramWorkoutExercise,
 } from "@/lib/program";
 import { C, DISPLAY, styles } from "@/lib/styles";
 import {
@@ -32,6 +35,7 @@ import {
   confirmSmallBtn,
   CopyWorkoutButton,
   inputStyle,
+  MuscleGroupPicker,
   NewProgramForm,
   SectionHeader,
   smallDangerBtn,
@@ -196,15 +200,12 @@ function ProgramFields({
                 </button>
               </span>
             </div>
-            {w.exercises.map((ex) => (
-              <div key={ex.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderTop: `1px solid ${C.line}` }}>
-                <span style={{ fontSize: 12.5 }}>{ex.name}</span>
-                <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 11, color: C.midGray }}>{ex.sets}×{ex.reps}</span>
-                  <button disabled={busy} onClick={() => run(() => deleteProgramWorkoutExercise(supabase, ex.id))} style={smallDangerBtn}>×</button>
-                </span>
-              </div>
-            ))}
+            <ReorderableExerciseList
+              exercises={w.exercises}
+              busy={busy}
+              onDelete={(exId) => run(() => deleteProgramWorkoutExercise(supabase, exId))}
+              onReorder={(orderedIds) => run(() => reorderProgramWorkoutExercises(supabase, orderedIds))}
+            />
             {addingToWorkout === w.id ? (
               <AddExerciseForm
                 supabase={supabase}
@@ -291,6 +292,122 @@ function ProgramFields({
       >
         {isScheduled ? "Remover programa agendado" : "Concluir este programa e criar um novo"}
       </button>
+    </div>
+  );
+}
+
+function ReorderableExerciseList({
+  exercises,
+  busy,
+  onDelete,
+  onReorder,
+}: {
+  exercises: ProgramWorkoutExercise[];
+  busy: boolean;
+  onDelete: (id: string) => void;
+  onReorder: (orderedIds: string[]) => void;
+}) {
+  const [order, setOrder] = useState(() => exercises.map((e) => e.id));
+  const [dragId, setDragId] = useState<string | null>(null);
+  const orderRef = useRef(order);
+  const dragIdRef = useRef<string | null>(null);
+  const draggingRef = useRef(false);
+  const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  useEffect(() => {
+    if (!draggingRef.current) {
+      const next = exercises.map((e) => e.id);
+      orderRef.current = next;
+      setOrder(next);
+    }
+  }, [exercises]);
+
+  function startDrag(id: string) {
+    if (busy) return;
+    dragIdRef.current = id;
+    draggingRef.current = true;
+    setDragId(id);
+
+    const onMove = (e: PointerEvent) => {
+      const dragging = dragIdRef.current;
+      if (!dragging) return;
+      const current = orderRef.current;
+      const currentIdx = current.indexOf(dragging);
+      const y = e.clientY;
+      for (let i = 0; i < current.length; i++) {
+        if (current[i] === dragging) continue;
+        const el = itemRefs.current[current[i]];
+        if (!el) continue;
+        const rect = el.getBoundingClientRect();
+        const mid = rect.top + rect.height / 2;
+        if ((i < currentIdx && y < mid) || (i > currentIdx && y > mid)) {
+          const next = current.filter((x) => x !== dragging);
+          next.splice(i, 0, dragging);
+          orderRef.current = next;
+          setOrder(next);
+          break;
+        }
+      }
+    };
+
+    const onUp = () => {
+      const dragging = dragIdRef.current;
+      if (dragging) onReorder(orderRef.current);
+      dragIdRef.current = null;
+      draggingRef.current = false;
+      setDragId(null);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  }
+
+  const byId = new Map(exercises.map((e) => [e.id, e]));
+
+  return (
+    <div>
+      {order.map((id) => {
+        const ex = byId.get(id);
+        if (!ex) return null;
+        const isDragging = dragId === id;
+        return (
+          <div
+            key={id}
+            ref={(el) => {
+              itemRefs.current[id] = el;
+            }}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "7px 0",
+              borderTop: `1px solid ${C.line}`,
+              background: isDragging ? "rgba(255,255,255,.05)" : "transparent",
+              opacity: isDragging ? 0.7 : 1,
+              touchAction: isDragging ? "none" : "auto",
+            }}
+          >
+            <span style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+              <span
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  startDrag(id);
+                }}
+                style={{ fontSize: 14, color: "#4E4E48", cursor: "grab", touchAction: "none", padding: "4px 2px" }}
+              >
+                ⠿
+              </span>
+              <span style={{ fontSize: 12.5 }}>{ex.name}</span>
+            </span>
+            <span style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+              <span style={{ fontSize: 11, color: C.midGray }}>{ex.sets}×{ex.reps}</span>
+              <button disabled={busy} onClick={() => onDelete(ex.id)} style={smallDangerBtn}>×</button>
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -437,10 +554,11 @@ function InlineExerciseCreateForm({
   busy: boolean;
   initialName: string;
   onCancel: () => void;
-  onCreate: (input: { name: string; unit: ExerciseUnit; holdSeconds: number | null }) => void;
+  onCreate: (input: { name: string; unit: ExerciseUnit; holdSeconds: number | null; muscleGroup: MuscleGroup | null }) => void;
 }) {
   const [name, setName] = useState(initialName);
   const [unit, setUnit] = useState<ExerciseUnit>("total");
+  const [muscleGroup, setMuscleGroup] = useState<MuscleGroup | null>(null);
   const [isTimed, setIsTimed] = useState(false);
   const [seconds, setSeconds] = useState("30");
 
@@ -455,6 +573,7 @@ function InlineExerciseCreateForm({
           </button>
         ))}
       </div>
+      <MuscleGroupPicker value={muscleGroup} onChange={setMuscleGroup} />
       <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: C.lightGray }}>
         <input type="checkbox" checked={isTimed} onChange={(e) => setIsTimed(e.target.checked)} />
         É por tempo (ex: prancha)
@@ -466,7 +585,7 @@ function InlineExerciseCreateForm({
         <button onClick={onCancel} style={cancelBtn}>Cancelar</button>
         <button
           disabled={busy || !name.trim()}
-          onClick={() => onCreate({ name: name.trim(), unit, holdSeconds: isTimed ? Number(seconds) || 30 : null })}
+          onClick={() => onCreate({ name: name.trim(), unit, holdSeconds: isTimed ? Number(seconds) || 30 : null, muscleGroup })}
           style={{ ...confirmSmallBtn, flex: 1 }}
         >
           Criar e selecionar
