@@ -394,7 +394,7 @@ export default function WorkoutApp() {
       <div key={screenTick} style={{ ...styles.doneWrap, animation: screenAnim }}>
         <h2 style={styles.doneTitle}>Treino de hoje já feito</h2>
         <p style={styles.doneSub}>
-          {doneWorkout ? `Você já treinou ${doneWorkout.name} hoje.` : "Você já treinou hoje."} Seu próximo treino é amanhã.
+          {doneWorkout ? `Você já treinou ${doneWorkout.name} hoje.` : "Você já treinou hoje."} O próximo treino está marcado na tela inicial.
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 12, width: "100%", marginTop: 10 }}>
           <button className="tab-press" onClick={() => startWorkout(conflictWorkout)} style={styles.okBtn}>
@@ -492,11 +492,7 @@ export default function WorkoutApp() {
     const restToday = isRestDay(program, history, todayStr);
     const todayEntries = history.filter((e) => e.date === todayStr);
     const trainedTodayAny = todayEntries.length > 0;
-    const tomorrowDate = new Date();
-    tomorrowDate.setDate(tomorrowDate.getDate() + 1);
-    const tomorrowStr = formatDate(tomorrowDate);
-    const tomorrowIsRest = isRestDay(program, history, tomorrowStr);
-    const nextTag = trainedTodayAny ? (tomorrowIsRest ? null : "AMANHÃ") : restToday ? "AMANHÃ" : "HOJE";
+    const nextTag = trainedTodayAny || restToday ? "PRÓXIMO" : "HOJE";
 
     return shell(
       <div key={screenTick} style={{ animation: screenAnim }}>
@@ -524,10 +520,10 @@ export default function WorkoutApp() {
             {desc && <span style={styles.weekDesc}>{desc}</span>}
           </div>
         </div>
-        {restToday && (
+        {restToday && !trainedTodayAny && (
           <div style={{ margin: "0 24px 16px", background: C.bgCard, border: `1px solid ${C.bgHeader}`, borderRadius: 16, padding: "16px 18px", textAlign: "center" }}>
-            <div style={{ fontSize: 13.5, fontWeight: 700, color: C.lightGray }}>😌 Hoje é dia de descanso</div>
-            <div style={{ fontSize: 11.5, color: C.midGray, marginTop: 4 }}>Seu próximo treino é amanhã</div>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: C.lightGray }}>😌 Hoje é sugestão de descanso</div>
+            <div style={{ fontSize: 11.5, color: C.midGray, marginTop: 4 }}>Quer treinar mesmo assim? É só tocar no próximo treino abaixo.</div>
           </div>
         )}
         <div style={styles.homeCards}>
