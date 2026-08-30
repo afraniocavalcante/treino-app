@@ -99,12 +99,12 @@ export const styles: Record<string, CSSProperties> = {
   progressFill: { height: "100%", background: C.accent, boxShadow: "0 0 14px rgba(232,255,71,.8)", transition: `width .5s ${EASE}` }, // NOVO
 
   // ── Treino: exercício atual ─────────────────────────────
-  currentCard: { ...glass, margin: "26px 20px 0", borderRadius: 28, padding: "32px 24px 26px", textAlign: "center", boxShadow: G.card },
-  currentLabel: { fontSize: 10, fontWeight: 600, letterSpacing: 2.6, color: C.accent, marginBottom: 14 },
+  currentCard: { ...glass, margin: "18px 20px 0", borderRadius: 28, padding: "22px 22px 18px", textAlign: "center", boxShadow: G.card },
+  currentLabel: { fontSize: 10, fontWeight: 600, letterSpacing: 2.6, color: C.accent, marginBottom: 8 },
   currentName: { fontFamily: DISPLAY, fontSize: 29, fontWeight: 600, lineHeight: 1.14, letterSpacing: -0.4, margin: 0 },
-  currentReps: { fontSize: 13, color: C.lightGray, marginTop: 10 },
+  currentReps: { fontSize: 13, color: C.lightGray, marginTop: 6 },
   lastKgHint: { fontSize: 12, color: C.midGray, marginTop: 20 },
-  setsRow: { display: "flex", justifyContent: "center", gap: 10, margin: "26px 0 0" },
+  setsRow: { display: "flex", justifyContent: "center", gap: 10, margin: "14px 0 0" },
   setDot: { width: 44, height: 44, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid transparent", background: "rgba(255,255,255,.06)", color: C.faint, transition: `all .22s ${EASE}` },
   setDotDone: { background: G.lime, color: "#0A0A0B", boxShadow: G.glowChip }, // NOVO
   setDotCurrent: { background: "transparent", border: `2px solid ${C.accent}`, color: C.accent, animation: "tabDotPulse 1.9s ease-in-out infinite" }, // NOVO
@@ -113,20 +113,13 @@ export const styles: Record<string, CSSProperties> = {
 
   // ── Treino: registro de carga ───────────────────────────
   inputLabel: { fontSize: 10, letterSpacing: 2.6, color: C.accent, fontWeight: 600, display: "block", marginBottom: 12, textTransform: "uppercase" },
-  inputRow: { display: "flex", alignItems: "baseline", justifyContent: "center", gap: 8, marginBottom: 18 },
+  inputRow: { display: "flex", alignItems: "baseline", justifyContent: "center", gap: 8, marginBottom: 12 },
   kgInput: { width: 150, border: "none", background: "transparent", color: C.accent, fontFamily: DISPLAY, fontSize: 64, fontWeight: 300, letterSpacing: -2, lineHeight: 1, textAlign: "center", outline: "none", fontVariantNumeric: "tabular-nums", textShadow: "0 0 34px rgba(232,255,71,.45)" },
   kgUnit: { fontSize: 18, fontWeight: 500, color: C.midGray }, // NOVO
-  kgAdjRow: { display: "flex", gap: 10, width: "100%", marginTop: 4 }, // NOVO
-  kgAdjBtn: { flex: 1, padding: "16px 0", background: "rgba(255,255,255,.06)", border: `1px solid ${C.bgHeader}`, color: C.white, borderRadius: 14, fontFamily: DISPLAY, fontSize: 14, fontWeight: 600, cursor: "pointer" },
-  kgPresetRow: { display: "flex", gap: 8, width: "100%", marginTop: 10 }, // NOVO
-  kgPreset: { flex: 1, padding: "11px 0", background: "transparent", border: `1px solid ${C.accentEdge}`, color: C.accent, borderRadius: 11, fontFamily: DISPLAY, fontSize: 12, fontWeight: 500, cursor: "pointer" }, // NOVO
-  kgPresetActive: { background: C.accentSoft, border: `1px solid rgba(232,255,71,.5)`, fontWeight: 600 }, // NOVO
-  unitHint: { fontSize: 11, color: C.midGray, textAlign: "center", marginBottom: 14, letterSpacing: 0.3 },
-  metaRow: { display: "flex", gap: 10, margin: "16px 20px 0" }, // NOVO
-  metaCell: { flex: 1, padding: "16px 14px", background: "rgba(255,255,255,.035)", border: `1px solid ${C.line}`, borderRadius: 18, display: "flex", flexDirection: "column", gap: 5 }, // NOVO
-  metaLabel: { fontSize: 9.5, letterSpacing: 1.4, color: C.midGray }, // NOVO
-  metaValue: { fontFamily: DISPLAY, fontSize: 22, fontWeight: 600, fontVariantNumeric: "tabular-nums" }, // NOVO
-  confirmBtn: { width: "100%", padding: 19, background: G.lime, color: "#0A0A0B", border: "none", borderRadius: 16, fontFamily: DISPLAY, fontSize: 15, fontWeight: 700, cursor: "pointer", boxShadow: G.glowBtn },
+  kgAdjRow: { display: "flex", gap: 10, width: "100%", marginTop: 2 }, // NOVO
+  kgAdjBtn: { flex: 1, padding: "12px 0", background: "rgba(255,255,255,.06)", border: `1px solid ${C.bgHeader}`, color: C.white, borderRadius: 14, fontFamily: DISPLAY, fontSize: 14, fontWeight: 600, cursor: "pointer" },
+  unitHint: { fontSize: 11, color: C.midGray, textAlign: "center", marginBottom: 10, letterSpacing: 0.3 },
+  confirmBtn: { width: "100%", padding: 15, background: G.lime, color: "#0A0A0B", border: "none", borderRadius: 16, fontFamily: DISPLAY, fontSize: 15, fontWeight: 700, cursor: "pointer", boxShadow: G.glowBtn },
   ghostBtn: { width: "100%", padding: 15, background: "transparent", border: "1px solid rgba(255,255,255,.12)", color: C.lightGray, borderRadius: 14, fontFamily: DISPLAY, fontSize: 13, fontWeight: 500, cursor: "pointer" }, // NOVO
 
   // ── Descanso ────────────────────────────────────────────
@@ -142,8 +135,8 @@ export const styles: Record<string, CSSProperties> = {
   skipBtn: { marginTop: 26, background: "transparent", border: "1px solid rgba(255,255,255,.14)", color: C.lightGray, borderRadius: 14, padding: "14px 34px", fontSize: 13, fontWeight: 500, cursor: "pointer" },
 
   // ── Próximos ────────────────────────────────────────────
-  upcomingSection: { margin: "30px 26px 0" },
-  upcomingHeader: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 },
+  upcomingSection: { margin: "16px 26px 0" },
+  upcomingHeader: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 },
   upcomingLabel: { fontSize: 10, fontWeight: 600, letterSpacing: 2.4, color: C.midGray },
   upcomingCount: { fontSize: 10, fontWeight: 500, letterSpacing: 1.4, color: C.faint },
   upcomingList: { display: "flex", flexDirection: "column", gap: 8, maxHeight: 210, overflowY: "auto", maskImage: "linear-gradient(#000 80%, transparent)", WebkitMaskImage: "linear-gradient(#000 80%, transparent)" } as CSSProperties,

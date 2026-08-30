@@ -1172,7 +1172,7 @@ export default function WorkoutApp() {
               src={exerciseGifUrl}
               alt={exercise.name}
               onClick={() => setGifModalUrl(exerciseGifUrl)}
-              style={{ width: "100%", maxHeight: 90, objectFit: "contain", borderRadius: 12, background: C.bgHeader, marginBottom: 8, cursor: "pointer" }}
+              style={{ width: "100%", maxHeight: 72, objectFit: "contain", borderRadius: 12, background: C.bgHeader, marginBottom: 6, cursor: "pointer" }}
             />
           )}
           <div style={styles.currentLabel}>EXERCÍCIO ATUAL</div>
@@ -1223,28 +1223,11 @@ export default function WorkoutApp() {
                 <input type="number" inputMode="decimal" value={kgInput} onChange={(e) => setKgInput(e.target.value)} onFocus={(e) => e.target.select()} style={styles.kgInput} placeholder="0" />
                 <span style={styles.kgUnit}>kg</span>
               </div>
-              <div style={{ height: 1, background: "rgba(255,255,255,.08)", margin: "0 0 16px" }} />
+              <div style={{ height: 1, background: "rgba(255,255,255,.08)", margin: "0 0 10px" }} />
               <div style={styles.kgAdjRow}>
                 <button className="tab-press" onClick={() => setKgInput(String(Math.max(0, (parseFloat(kgInput) || 0) - 2.5)))} style={styles.kgAdjBtn}>− 2,5</button>
                 <button className="tab-press" onClick={() => setKgInput(String((parseFloat(kgInput) || 0) + 2.5))} style={styles.kgAdjBtn}>+ 2,5</button>
               </div>
-              {lastKg > 0 && (
-                <div style={styles.kgPresetRow}>
-                  {[Math.max(0, lastKg - 2.5), lastKg, lastKg + 2.5].map((preset) => {
-                    const isActive = parseFloat(kgInput) === preset;
-                    return (
-                      <button
-                        key={preset}
-                        className="tab-press"
-                        onClick={() => setKgInput(String(preset))}
-                        style={{ ...styles.kgPreset, ...(isActive ? styles.kgPresetActive : null) }}
-                      >
-                        {preset % 1 === 0 ? preset : preset.toFixed(1).replace(".", ",")}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
               <div style={styles.unitHint}>{exercise.unit === "halter" ? "🏋️ cada halter" : "🏋️ peso total na máquina/barra"}</div>
               <button className="tab-press" onClick={handleKgSubmit} style={styles.confirmBtn}>CONFIRMAR</button>
             </div>
@@ -1269,32 +1252,30 @@ export default function WorkoutApp() {
           )}
         </div>
       </div>
-      {phase === "active" && (
-        <div style={styles.upcomingSection}>
-          <div style={styles.upcomingHeader}>
-            <span style={styles.upcomingLabel}>PRÓXIMOS</span>
-            <span style={styles.upcomingCount}>{`${workout.exercises.length - completedExercises.size} RESTANTES`}</span>
-          </div>
-          <div style={styles.upcomingList}>
-            {upcoming.map((ex) => {
-              const isDone = completedExercises.has(ex.idx);
-              const lw = lastWeights[ex.exerciseId];
-              return (
-                <div key={ex.idx} style={{ ...styles.upcomingItem, opacity: isDone ? 0.32 : 1 }}>
-                  <span style={styles.upcomingNum}>{String(ex.idx + 1).padStart(2, "0")}</span>
-                  <span style={styles.upcomingInfo}>
-                    <span style={{ ...styles.upcomingName, textDecoration: isDone ? "line-through" : "none" }}>{ex.name}</span>
-                    <span style={styles.upcomingMeta}>{`${ex.sets}×${ex.reps}${lw > 0 ? `  •  ${lw}kg` : ""}`}</span>
-                  </span>
-                  {!isDone && (
-                    <button className="tab-press" onClick={() => jumpToExercise(ex.idx)} style={styles.upcomingPlay}>▶</button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+      <div style={styles.upcomingSection}>
+        <div style={styles.upcomingHeader}>
+          <span style={styles.upcomingLabel}>PRÓXIMOS</span>
+          <span style={styles.upcomingCount}>{`${workout.exercises.length - completedExercises.size} RESTANTES`}</span>
         </div>
-      )}
+        <div style={{ ...styles.upcomingList, maxHeight: 150 }}>
+          {upcoming.map((ex) => {
+            const isDone = completedExercises.has(ex.idx);
+            const lw = lastWeights[ex.exerciseId];
+            return (
+              <div key={ex.idx} style={{ ...styles.upcomingItem, padding: "9px 12px", opacity: isDone ? 0.32 : 1 }}>
+                <span style={styles.upcomingNum}>{String(ex.idx + 1).padStart(2, "0")}</span>
+                <span style={styles.upcomingInfo}>
+                  <span style={{ ...styles.upcomingName, textDecoration: isDone ? "line-through" : "none" }}>{ex.name}</span>
+                  <span style={styles.upcomingMeta}>{`${ex.sets}×${ex.reps}${lw > 0 ? `  •  ${lw}kg` : ""}`}</span>
+                </span>
+                {!isDone && (
+                  <button className="tab-press" onClick={() => jumpToExercise(ex.idx)} style={styles.upcomingPlay}>▶</button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
       {showExitConfirm && (
         <div
           onClick={() => setShowExitConfirm(false)}
