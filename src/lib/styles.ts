@@ -56,12 +56,12 @@ export const styles: Record<string, CSSProperties> = {
   accentBar: { height: 2, background: C.accent, boxShadow: "0 0 14px rgba(232,255,71,.8)" },
 
   // ── Home ────────────────────────────────────────────────
-  homeHeader: { padding: "52px 26px 30px", position: "relative" },
+  homeHeader: { padding: "38px 26px 20px", position: "relative" },
   logoTitle: { fontFamily: DISPLAY, fontSize: 30, fontWeight: 600, letterSpacing: -0.6, lineHeight: 1.14, color: C.white, margin: 0 },
   logoSub: { color: C.midGray, fontSize: 12.5, margin: "12px 0 0", letterSpacing: 0.2 },
   signOutBtn: { position: "absolute", top: 22, right: 22, background: "rgba(255,255,255,.05)", border: `1px solid ${C.bgHeader}`, color: C.midGray, borderRadius: 10, padding: "7px 13px", fontSize: 11, fontWeight: 500, cursor: "pointer" },
 
-  weekCard: { ...glass, margin: "0 26px 26px", borderRadius: 20, padding: 18 },
+  weekCard: { ...glass, margin: "0 26px 16px", borderRadius: 20, padding: 16 },
   weekDotsRow: { display: "flex", gap: 6, alignItems: "flex-end", height: 34 },
   weekDot: { flex: 1, height: "100%", borderRadius: 5, display: "flex", alignItems: "center", justifyContent: "center", transition: `background .4s ${EASE}, box-shadow .4s ${EASE}` },
   weekDotDone: { background: G.limeBar }, // NOVO
@@ -73,9 +73,9 @@ export const styles: Record<string, CSSProperties> = {
   weekDesc: { fontSize: 11.5, color: C.midGray },
 
   homeCards: { padding: "0 26px", display: "flex", flexDirection: "column", gap: 14 },
-  workoutCard: { display: "flex", alignItems: "center", gap: 16, width: "100%", background: "rgba(255,255,255,.035)", border: `1px solid ${C.bgHeader}`, borderRadius: 22, padding: "24px 22px", textAlign: "left", color: C.white, cursor: "pointer", position: "relative", overflow: "hidden", transition: `transform .18s ${EASE}, border-color .3s ${EASE}` },
+  workoutCard: { display: "flex", alignItems: "center", gap: 14, width: "100%", background: "rgba(255,255,255,.035)", border: `1px solid ${C.bgHeader}`, borderRadius: 20, padding: "16px 18px", textAlign: "left", color: C.white, cursor: "pointer", position: "relative", overflow: "hidden", transition: `transform .18s ${EASE}, border-color .3s ${EASE}` },
   workoutCardToday: { background: G.glassActive, border: `1px solid ${C.accentEdge}` }, // NOVO
-  cardEmoji: { width: 52, height: 52, flexShrink: 0, borderRadius: 16, background: "rgba(255,255,255,.06)", color: C.midGray, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: DISPLAY, fontSize: 22, fontWeight: 700, lineHeight: 1 },
+  cardEmoji: { width: 44, height: 44, flexShrink: 0, borderRadius: 14, background: "rgba(255,255,255,.06)", color: C.midGray, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: DISPLAY, fontSize: 20, fontWeight: 700, lineHeight: 1 },
   cardEmojiToday: { background: G.lime, color: "#0A0A0B", boxShadow: "0 0 30px rgba(232,255,71,.4)" }, // NOVO
   cardBody: { flex: 1, display: "flex", flexDirection: "column", gap: 5 },
   cardTitleRow: { display: "flex", alignItems: "center", gap: 9 },

@@ -593,13 +593,13 @@ export default function WorkoutApp() {
           </div>
         </div>
         {restToday && !trainedTodayAny && (
-          <div style={{ margin: "0 24px 16px", background: C.bgCard, border: `1px solid ${C.bgHeader}`, borderRadius: 16, padding: "16px 18px", textAlign: "center" }}>
+          <div style={{ margin: "0 24px 12px", background: C.bgCard, border: `1px solid ${C.bgHeader}`, borderRadius: 14, padding: "12px 16px", textAlign: "center" }}>
             <div style={{ fontSize: 13.5, fontWeight: 700, color: C.lightGray }}>😌 Hoje é sugestão de descanso</div>
             <div style={{ fontSize: 11.5, color: C.midGray, marginTop: 4 }}>Quer treinar mesmo assim? É só tocar no próximo treino abaixo.</div>
           </div>
         )}
         {isLastWeek && scheduledProgram && (
-          <div style={{ margin: "0 24px 16px", background: C.accentSoft, border: `1px solid ${C.accentEdge}`, borderRadius: 16, padding: "16px 18px", textAlign: "center" }}>
+          <div style={{ margin: "0 24px 12px", background: C.accentSoft, border: `1px solid ${C.accentEdge}`, borderRadius: 14, padding: "12px 16px", textAlign: "center" }}>
             <div style={{ fontSize: 13.5, fontWeight: 700, color: C.green }}>✓ Próximo programa pronto</div>
             <div style={{ fontSize: 11.5, color: C.midGray, marginTop: 4 }}>
               {`"${scheduledProgram.name}" começa automaticamente quando este terminar.`}
@@ -607,7 +607,7 @@ export default function WorkoutApp() {
           </div>
         )}
         {isLastWeek && !scheduledProgram && (
-          <div style={{ margin: "0 24px 16px", background: C.accentSoft, border: `1px solid ${C.accentEdge}`, borderRadius: 16, padding: "16px 18px", textAlign: "center" }}>
+          <div style={{ margin: "0 24px 12px", background: C.accentSoft, border: `1px solid ${C.accentEdge}`, borderRadius: 14, padding: "12px 16px", textAlign: "center" }}>
             <div style={{ fontSize: 13.5, fontWeight: 700, color: C.accent }}>⚠️ Última semana deste programa</div>
             <div style={{ fontSize: 11.5, color: C.midGray, marginTop: 4, marginBottom: 12 }}>
               Cadastre o próximo programa agora — ele entra em sequência automaticamente quando este terminar, sem interromper nada.
@@ -680,13 +680,15 @@ export default function WorkoutApp() {
             );
           })}
         </div>
-        <div style={{ margin: "20px 24px 16px" }}>
+        <div style={{ margin: "12px 24px 12px" }}>
           <Heatmap trainedDates={getTrainedDateSet(history)} weekByDate={getTrainingWeekMap(program, history)} compact weeks={14} onClick={() => goScreen("stats")} />
         </div>
-        <button className="tab-press" onClick={() => goScreen("history")} style={styles.historyBtn}>Progressão de Carga</button>
-        <button className="tab-press" onClick={() => goScreen("programs")} style={{ ...styles.historyBtn, marginTop: 12, border: "none", color: C.midGray }}>
-          📋 Programas
-        </button>
+        <div style={styles.homeFooter}>
+          <button className="tab-press" onClick={() => goScreen("history")} style={{ ...styles.historyBtn, flex: 1, margin: 0 }}>Progressão</button>
+          <button className="tab-press" onClick={() => goScreen("programs")} style={{ ...styles.historyBtn, flex: 1, margin: 0, border: "none", color: C.midGray }}>
+            📋 Programas
+          </button>
+        </div>
       </div>
     );
   }
