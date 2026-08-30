@@ -14,7 +14,7 @@ import {
 export async function getHistory(supabase: SupabaseClient): Promise<HistoryEntry[]> {
   const { data, error } = await supabase
     .from("workout_sessions")
-    .select("id, date, workout, program_id, program_workout_id, session_id, exercises")
+    .select("id, date, workout, workout_emoji, program_id, program_workout_id, session_id, exercises")
     .order("date", { ascending: true })
     .order("created_at", { ascending: true });
 
@@ -26,6 +26,7 @@ export async function getHistory(supabase: SupabaseClient): Promise<HistoryEntry
     programId: row.program_id,
     programWorkoutId: row.program_workout_id,
     workoutLabel: row.workout,
+    workoutEmoji: row.workout_emoji,
     sessionLabel: row.session_id,
     exercises: row.exercises as SessionLog,
   }));
@@ -48,6 +49,7 @@ export async function saveSession(
     programId: string;
     programWorkoutId: string;
     workoutLabel: string;
+    workoutEmoji: string;
     sessionLabel: string;
     exercises: SessionLog;
   }
@@ -60,6 +62,7 @@ export async function saveSession(
       program_id: entry.programId,
       program_workout_id: entry.programWorkoutId,
       workout: entry.workoutLabel,
+      workout_emoji: entry.workoutEmoji,
       session_id: entry.sessionLabel,
       exercises: entry.exercises,
     })

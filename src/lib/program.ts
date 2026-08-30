@@ -70,6 +70,7 @@ export interface HistoryEntry {
   programId: string | null;
   programWorkoutId: string | null;
   workoutLabel: string;
+  workoutEmoji: string | null;
   sessionLabel: string;
   exercises: SessionLog;
 }

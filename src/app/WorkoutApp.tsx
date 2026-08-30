@@ -133,6 +133,7 @@ export default function WorkoutApp() {
       programId: program.id,
       programWorkoutId: workout.id,
       workoutLabel: workout.name,
+      workoutEmoji: workout.emoji,
       sessionLabel,
       exercises: log,
     };
@@ -741,7 +742,7 @@ export default function WorkoutApp() {
             </button>
           </div>
           <div style={styles.histBody}>
-            <h2 style={styles.detailTitle}>{workout ? `${workout.emoji}  ${workout.name}` : entry.workoutLabel}</h2>
+            <h2 style={styles.detailTitle}>{`${entry.workoutEmoji ?? workout?.emoji ?? ""} ${entry.workoutLabel}`.trim()}</h2>
             <p style={styles.detailSub}>{`${formatDateDisplay(entry.date)}  •  ${entry.sessionLabel}`}</p>
             {rows.map((ex, i) => (
               <div key={ex.exerciseId} style={{ ...styles.histExCard, animation: stagger(i) }}>
@@ -836,7 +837,7 @@ export default function WorkoutApp() {
             if (!entries || entries.length === 0) return null;
             const first = entries[0];
             const workout = program?.workouts.find((w) => w.id === first.programWorkoutId);
-            const label = workout ? `${workout.emoji} ${workout.name}` : first.workoutLabel;
+            const label = `${first.workoutEmoji ?? workout?.emoji ?? ""} ${first.workoutLabel}`.trim();
             return (
               <div key={key} style={{ marginBottom: 34 }}>
                 <div style={styles.groupHeader}>
