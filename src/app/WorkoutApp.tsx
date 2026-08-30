@@ -32,7 +32,7 @@ import {
   type ProgramWorkoutExercise,
   type SessionLog,
 } from "@/lib/program";
-import { C, DISPLAY, EASE, styles } from "@/lib/styles";
+import { C, DISPLAY, EASE, G, styles } from "@/lib/styles";
 import { signOut } from "./actions";
 import ProgressChart from "./ProgressChart";
 import ProgramsOverview from "./ProgramsOverview";
@@ -82,6 +82,8 @@ export default function WorkoutApp() {
   const [conflictWorkout, setConflictWorkout] = useState<ProgramWorkout | null>(null);
   const [previewWorkout, setPreviewWorkout] = useState<ProgramWorkout | null>(null);
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
+  const [historyFilter, setHistoryFilter] = useState<string | null>(null);
+  const [chartMetric, setChartMetric] = useState<"carga" | "volume" | "frequencia">("carga");
   const [completedExercises, setCompletedExercises] = useState<Set<number>>(new Set());
   const [lastWeights, setLastWeights] = useState<Record<string, number>>({});
   const [sessionLabel, setSessionLabel] = useState("");
@@ -891,9 +893,23 @@ export default function WorkoutApp() {
                 ));
               })()}
             </div>
-            {rows.map((ex, i) => (
+            {rows.map((ex, i) => {
+              const currentMax = Math.max(...entry.exercises[ex.exerciseId].map((s) => s.kg || 0));
+              const priorEntry = history
+                .filter((e) => e.date < entry.date && (e.exercises[ex.exerciseId]?.length ?? 0) > 0)
+                .slice(-1)[0];
+              const priorMax = priorEntry ? Math.max(...priorEntry.exercises[ex.exerciseId].map((s) => s.kg || 0)) : null;
+              const delta = priorMax != null ? currentMax - priorMax : null;
+              return (
               <div key={ex.exerciseId} style={{ ...styles.histExCard, animation: stagger(i) }}>
-                <div style={styles.histExName}>{ex.name}</div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                  <div style={styles.histExName}>{ex.name}</div>
+                  {delta != null && (
+                    <span style={{ ...styles.histExDelta, color: delta > 0 ? C.accent : delta < 0 ? C.red : C.midGray }}>
+                      {delta === 0 ? "manteve" : `${delta > 0 ? "+" : ""}${delta}kg`}
+                    </span>
+                  )}
+                </div>
                 <div style={styles.histSetsRow}>
                   {entry.exercises[ex.exerciseId].map((s, j) => (
                     <div key={j} style={styles.histSetBadge}>
@@ -903,7 +919,8 @@ export default function WorkoutApp() {
                   ))}
                 </div>
               </div>
-            ))}
+              );
+            })}
             {workout && (
               <button
                 className="tab-press"
@@ -936,6 +953,24 @@ export default function WorkoutApp() {
       : exercisesWithData[0]?.id ?? null;
     const activeEx = exercisesWithData.find((ex) => ex.id === activeId) ?? null;
 
+    const weeklyBuckets = (metric: "volume" | "frequencia") => {
+      const today = new Date();
+      const buckets = new Array(8).fill(0);
+      history.forEach((e) => {
+        const [y, m, d] = e.date.split("-").map(Number);
+        const entryDate = new Date(y, m - 1, d);
+        const daysAgo = Math.floor((today.getTime() - entryDate.getTime()) / 86400000);
+        const weekIdx = 7 - Math.floor(daysAgo / 7);
+        if (weekIdx < 0 || weekIdx > 7) return;
+        if (metric === "frequencia") {
+          buckets[weekIdx] += 1;
+        } else {
+          Object.values(e.exercises).forEach((sets) => sets.forEach((s) => { buckets[weekIdx] += s.kg || 0; }));
+        }
+      });
+      return buckets;
+    };
+
     return shell(
       <div key={screenTick} style={{ animation: screenAnim }}>
         <div style={styles.topNav}>
@@ -950,37 +985,112 @@ export default function WorkoutApp() {
               <span style={{ color: C.midGray }}>Finalize um treino para ver a evolução das cargas.</span>
             </div>
           )}
-          {activeEx && (
-            <div style={{ marginBottom: 30 }}>
-              <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 12, marginBottom: 4 }}>
-                {exercisesWithData.map((ex) => {
-                  const isActive = ex.id === activeId;
-                  return (
-                    <button
-                      key={ex.id}
-                      onClick={() => setSelectedExerciseId(ex.id)}
-                      style={{
-                        flexShrink: 0,
-                        padding: "8px 14px",
-                        borderRadius: 10,
-                        fontSize: 12,
-                        fontWeight: 600,
-                        whiteSpace: "nowrap",
-                        cursor: "pointer",
-                        border: `1px solid ${isActive ? C.accent : C.bgHeader}`,
-                        background: isActive ? C.accentSoft : "transparent",
-                        color: isActive ? C.accent : C.lightGray,
-                      }}
-                    >
-                      {ex.name}
-                    </button>
-                  );
-                })}
+          {history.length > 0 && (
+            <>
+              {chartMetric === "carga" && activeEx && (
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 12, marginBottom: 4 }}>
+                    {exercisesWithData.map((ex) => {
+                      const isActive = ex.id === activeId;
+                      return (
+                        <button
+                          key={ex.id}
+                          onClick={() => setSelectedExerciseId(ex.id)}
+                          style={{
+                            flexShrink: 0,
+                            padding: "8px 14px",
+                            borderRadius: 10,
+                            fontSize: 12,
+                            fontWeight: 600,
+                            whiteSpace: "nowrap",
+                            cursor: "pointer",
+                            border: `1px solid ${isActive ? C.accent : C.bgHeader}`,
+                            background: isActive ? C.accentSoft : "transparent",
+                            color: isActive ? C.accent : C.lightGray,
+                          }}
+                        >
+                          {ex.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <ProgressChart points={getExerciseSeries(history, activeEx.id)} exerciseName={activeEx.name} unit={activeEx.unit} />
+                </div>
+              )}
+              {(chartMetric === "volume" || chartMetric === "frequencia") && (
+                <div style={{ ...styles.chartCard, margin: "0 0 12px" }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>
+                    {chartMetric === "volume" ? "Volume semanal" : "Frequência semanal"}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 84 }}>
+                    {(() => {
+                      const buckets = weeklyBuckets(chartMetric);
+                      const max = Math.max(1, ...buckets);
+                      return buckets.map((v, i) => (
+                        <div
+                          key={i}
+                          style={{
+                            flex: 1,
+                            height: `${Math.max(4, (v / max) * 100)}%`,
+                            borderRadius: 4,
+                            transformOrigin: "bottom",
+                            background: i === buckets.length - 1 ? G.limeBar : "rgba(255,255,255,.1)",
+                            boxShadow: i === buckets.length - 1 ? "0 0 20px rgba(232,255,71,.45)" : "none",
+                            animation: `tabBarGrow 500ms ${EASE} ${(i * 0.05).toFixed(2)}s both`,
+                          }}
+                        />
+                      ));
+                    })()}
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9.5, color: C.faint, marginTop: 6 }}>
+                    <span>8 sem. atrás</span>
+                    <span>hoje</span>
+                  </div>
+                </div>
+              )}
+              <div style={{ display: "flex", gap: 8, marginBottom: 30 }}>
+                {(["carga", "volume", "frequencia"] as const).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setChartMetric(m)}
+                    style={{ ...styles.filterChip, ...(chartMetric === m ? styles.filterChipActive : null), flex: 1, textAlign: "center" }}
+                  >
+                    {m === "carga" ? "Carga" : m === "volume" ? "Volume" : "Frequência"}
+                  </button>
+                ))}
               </div>
-              <ProgressChart points={getExerciseSeries(history, activeEx.id)} exerciseName={activeEx.name} unit={activeEx.unit} />
-            </div>
+            </>
           )}
-          {Object.entries(grouped).map(([key, entries]) => {
+          {(() => {
+            const groupLabels: Record<string, string> = {};
+            Object.entries(grouped).forEach(([key, entries]) => {
+              const first = entries[0];
+              const workout = program?.workouts.find((w) => w.id === first.programWorkoutId);
+              const seqPrefix = first.programId && programSeq.has(first.programId) ? `P${programSeq.get(first.programId)} ` : "";
+              groupLabels[key] = `${first.workoutEmoji ?? workout?.emoji ?? ""} ${seqPrefix}${first.workoutLabel}`.trim();
+            });
+            const groupKeys = Object.keys(grouped);
+            if (groupKeys.length < 2) return null;
+            return (
+              <div style={{ ...styles.filterRow, overflowX: "auto" }}>
+                <button onClick={() => setHistoryFilter(null)} style={{ ...styles.filterChip, ...(historyFilter === null ? styles.filterChipActive : null), flexShrink: 0 }}>
+                  Tudo
+                </button>
+                {groupKeys.map((key) => (
+                  <button
+                    key={key}
+                    onClick={() => setHistoryFilter(key === historyFilter ? null : key)}
+                    style={{ ...styles.filterChip, ...(historyFilter === key ? styles.filterChipActive : null), whiteSpace: "nowrap", flexShrink: 0 }}
+                  >
+                    {groupLabels[key]}
+                  </button>
+                ))}
+              </div>
+            );
+          })()}
+          {Object.entries(grouped)
+            .filter(([key]) => historyFilter === null || key === historyFilter)
+            .map(([key, entries]) => {
             if (!entries || entries.length === 0) return null;
             const first = entries[0];
             const workout = program?.workouts.find((w) => w.id === first.programWorkoutId);
@@ -1115,6 +1225,33 @@ export default function WorkoutApp() {
               <div style={styles.kgAdjRow}>
                 <button className="tab-press" onClick={() => setKgInput(String(Math.max(0, (parseFloat(kgInput) || 0) - 2.5)))} style={styles.kgAdjBtn}>− 2,5</button>
                 <button className="tab-press" onClick={() => setKgInput(String((parseFloat(kgInput) || 0) + 2.5))} style={styles.kgAdjBtn}>+ 2,5</button>
+              </div>
+              {lastKg > 0 && (
+                <div style={styles.kgPresetRow}>
+                  {[Math.max(0, lastKg - 2.5), lastKg, lastKg + 2.5].map((preset) => {
+                    const isActive = parseFloat(kgInput) === preset;
+                    return (
+                      <button
+                        key={preset}
+                        className="tab-press"
+                        onClick={() => setKgInput(String(preset))}
+                        style={{ ...styles.kgPreset, ...(isActive ? styles.kgPresetActive : null) }}
+                      >
+                        {preset % 1 === 0 ? preset : preset.toFixed(1).replace(".", ",")}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              <div style={{ ...styles.metaRow, margin: "16px 0 0" }}>
+                <div style={styles.metaCell}>
+                  <span style={styles.metaLabel}>REPS</span>
+                  <span style={styles.metaValue}>{exercise.reps}</span>
+                </div>
+                <div style={styles.metaCell}>
+                  <span style={styles.metaLabel}>ANTERIOR</span>
+                  <span style={{ ...styles.metaValue, color: C.midGray }}>{lastKg > 0 ? `${lastKg}kg` : "—"}</span>
+                </div>
               </div>
               <div style={styles.unitHint}>{exercise.unit === "halter" ? "🏋️ cada halter" : "🏋️ peso total na máquina/barra"}</div>
               <button className="tab-press" onClick={handleKgSubmit} style={styles.confirmBtn}>CONFIRMAR</button>

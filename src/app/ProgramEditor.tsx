@@ -13,6 +13,7 @@ import {
   deleteProgramWorkout,
   deleteProgramWorkoutExercise,
   reorderProgramWorkoutExercises,
+  updateProgramWorkoutExercise,
   scheduleNextProgram,
 } from "@/lib/data";
 import {
@@ -205,6 +206,7 @@ function ProgramFields({
               busy={busy}
               onDelete={(exId) => run(() => deleteProgramWorkoutExercise(supabase, exId))}
               onReorder={(orderedIds) => run(() => reorderProgramWorkoutExercises(supabase, orderedIds))}
+              onEdit={(exId, input) => run(() => updateProgramWorkoutExercise(supabase, exId, input))}
             />
             {addingToWorkout === w.id ? (
               <AddExerciseForm
@@ -301,14 +303,17 @@ function ReorderableExerciseList({
   busy,
   onDelete,
   onReorder,
+  onEdit,
 }: {
   exercises: ProgramWorkoutExercise[];
   busy: boolean;
   onDelete: (id: string) => void;
   onReorder: (orderedIds: string[]) => void;
+  onEdit: (id: string, input: { sets: number; reps: string; holdSeconds: number | null }) => void;
 }) {
   const [order, setOrder] = useState(() => exercises.map((e) => e.id));
   const [dragId, setDragId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const orderRef = useRef(order);
   const dragIdRef = useRef<string | null>(null);
   const draggingRef = useRef(false);
@@ -379,38 +384,105 @@ function ReorderableExerciseList({
               itemRefs.current[id] = el;
             }}
             style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: "7px 0",
               borderTop: `1px solid ${C.line}`,
               background: isDragging ? "rgba(255,255,255,.05)" : "transparent",
               opacity: isDragging ? 0.7 : 1,
               touchAction: isDragging ? "none" : "auto",
             }}
           >
-            <span style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-              <span
-                onPointerDown={(e) => {
-                  e.preventDefault();
-                  startDrag(id);
-                }}
-                style={{ fontSize: 14, color: "#4E4E48", cursor: "grab", touchAction: "none", padding: "4px 2px" }}
-              >
-                ⠿
+            <div
+              onClick={() => setExpandedId(expandedId === id ? null : id)}
+              style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", cursor: "pointer" }}
+            >
+              <span style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                <span
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    startDrag(id);
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ fontSize: 14, color: "#4E4E48", cursor: "grab", touchAction: "none", padding: "4px 2px" }}
+                >
+                  ⠿
+                </span>
+                <span style={{ fontSize: 12.5 }}>{ex.name}</span>
               </span>
-              <span style={{ fontSize: 12.5 }}>{ex.name}</span>
-            </span>
-            <span style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-              <span style={{ fontSize: 11, color: C.midGray }}>{ex.sets}×{ex.reps}</span>
-              <button disabled={busy} onClick={() => onDelete(ex.id)} style={smallDangerBtn}>×</button>
-            </span>
+              <span style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                <span style={{ fontSize: 11, color: C.midGray }}>{ex.holdSeconds ? `${ex.sets}×${ex.holdSeconds}s` : `${ex.sets}×${ex.reps}`}</span>
+                <button disabled={busy} onClick={(e) => { e.stopPropagation(); onDelete(ex.id); }} style={smallDangerBtn}>×</button>
+              </span>
+            </div>
+            {expandedId === id && (
+              <ExerciseEditFields
+                exercise={ex}
+                busy={busy}
+                onSave={(input) => {
+                  onEdit(ex.id, input);
+                  setExpandedId(null);
+                }}
+              />
+            )}
           </div>
         );
       })}
     </div>
   );
 }
+
+function ExerciseEditFields({
+  exercise,
+  busy,
+  onSave,
+}: {
+  exercise: ProgramWorkoutExercise;
+  busy: boolean;
+  onSave: (input: { sets: number; reps: string; holdSeconds: number | null }) => void;
+}) {
+  const [sets, setSets] = useState(String(exercise.sets));
+  const [reps, setReps] = useState(exercise.reps);
+  const [holdSeconds, setHoldSeconds] = useState(exercise.holdSeconds ? String(exercise.holdSeconds) : "");
+  const isTimed = exercise.holdSeconds != null;
+
+  return (
+    <div style={{ display: "flex", gap: 8, padding: "0 0 12px" }} onClick={(e) => e.stopPropagation()}>
+      <div style={numFieldStyle}>
+        <span style={numFieldLabelStyle}>SÉRIES</span>
+        <input type="number" value={sets} onChange={(e) => setSets(e.target.value)} style={numFieldValueStyle} />
+      </div>
+      <div style={numFieldStyle}>
+        <span style={numFieldLabelStyle}>{isTimed ? "SEGUNDOS" : "REPS"}</span>
+        <input value={isTimed ? holdSeconds : reps} onChange={(e) => (isTimed ? setHoldSeconds(e.target.value) : setReps(e.target.value))} style={numFieldValueStyle} />
+      </div>
+      <button
+        disabled={busy}
+        onClick={() =>
+          onSave({
+            sets: Number(sets) || 1,
+            reps: isTimed ? exercise.reps : reps,
+            holdSeconds: isTimed ? Number(holdSeconds) || exercise.holdSeconds : null,
+          })
+        }
+        style={{ ...confirmSmallBtn, alignSelf: "flex-end" }}
+      >
+        ✓
+      </button>
+    </div>
+  );
+}
+
+const numFieldStyle: React.CSSProperties = {
+  flex: 1,
+  padding: "9px 10px",
+  background: "rgba(255,255,255,.05)",
+  border: "1px solid rgba(255,255,255,.09)",
+  borderRadius: 10,
+  display: "flex",
+  flexDirection: "column",
+  gap: 2,
+};
+const numFieldLabelStyle: React.CSSProperties = { fontSize: 8.5, letterSpacing: 1, color: "#8A8A82" };
+const numFieldValueStyle: React.CSSProperties = { fontSize: 13, fontWeight: 600, background: "transparent", border: "none", color: "#F2F2EE", outline: "none", width: "100%", padding: 0 };
 
 function AddExerciseForm({
   supabase,

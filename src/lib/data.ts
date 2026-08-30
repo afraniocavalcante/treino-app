@@ -381,6 +381,18 @@ export async function addProgramWorkoutExercise(
   if (error) throw error;
 }
 
+export async function updateProgramWorkoutExercise(
+  supabase: SupabaseClient,
+  id: string,
+  input: { sets: number; reps: string; holdSeconds: number | null }
+): Promise<void> {
+  const { error } = await supabase
+    .from("program_workout_exercises")
+    .update({ sets: input.sets, reps: input.reps, hold_seconds: input.holdSeconds })
+    .eq("id", id);
+  if (error) throw error;
+}
+
 export async function deleteProgramWorkoutExercise(supabase: SupabaseClient, id: string): Promise<void> {
   const { error } = await supabase.from("program_workout_exercises").delete().eq("id", id);
   if (error) throw error;
