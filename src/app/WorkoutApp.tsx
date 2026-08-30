@@ -1257,7 +1257,7 @@ export default function WorkoutApp() {
           <span style={styles.upcomingLabel}>PRÓXIMOS</span>
           <span style={styles.upcomingCount}>{`${workout.exercises.length - completedExercises.size} RESTANTES`}</span>
         </div>
-        <div style={{ ...styles.upcomingList, maxHeight: 150 }}>
+        <div style={{ ...styles.upcomingList, maxHeight: 206 }}>
           {upcoming.map((ex) => {
             const isDone = completedExercises.has(ex.idx);
             const lw = lastWeights[ex.exerciseId];
