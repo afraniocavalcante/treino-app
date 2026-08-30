@@ -8,9 +8,11 @@ import {
   addProgramWorkout,
   addProgramWorkoutExercise,
   createProgram,
+  deleteProgram,
   deleteProgramPhase,
   deleteProgramWorkout,
   deleteProgramWorkoutExercise,
+  scheduleNextProgram,
   uploadExerciseGif,
 } from "@/lib/data";
 import {
@@ -37,23 +39,30 @@ const COLOR_OPTIONS: PhaseColor[] = ["accent", "green", "blue", "red"];
 export default function ProgramManager({
   supabase,
   program,
+  scheduledProgram,
   library,
   history,
   onBack,
   onChanged,
+  startWithScheduleForm = false,
 }: {
   supabase: SupabaseClient;
   program: Program | null;
+  scheduledProgram: Program | null;
   library: LibraryExercise[];
   history: HistoryEntry[];
   onBack: () => void;
   onChanged: () => Promise<void>;
+  startWithScheduleForm?: boolean;
 }) {
   const [busy, setBusy] = useState(false);
   const [showNewProgram, setShowNewProgram] = useState(!program);
   const [showNewExercise, setShowNewExercise] = useState(false);
   const [addingToWorkout, setAddingToWorkout] = useState<string | null>(null);
   const [showNewPhase, setShowNewPhase] = useState(false);
+  const [showScheduleForm, setShowScheduleForm] = useState(startWithScheduleForm);
+  const [addingToScheduledWorkout, setAddingToScheduledWorkout] = useState<string | null>(null);
+  const [showScheduledNewPhase, setShowScheduledNewPhase] = useState(false);
 
   async function run(fn: () => Promise<void>) {
     setBusy(true);
@@ -103,6 +112,48 @@ export default function ProgramManager({
           />
         )}
 
+        {program && !showNewProgram && (
+          <div style={{ marginTop: 34 }}>
+            <SectionHeader title="Próximo Programa" />
+            {scheduledProgram ? (
+              <ProgramSection
+                supabase={supabase}
+                program={scheduledProgram}
+                library={library}
+                history={history}
+                busy={busy}
+                run={run}
+                addingToWorkout={addingToScheduledWorkout}
+                setAddingToWorkout={setAddingToScheduledWorkout}
+                showNewPhase={showScheduledNewPhase}
+                setShowNewPhase={setShowScheduledNewPhase}
+                isScheduled
+                onDeleteScheduled={() => run(() => deleteProgram(supabase, scheduledProgram.id))}
+              />
+            ) : showScheduleForm ? (
+              <NewProgramForm
+                busy={busy}
+                hasExisting
+                scheduling
+                onCancel={() => setShowScheduleForm(false)}
+                onCreate={(input) =>
+                  run(async () => {
+                    await scheduleNextProgram(supabase, { name: input.name, weeks: input.weeks, restSeconds: input.restSeconds });
+                    setShowScheduleForm(false);
+                  })
+                }
+              />
+            ) : (
+              <div style={{ background: C.bgCard, border: `1px dashed ${C.bgHeader}`, borderRadius: 14, padding: 16, textAlign: "center" }}>
+                <div style={{ fontSize: 12.5, color: C.midGray, marginBottom: 12 }}>
+                  Nenhum próximo programa agendado ainda. Ele entra em sequência automaticamente quando o atual terminar.
+                </div>
+                <button onClick={() => setShowScheduleForm(true)} style={addBtnStyle}>+ Agendar próximo programa</button>
+              </div>
+            )}
+          </div>
+        )}
+
         <div style={{ marginTop: 34 }}>
           <SectionHeader title="Biblioteca de Exercícios" />
           <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
@@ -143,6 +194,8 @@ function ProgramSection({
   showNewPhase,
   setShowNewPhase,
   onStartNewProgram,
+  isScheduled = false,
+  onDeleteScheduled,
 }: {
   supabase: SupabaseClient;
   program: Program;
@@ -154,7 +207,9 @@ function ProgramSection({
   setAddingToWorkout: (id: string | null) => void;
   showNewPhase: boolean;
   setShowNewPhase: (v: boolean) => void;
-  onStartNewProgram: () => void;
+  onStartNewProgram?: () => void;
+  isScheduled?: boolean;
+  onDeleteScheduled?: () => void;
 }) {
   const week = getCurrentWeek(program, history);
   const [newWorkoutName, setNewWorkoutName] = useState("");
@@ -165,7 +220,9 @@ function ProgramSection({
       <div style={{ background: C.bgCard, border: `1px solid ${C.bgHeader}`, borderRadius: 16, padding: "18px 18px 16px", marginBottom: 24 }}>
         <div style={{ fontFamily: DISPLAY, fontSize: 18, fontWeight: 700 }}>{program.name}</div>
         <div style={{ fontSize: 12, color: C.midGray, marginTop: 4 }}>
-          Semana {week} de {program.weeks} · início {formatDateDisplay(program.startDate)} · descanso {program.restSeconds}s
+          {isScheduled
+            ? `${program.weeks} semanas · descanso ${program.restSeconds}s · começa quando o atual terminar`
+            : `Semana ${week} de ${program.weeks} · início ${formatDateDisplay(program.startDate)} · descanso ${program.restSeconds}s`}
         </div>
       </div>
 
@@ -258,10 +315,11 @@ function ProgramSection({
       )}
 
       <button
-        onClick={onStartNewProgram}
+        disabled={busy}
+        onClick={isScheduled ? onDeleteScheduled : onStartNewProgram}
         style={{ display: "block", width: "100%", marginTop: 30, background: "transparent", border: `1px solid #4A2233`, color: C.red, borderRadius: 12, padding: "13px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
       >
-        Concluir este programa e criar um novo
+        {isScheduled ? "Remover programa agendado" : "Concluir este programa e criar um novo"}
       </button>
     </div>
   );
@@ -326,11 +384,13 @@ function SectionHeader({ title }: { title: string }) {
 function NewProgramForm({
   busy,
   hasExisting,
+  scheduling = false,
   onCancel,
   onCreate,
 }: {
   busy: boolean;
   hasExisting: boolean;
+  scheduling?: boolean;
   onCancel: () => void;
   onCreate: (input: { name: string; startDate: string; weeks: number; restSeconds: number }) => void;
 }) {
@@ -341,17 +401,22 @@ function NewProgramForm({
 
   return (
     <div style={{ background: C.bgCard, border: `1px solid ${C.accent}`, borderRadius: 16, padding: 16, marginBottom: 24, display: "flex", flexDirection: "column", gap: 10 }}>
-      <div style={{ fontSize: 13, fontWeight: 700 }}>Novo programa</div>
+      <div style={{ fontSize: 13, fontWeight: 700 }}>{scheduling ? "Agendar próximo programa" : "Novo programa"}</div>
       <input placeholder="Nome do programa" value={name} onChange={(e) => setName(e.target.value)} style={inputStyle} />
-      <label style={labelStyle}>Data de início
-        <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={inputStyle} />
-      </label>
+      {!scheduling && (
+        <label style={labelStyle}>Data de início
+          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={inputStyle} />
+        </label>
+      )}
       <label style={labelStyle}>Duração (semanas)
         <input type="number" value={weeks} onChange={(e) => setWeeks(e.target.value)} style={inputStyle} />
       </label>
       <label style={labelStyle}>Descanso entre séries (segundos)
         <input type="number" value={restSeconds} onChange={(e) => setRestSeconds(e.target.value)} style={inputStyle} />
       </label>
+      {scheduling && (
+        <div style={{ fontSize: 11, color: C.midGray }}>A data de início real é definida automaticamente quando este programa entrar em vigor.</div>
+      )}
       <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
         {hasExisting && <button onClick={onCancel} style={cancelBtn}>Cancelar</button>}
         <button
@@ -359,7 +424,7 @@ function NewProgramForm({
           onClick={() => onCreate({ name: name.trim(), startDate, weeks: Number(weeks), restSeconds: Number(restSeconds) })}
           style={{ ...confirmSmallBtn, flex: 1 }}
         >
-          Criar programa
+          {scheduling ? "Agendar" : "Criar programa"}
         </button>
       </div>
     </div>

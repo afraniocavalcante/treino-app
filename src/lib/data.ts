@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
+  formatDate,
   isProgramEnded,
   type ExerciseUnit,
   type HistoryEntry,
@@ -189,7 +190,7 @@ async function loadProgram(supabase: SupabaseClient, row: {
     startDate: row.start_date,
     weeks: row.weeks,
     restSeconds: row.rest_seconds,
-    status: row.status as "active" | "completed",
+    status: row.status as "active" | "scheduled" | "completed",
     workouts,
     phases: (phaseRows.data ?? []).map((p) => ({
       id: p.id,
@@ -202,30 +203,64 @@ async function loadProgram(supabase: SupabaseClient, row: {
   };
 }
 
+const PROGRAM_COLUMNS = "id, name, start_date, weeks, rest_seconds, status";
+
 export async function getActiveProgram(supabase: SupabaseClient): Promise<Program | null> {
   const { data, error } = await supabase
     .from("programs")
-    .select("id, name, start_date, weeks, rest_seconds, status")
+    .select(PROGRAM_COLUMNS)
     .eq("status", "active")
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
   if (error) throw error;
-  if (!data) return null;
 
-  const program = await loadProgram(supabase, data);
-  const { data: sessionDates, error: sessErr } = await supabase
-    .from("workout_sessions")
-    .select("date")
-    .eq("program_id", program.id);
-  if (sessErr) throw sessErr;
-  const trainedDayCount = new Set((sessionDates ?? []).map((r) => r.date)).size;
+  if (data) {
+    const program = await loadProgram(supabase, data);
+    const { data: sessionDates, error: sessErr } = await supabase
+      .from("workout_sessions")
+      .select("date")
+      .eq("program_id", program.id);
+    if (sessErr) throw sessErr;
+    const trainedDayCount = new Set((sessionDates ?? []).map((r) => r.date)).size;
 
-  if (isProgramEnded(program, trainedDayCount)) {
+    if (!isProgramEnded(program, trainedDayCount)) return program;
     await supabase.from("programs").update({ status: "completed" }).eq("id", program.id);
-    return null;
   }
-  return program;
+
+  // No active program left (there never was one, or it just ended) — promote a scheduled one, if any.
+  const { data: scheduled, error: schedErr } = await supabase
+    .from("programs")
+    .select(PROGRAM_COLUMNS)
+    .eq("status", "scheduled")
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (schedErr) throw schedErr;
+  if (!scheduled) return null;
+
+  const { data: promoted, error: promoteErr } = await supabase
+    .from("programs")
+    .update({ status: "active", start_date: formatDate(new Date()) })
+    .eq("id", scheduled.id)
+    .select(PROGRAM_COLUMNS)
+    .single();
+  if (promoteErr) throw promoteErr;
+
+  return loadProgram(supabase, promoted);
+}
+
+export async function getScheduledProgram(supabase: SupabaseClient): Promise<Program | null> {
+  const { data, error } = await supabase
+    .from("programs")
+    .select(PROGRAM_COLUMNS)
+    .eq("status", "scheduled")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return loadProgram(supabase, data);
 }
 
 export async function createProgram(
@@ -243,11 +278,36 @@ export async function createProgram(
       rest_seconds: input.restSeconds,
       status: "active",
     })
-    .select("id, name, start_date, weeks, rest_seconds, status")
+    .select(PROGRAM_COLUMNS)
     .single();
   if (error) throw error;
 
   return loadProgram(supabase, data);
+}
+
+export async function scheduleNextProgram(
+  supabase: SupabaseClient,
+  input: { name: string; weeks: number; restSeconds: number }
+): Promise<Program> {
+  const { data, error } = await supabase
+    .from("programs")
+    .insert({
+      name: input.name,
+      start_date: formatDate(new Date()), // placeholder — overwritten with the real date when promoted to active
+      weeks: input.weeks,
+      rest_seconds: input.restSeconds,
+      status: "scheduled",
+    })
+    .select(PROGRAM_COLUMNS)
+    .single();
+  if (error) throw error;
+
+  return loadProgram(supabase, data);
+}
+
+export async function deleteProgram(supabase: SupabaseClient, id: string): Promise<void> {
+  const { error } = await supabase.from("programs").delete().eq("id", id);
+  if (error) throw error;
 }
 
 export async function addProgramWorkout(

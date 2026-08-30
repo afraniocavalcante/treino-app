@@ -7,6 +7,7 @@ import {
   getExerciseLibrary,
   getHistory,
   getLastWeights,
+  getScheduledProgram,
   saveSession as saveSessionRemote,
   upsertLastWeights,
 } from "@/lib/data";
@@ -58,6 +59,7 @@ export default function WorkoutApp() {
   const [loading, setLoading] = useState(true);
   const [screen, setScreen] = useState<Screen>("home");
   const [program, setProgram] = useState<Program | null>(null);
+  const [scheduledProgram, setScheduledProgram] = useState<Program | null>(null);
   const [library, setLibrary] = useState<LibraryExercise[]>([]);
   const [activeWorkoutId, setActiveWorkoutId] = useState<string | null>(null);
   const [exerciseIndex, setExerciseIndex] = useState(0);
@@ -82,22 +84,25 @@ export default function WorkoutApp() {
   const [saving, setSaving] = useState(false);
   const [gifModalUrl, setGifModalUrl] = useState<string | null>(null);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [wantScheduleForm, setWantScheduleForm] = useState(false);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const holdTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const phaseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   async function loadAll() {
-    const [p, lib, h, w] = await Promise.all([
+    const [p, lib, h, w, sp] = await Promise.all([
       getActiveProgram(supabase),
       getExerciseLibrary(supabase),
       getHistory(supabase),
       getLastWeights(supabase),
+      getScheduledProgram(supabase),
     ]);
     setProgram(p);
     setLibrary(lib);
     setHistory(h);
     setLastWeights(w);
+    setScheduledProgram(sp);
   }
 
   useEffect(() => {
@@ -379,10 +384,15 @@ export default function WorkoutApp() {
       <ProgramManager
         supabase={supabase}
         program={program}
+        scheduledProgram={scheduledProgram}
         library={library}
         history={history}
-        onBack={() => goScreen("home")}
+        onBack={() => {
+          setWantScheduleForm(false);
+          goScreen("home");
+        }}
         onChanged={loadAll}
+        startWithScheduleForm={wantScheduleForm}
       />
     );
   }
@@ -494,6 +504,7 @@ export default function WorkoutApp() {
     const todayEntries = history.filter((e) => e.date === todayStr);
     const trainedTodayAny = todayEntries.length > 0;
     const nextTag = trainedTodayAny || restToday ? "PRÓXIMO" : "HOJE";
+    const isLastWeek = week >= program.weeks;
 
     return shell(
       <div key={screenTick} style={{ animation: screenAnim }}>
@@ -525,6 +536,32 @@ export default function WorkoutApp() {
           <div style={{ margin: "0 24px 16px", background: C.bgCard, border: `1px solid ${C.bgHeader}`, borderRadius: 16, padding: "16px 18px", textAlign: "center" }}>
             <div style={{ fontSize: 13.5, fontWeight: 700, color: C.lightGray }}>😌 Hoje é sugestão de descanso</div>
             <div style={{ fontSize: 11.5, color: C.midGray, marginTop: 4 }}>Quer treinar mesmo assim? É só tocar no próximo treino abaixo.</div>
+          </div>
+        )}
+        {isLastWeek && scheduledProgram && (
+          <div style={{ margin: "0 24px 16px", background: "rgba(46,213,115,0.08)", border: `1px solid ${C.green}`, borderRadius: 16, padding: "16px 18px", textAlign: "center" }}>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: C.green }}>✓ Próximo programa pronto</div>
+            <div style={{ fontSize: 11.5, color: C.midGray, marginTop: 4 }}>
+              {`"${scheduledProgram.name}" começa automaticamente quando este terminar.`}
+            </div>
+          </div>
+        )}
+        {isLastWeek && !scheduledProgram && (
+          <div style={{ margin: "0 24px 16px", background: "rgba(232,255,71,0.08)", border: `1px solid ${C.accent}`, borderRadius: 16, padding: "16px 18px", textAlign: "center" }}>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: C.accent }}>⚠️ Última semana deste programa</div>
+            <div style={{ fontSize: 11.5, color: C.midGray, marginTop: 4, marginBottom: 12 }}>
+              Cadastre o próximo programa agora — ele entra em sequência automaticamente quando este terminar, sem interromper nada.
+            </div>
+            <button
+              className="tab-press"
+              onClick={() => {
+                setWantScheduleForm(true);
+                goScreen("program");
+              }}
+              style={{ ...styles.okBtn, padding: "12px 20px", fontSize: 13 }}
+            >
+              Cadastrar próximo programa
+            </button>
           </div>
         )}
         <div style={styles.homeCards}>

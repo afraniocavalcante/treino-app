@@ -52,7 +52,7 @@ export interface Program {
   startDate: string;
   weeks: number;
   restSeconds: number;
-  status: "active" | "completed";
+  status: "active" | "scheduled" | "completed";
   workouts: ProgramWorkout[];
   phases: ProgramPhase[];
 }
