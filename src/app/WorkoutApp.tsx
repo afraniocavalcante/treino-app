@@ -35,7 +35,9 @@ import {
 import { C, DISPLAY, EASE, styles } from "@/lib/styles";
 import { signOut } from "./actions";
 import ProgressChart from "./ProgressChart";
-import ProgramManager from "./ProgramManager";
+import ProgramsOverview from "./ProgramsOverview";
+import ProgramEditor from "./ProgramEditor";
+import ExerciseLibrary from "./ExerciseLibrary";
 import Heatmap from "./Heatmap";
 
 const RING_R = 74;
@@ -56,7 +58,7 @@ const confirmBtnSmall: React.CSSProperties = {
   cursor: "pointer",
 };
 
-type Screen = "home" | "workout" | "done" | "history" | "program" | "conflict" | "preview" | "stats" | "completed";
+type Screen = "home" | "workout" | "done" | "history" | "programs" | "programEditor" | "library" | "conflict" | "preview" | "stats" | "completed";
 type Phase = "active" | "rest" | "input" | "hold";
 
 function initialPhaseFor(ex: ProgramWorkoutExercise): Phase {
@@ -97,6 +99,7 @@ export default function WorkoutApp() {
   const [gifModalUrl, setGifModalUrl] = useState<string | null>(null);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [wantScheduleForm, setWantScheduleForm] = useState(false);
+  const [editingTarget, setEditingTarget] = useState<"active" | "scheduled">("active");
   const [completedPrograms, setCompletedPrograms] = useState<Program[]>([]);
   const [programSeq, setProgramSeq] = useState<Map<string, number>>(new Map());
   const [copiedWorkoutId, setCopiedWorkoutId] = useState<string | null>(null);
@@ -411,21 +414,52 @@ export default function WorkoutApp() {
     return shell(<div style={styles.loadingWrap}>Carregando…</div>);
   }
 
-  if (screen === "program") {
+  if (screen === "programs") {
     return shell(
-      <ProgramManager
+      <ProgramsOverview
         supabase={supabase}
         program={program}
         scheduledProgram={scheduledProgram}
+        completedCount={completedPrograms.length}
         library={library}
         history={history}
+        onBack={() => goScreen("home")}
+        onChanged={loadAll}
+        onOpenActive={() => {
+          setEditingTarget("active");
+          goScreen("programEditor");
+        }}
+        onOpenScheduled={() => {
+          setEditingTarget("scheduled");
+          goScreen("programEditor");
+        }}
+        onOpenCompleted={() => goScreen("completed")}
+        onOpenLibrary={() => goScreen("library")}
+      />
+    );
+  }
+
+  if (screen === "programEditor") {
+    return shell(
+      <ProgramEditor
+        supabase={supabase}
+        program={editingTarget === "active" ? program : scheduledProgram}
+        library={library}
+        history={history}
+        target={editingTarget}
         onBack={() => {
           setWantScheduleForm(false);
-          goScreen("home");
+          goScreen("programs");
         }}
         onChanged={loadAll}
-        startWithScheduleForm={wantScheduleForm}
+        startWithCreateForm={wantScheduleForm}
       />
+    );
+  }
+
+  if (screen === "library") {
+    return shell(
+      <ExerciseLibrary supabase={supabase} library={library} onBack={() => goScreen("programs")} onChanged={loadAll} />
     );
   }
 
@@ -520,7 +554,7 @@ export default function WorkoutApp() {
             <p style={{ color: C.midGray, fontSize: 13, marginBottom: 20 }}>
               Crie um programa com seus treinos e exercícios para começar.
             </p>
-            <button className="tab-press" onClick={() => goScreen("program")} style={styles.okBtn}>
+            <button className="tab-press" onClick={() => goScreen("programs")} style={styles.okBtn}>
               Criar programa
             </button>
           </div>
@@ -588,7 +622,8 @@ export default function WorkoutApp() {
               className="tab-press"
               onClick={() => {
                 setWantScheduleForm(true);
-                goScreen("program");
+                setEditingTarget("scheduled");
+                goScreen("programEditor");
               }}
               style={{ ...styles.okBtn, padding: "12px 20px", fontSize: 13 }}
             >
@@ -648,13 +683,8 @@ export default function WorkoutApp() {
           <Heatmap trainedDates={getTrainedDateSet(history)} weekByDate={getTrainingWeekMap(program, history)} compact weeks={14} onClick={() => goScreen("stats")} />
         </div>
         <button className="tab-press" onClick={() => goScreen("history")} style={styles.historyBtn}>Progressão de Carga</button>
-        {completedPrograms.length > 0 && (
-          <button className="tab-press" onClick={() => goScreen("completed")} style={{ ...styles.historyBtn, marginTop: 12 }}>
-            📁 Programas Concluídos
-          </button>
-        )}
-        <button className="tab-press" onClick={() => goScreen("program")} style={{ ...styles.historyBtn, marginTop: 12, border: "none", color: C.midGray }}>
-          ⚙︎ Editar programa
+        <button className="tab-press" onClick={() => goScreen("programs")} style={{ ...styles.historyBtn, marginTop: 12, border: "none", color: C.midGray }}>
+          📋 Programas
         </button>
       </div>
     );
@@ -696,7 +726,7 @@ export default function WorkoutApp() {
     return shell(
       <div key={screenTick} style={{ animation: screenAnim }}>
         <div style={styles.topNav}>
-          <button onClick={() => goScreen("home")} style={styles.backBtn}>← Início</button>
+          <button onClick={() => goScreen("programs")} style={styles.backBtn}>← Programas</button>
         </div>
         <div style={styles.histBody}>
           <h2 style={styles.histTitle}>Programas Concluídos</h2>
