@@ -214,7 +214,14 @@ export async function getActiveProgram(supabase: SupabaseClient): Promise<Progra
   if (!data) return null;
 
   const program = await loadProgram(supabase, data);
-  if (isProgramEnded(program)) {
+  const { data: sessionDates, error: sessErr } = await supabase
+    .from("workout_sessions")
+    .select("date")
+    .eq("program_id", program.id);
+  if (sessErr) throw sessErr;
+  const trainedDayCount = new Set((sessionDates ?? []).map((r) => r.date)).size;
+
+  if (isProgramEnded(program, trainedDayCount)) {
     await supabase.from("programs").update({ status: "completed" }).eq("id", program.id);
     return null;
   }

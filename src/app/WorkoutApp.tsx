@@ -123,7 +123,7 @@ export default function WorkoutApp() {
     if (!program) return;
     const entry = {
       date: formatDate(new Date()),
-      week: getCurrentWeek(program),
+      week: getCurrentWeek(program, history),
       programId: program.id,
       programWorkoutId: workout.id,
       workoutLabel: workout.name,
@@ -379,6 +379,7 @@ export default function WorkoutApp() {
         supabase={supabase}
         program={program}
         library={library}
+        history={history}
         onBack={() => goScreen("home")}
         onChanged={loadAll}
       />
@@ -484,7 +485,7 @@ export default function WorkoutApp() {
       );
     }
 
-    const week = getCurrentWeek(program);
+    const week = getCurrentWeek(program, history);
     const { name: phaseName, desc, color } = getPhaseInfo(program, week);
     const nextIdx = getNextWorkoutIndex(program, history);
     const todayStr = formatDate(new Date());
@@ -840,7 +841,7 @@ export default function WorkoutApp() {
   if (!exercise) return shell(<div style={styles.loadingWrap}>—</div>);
   const upcoming = getUpcomingExercises();
   const lastKg = lastWeights[exercise.exerciseId];
-  const week = getCurrentWeek(program);
+  const week = getCurrentWeek(program, history);
   const badgeColor = getPhaseInfo(program, week).color;
   const doneSets = sessionLog[exercise.exerciseId] || [];
   const phaseAnim = phaseExiting ? "tabPhaseOut .17s ease forwards" : `tabPhaseIn .38s ${EASE} both`;

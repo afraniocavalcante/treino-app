@@ -88,20 +88,22 @@ export function formatDateDisplay(str: string): string {
   return `${d}/${m}`;
 }
 
-export function getProgramEndDate(program: Program): Date {
-  const end = parseDate(program.startDate);
-  end.setDate(end.getDate() + program.weeks * 7);
-  return end;
+const TRAINING_DAYS_PER_WEEK = 6;
+
+export function isProgramEnded(program: Program, trainedDayCount: number): boolean {
+  return trainedDayCount >= program.weeks * TRAINING_DAYS_PER_WEEK;
 }
 
-export function isProgramEnded(program: Program): boolean {
-  return Date.now() >= getProgramEndDate(program).getTime();
+function getTrainedDaysBeforeToday(program: Program, history: HistoryEntry[]): number {
+  const today = formatDate(new Date());
+  return new Set(
+    history.filter((e) => e.programId === program.id && e.date < today).map((e) => e.date)
+  ).size;
 }
 
-export function getCurrentWeek(program: Program): number {
-  const start = parseDate(program.startDate);
-  const days = Math.floor((Date.now() - start.getTime()) / 86400000);
-  return Math.min(program.weeks, Math.max(1, Math.floor(days / 7) + 1));
+export function getCurrentWeek(program: Program, history: HistoryEntry[]): number {
+  const trainedBefore = getTrainedDaysBeforeToday(program, history);
+  return Math.min(program.weeks, Math.floor(trainedBefore / TRAINING_DAYS_PER_WEEK) + 1);
 }
 
 export function getPhaseInfo(program: Program, week: number) {
@@ -177,16 +179,11 @@ export function getTrainingStreak(program: Program, history: HistoryEntry[]): nu
 }
 
 export function getSessionLabel(program: Program, workout: ProgramWorkout, history: HistoryEntry[]): string {
-  const week = getCurrentWeek(program);
-  const start = parseDate(program.startDate);
-  start.setDate(start.getDate() + (week - 1) * 7);
-  const end = new Date(start);
-  end.setDate(end.getDate() + 7);
-  const startStr = formatDate(start);
-  const endStr = formatDate(end);
-  const count = history.filter(
-    (e) => e.programWorkoutId === workout.id && e.date >= startStr && e.date < endStr
-  ).length;
+  const week = getCurrentWeek(program, history);
+  const relevant = history.filter((e) => e.programId === program.id);
+  const trainedDatesSorted = [...new Set(relevant.map((e) => e.date))].sort();
+  const bucketDates = new Set(trainedDatesSorted.slice((week - 1) * TRAINING_DAYS_PER_WEEK, week * TRAINING_DAYS_PER_WEEK));
+  const count = relevant.filter((e) => e.programWorkoutId === workout.id && bucketDates.has(e.date)).length;
   return `${workoutLetter(workout.orderIndex)}${count + 1}S${week}`;
 }
 

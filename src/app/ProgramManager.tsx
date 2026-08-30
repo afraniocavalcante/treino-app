@@ -19,6 +19,7 @@ import {
   getCurrentWeek,
   PHASE_COLOR_HEX,
   type ExerciseUnit,
+  type HistoryEntry,
   type LibraryExercise,
   type PhaseColor,
   type Program,
@@ -37,12 +38,14 @@ export default function ProgramManager({
   supabase,
   program,
   library,
+  history,
   onBack,
   onChanged,
 }: {
   supabase: SupabaseClient;
   program: Program | null;
   library: LibraryExercise[];
+  history: HistoryEntry[];
   onBack: () => void;
   onChanged: () => Promise<void>;
 }) {
@@ -75,6 +78,7 @@ export default function ProgramManager({
             supabase={supabase}
             program={program}
             library={library}
+            history={history}
             busy={busy}
             run={run}
             addingToWorkout={addingToWorkout}
@@ -131,6 +135,7 @@ function ProgramSection({
   supabase,
   program,
   library,
+  history,
   busy,
   run,
   addingToWorkout,
@@ -142,6 +147,7 @@ function ProgramSection({
   supabase: SupabaseClient;
   program: Program;
   library: LibraryExercise[];
+  history: HistoryEntry[];
   busy: boolean;
   run: (fn: () => Promise<void>) => Promise<void>;
   addingToWorkout: string | null;
@@ -150,7 +156,7 @@ function ProgramSection({
   setShowNewPhase: (v: boolean) => void;
   onStartNewProgram: () => void;
 }) {
-  const week = getCurrentWeek(program);
+  const week = getCurrentWeek(program, history);
   const [newWorkoutName, setNewWorkoutName] = useState("");
   const [newWorkoutEmoji, setNewWorkoutEmoji] = useState("💪");
 
