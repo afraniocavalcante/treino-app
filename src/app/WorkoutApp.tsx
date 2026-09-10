@@ -74,6 +74,7 @@ export default function WorkoutApp() {
   const [phaseTick, setPhaseTick] = useState(0);
   const [screenTick, setScreenTick] = useState(0);
   const [restTime, setRestTime] = useState(0);
+  const [restTotal, setRestTotal] = useState(0);
   const [kgInput, setKgInput] = useState("");
   const [sessionLog, setSessionLog] = useState<SessionLog>({});
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -230,11 +231,12 @@ export default function WorkoutApp() {
     });
   }
 
-  function startTimer(onDone: () => void) {
+  function startTimer(onDone: () => void, restSeconds?: number | null) {
     if (!program) return;
     if (timerRef.current) clearInterval(timerRef.current);
-    let t = program.restSeconds;
+    let t = restSeconds ?? program.restSeconds;
     setRestTime(t);
+    setRestTotal(t);
     timerRef.current = setInterval(() => {
       t -= 1;
       setRestTime(t);
@@ -273,11 +275,11 @@ export default function WorkoutApp() {
               goScreen("done");
             } else {
               toPhase("rest");
-              startTimer(() => goToStep(nextIdx, 0));
+              startTimer(() => goToStep(nextIdx, 0), ex.restSeconds);
             }
           } else {
             toPhase("rest");
-            startTimer(() => goToStep(exerciseIndex, currentSet + 1));
+            startTimer(() => goToStep(exerciseIndex, currentSet + 1), ex.restSeconds);
           }
         }
       }, 1000);
@@ -299,10 +301,10 @@ export default function WorkoutApp() {
           return;
         }
         toPhase("rest");
-        startTimer(() => goToStep(nextIdx, 0));
+        startTimer(() => goToStep(nextIdx, 0), ex.restSeconds);
       } else {
         toPhase("rest");
-        startTimer(() => goToStep(exerciseIndex, currentSet + 1));
+        startTimer(() => goToStep(exerciseIndex, currentSet + 1), ex.restSeconds);
       }
       return;
     }
@@ -327,10 +329,10 @@ export default function WorkoutApp() {
         return;
       }
       toPhase("rest");
-      startTimer(() => goToStep(nextIdx, 0));
+      startTimer(() => goToStep(nextIdx, 0), ex.restSeconds);
     } else {
       toPhase("rest");
-      startTimer(() => goToStep(exerciseIndex, currentSet + 1));
+      startTimer(() => goToStep(exerciseIndex, currentSet + 1), ex.restSeconds);
     }
   }
 
@@ -1181,6 +1183,11 @@ export default function WorkoutApp() {
           {lastKg > 0 && phase === "active" && (
             <div style={styles.lastKgHint}>{`Última carga: ${lastKg}kg${exercise.unit === "halter" ? " cada" : ""}`}</div>
           )}
+          {exercise.notes && (
+            <div style={{ marginTop: 6, padding: "6px 10px", background: "rgba(255,95,82,.1)", border: "1px solid rgba(255,95,82,.35)", borderRadius: 10, fontSize: 10.5, color: C.lightGray, textAlign: "left", lineHeight: 1.3 }}>
+              {exercise.notes}
+            </div>
+          )}
         </div>
         <div style={styles.setsRow}>
           {Array.from({ length: exercise.sets }).map((_, i) => {
@@ -1239,7 +1246,7 @@ export default function WorkoutApp() {
                 <div style={styles.ringGlow} />
                 <svg width="216" height="216" viewBox="0 0 100 100" style={{ transform: "rotate(-90deg)" }}>
                   <circle cx="50" cy="50" r={RING_R} fill="none" stroke="rgba(255,255,255,.08)" strokeWidth="4" />
-                  <circle cx="50" cy="50" r={RING_R} fill="none" stroke={C.accent} strokeWidth="4" strokeLinecap="round" strokeDasharray={RING_CIRC} strokeDashoffset={RING_CIRC * (1 - restTime / program.restSeconds)} style={{ transition: "stroke-dashoffset 1s linear" }} />
+                  <circle cx="50" cy="50" r={RING_R} fill="none" stroke={C.accent} strokeWidth="4" strokeLinecap="round" strokeDasharray={RING_CIRC} strokeDashoffset={RING_CIRC * (1 - restTime / (restTotal || program.restSeconds))} style={{ transition: "stroke-dashoffset 1s linear" }} />
                 </svg>
                 <div style={styles.ringCenter}>
                   <span style={styles.restTimer}>{restTime}</span>

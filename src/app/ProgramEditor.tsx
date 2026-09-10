@@ -309,7 +309,7 @@ function ReorderableExerciseList({
   busy: boolean;
   onDelete: (id: string) => void;
   onReorder: (orderedIds: string[]) => void;
-  onEdit: (id: string, input: { sets: number; reps: string; holdSeconds: number | null }) => void;
+  onEdit: (id: string, input: { sets: number; reps: string; holdSeconds: number | null; restSeconds: number | null; notes: string | null }) => void;
 }) {
   const [order, setOrder] = useState(() => exercises.map((e) => e.id));
   const [dragId, setDragId] = useState<string | null>(null);
@@ -437,23 +437,37 @@ function ExerciseEditFields({
 }: {
   exercise: ProgramWorkoutExercise;
   busy: boolean;
-  onSave: (input: { sets: number; reps: string; holdSeconds: number | null }) => void;
+  onSave: (input: { sets: number; reps: string; holdSeconds: number | null; restSeconds: number | null; notes: string | null }) => void;
 }) {
   const [sets, setSets] = useState(String(exercise.sets));
   const [reps, setReps] = useState(exercise.reps);
   const [holdSeconds, setHoldSeconds] = useState(exercise.holdSeconds ? String(exercise.holdSeconds) : "");
+  const [restSeconds, setRestSeconds] = useState(exercise.restSeconds ? String(exercise.restSeconds) : "");
+  const [notes, setNotes] = useState(exercise.notes ?? "");
   const isTimed = exercise.holdSeconds != null;
 
   return (
-    <div style={{ display: "flex", gap: 8, padding: "0 0 12px" }} onClick={(e) => e.stopPropagation()}>
-      <div style={numFieldStyle}>
-        <span style={numFieldLabelStyle}>SÉRIES</span>
-        <input type="number" value={sets} onChange={(e) => setSets(e.target.value)} style={numFieldValueStyle} />
+    <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "0 0 12px" }} onClick={(e) => e.stopPropagation()}>
+      <div style={{ display: "flex", gap: 8 }}>
+        <div style={numFieldStyle}>
+          <span style={numFieldLabelStyle}>SÉRIES</span>
+          <input type="number" value={sets} onChange={(e) => setSets(e.target.value)} style={numFieldValueStyle} />
+        </div>
+        <div style={numFieldStyle}>
+          <span style={numFieldLabelStyle}>{isTimed ? "SEGUNDOS" : "REPS"}</span>
+          <input value={isTimed ? holdSeconds : reps} onChange={(e) => (isTimed ? setHoldSeconds(e.target.value) : setReps(e.target.value))} style={numFieldValueStyle} />
+        </div>
+        <div style={numFieldStyle}>
+          <span style={numFieldLabelStyle}>DESC. (S)</span>
+          <input type="number" placeholder="—" value={restSeconds} onChange={(e) => setRestSeconds(e.target.value)} style={numFieldValueStyle} />
+        </div>
       </div>
-      <div style={numFieldStyle}>
-        <span style={numFieldLabelStyle}>{isTimed ? "SEGUNDOS" : "REPS"}</span>
-        <input value={isTimed ? holdSeconds : reps} onChange={(e) => (isTimed ? setHoldSeconds(e.target.value) : setReps(e.target.value))} style={numFieldValueStyle} />
-      </div>
+      <input
+        placeholder="Observação (opcional, ex: cuidado com o joelho)"
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        style={inputStyle}
+      />
       <button
         disabled={busy}
         onClick={() =>
@@ -461,11 +475,13 @@ function ExerciseEditFields({
             sets: Number(sets) || 1,
             reps: isTimed ? exercise.reps : reps,
             holdSeconds: isTimed ? Number(holdSeconds) || exercise.holdSeconds : null,
+            restSeconds: restSeconds.trim() ? Number(restSeconds) : null,
+            notes: notes.trim() || null,
           })
         }
-        style={{ ...confirmSmallBtn, alignSelf: "flex-end" }}
+        style={confirmSmallBtn}
       >
-        ✓
+        Salvar
       </button>
     </div>
   );

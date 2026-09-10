@@ -163,7 +163,7 @@ async function loadProgramWorkouts(supabase: SupabaseClient, programId: string):
   for (const w of workoutRows ?? []) {
     const { data: exRows, error: exErr } = await supabase
       .from("program_workout_exercises")
-      .select("id, exercise_id, order_index, sets, reps, hold_seconds, exercise_library(name, unit)")
+      .select("id, exercise_id, order_index, sets, reps, hold_seconds, rest_seconds, notes, exercise_library(name, unit)")
       .eq("program_workout_id", w.id)
       .order("order_index", { ascending: true });
     if (exErr) throw exErr;
@@ -183,6 +183,8 @@ async function loadProgramWorkouts(supabase: SupabaseClient, programId: string):
           sets: row.sets,
           reps: row.reps,
           holdSeconds: row.hold_seconds,
+          restSeconds: row.rest_seconds,
+          notes: row.notes,
           orderIndex: row.order_index,
         };
       }),
@@ -368,7 +370,15 @@ export async function deleteProgramWorkout(supabase: SupabaseClient, id: string)
 export async function addProgramWorkoutExercise(
   supabase: SupabaseClient,
   programWorkoutId: string,
-  input: { exerciseId: string; sets: number; reps: string; holdSeconds: number | null; orderIndex: number }
+  input: {
+    exerciseId: string;
+    sets: number;
+    reps: string;
+    holdSeconds: number | null;
+    orderIndex: number;
+    restSeconds?: number | null;
+    notes?: string | null;
+  }
 ): Promise<void> {
   const { error } = await supabase.from("program_workout_exercises").insert({
     program_workout_id: programWorkoutId,
@@ -377,6 +387,8 @@ export async function addProgramWorkoutExercise(
     reps: input.reps,
     hold_seconds: input.holdSeconds,
     order_index: input.orderIndex,
+    rest_seconds: input.restSeconds ?? null,
+    notes: input.notes ?? null,
   });
   if (error) throw error;
 }
@@ -384,11 +396,17 @@ export async function addProgramWorkoutExercise(
 export async function updateProgramWorkoutExercise(
   supabase: SupabaseClient,
   id: string,
-  input: { sets: number; reps: string; holdSeconds: number | null }
+  input: { sets: number; reps: string; holdSeconds: number | null; restSeconds?: number | null; notes?: string | null }
 ): Promise<void> {
   const { error } = await supabase
     .from("program_workout_exercises")
-    .update({ sets: input.sets, reps: input.reps, hold_seconds: input.holdSeconds })
+    .update({
+      sets: input.sets,
+      reps: input.reps,
+      hold_seconds: input.holdSeconds,
+      ...(input.restSeconds !== undefined ? { rest_seconds: input.restSeconds } : {}),
+      ...(input.notes !== undefined ? { notes: input.notes } : {}),
+    })
     .eq("id", id);
   if (error) throw error;
 }

@@ -32,6 +32,8 @@ export interface ProgramWorkoutExercise {
   sets: number;
   reps: string;
   holdSeconds: number | null;
+  restSeconds: number | null;
+  notes: string | null;
   orderIndex: number;
 }
 
