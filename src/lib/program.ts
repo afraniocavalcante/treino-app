@@ -68,6 +68,14 @@ export interface Program {
 export interface SetEntry {
   set: number;
   kg: number;
+  reps: number | null;
+}
+
+/** Parses the top of a prescribed rep range ("8-12" -> 12, "10" -> 10) for prefilling the reps input. */
+export function parseTopReps(reps: string): number | null {
+  const nums = reps.match(/\d+/g);
+  if (!nums || nums.length === 0) return null;
+  return Number(nums[nums.length - 1]);
 }
 
 export type SessionLog = Record<string, SetEntry[]>;

@@ -25,6 +25,7 @@ import {
   getTrainingStreak,
   getTrainingWeekMap,
   isRestDay,
+  parseTopReps,
   type HistoryEntry,
   type LibraryExercise,
   type Program,
@@ -76,6 +77,7 @@ export default function WorkoutApp() {
   const [restTime, setRestTime] = useState(0);
   const [restTotal, setRestTotal] = useState(0);
   const [kgInput, setKgInput] = useState("");
+  const [repsInput, setRepsInput] = useState("");
   const [sessionLog, setSessionLog] = useState<SessionLog>({});
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [historyView, setHistoryView] = useState<HistoryEntry | null>(null);
@@ -195,6 +197,7 @@ export default function WorkoutApp() {
     setCurrentSet(0);
     setPhase(firstPhase);
     setKgInput(firstPhase === "input" && lastWeights[firstEx.exerciseId] ? String(lastWeights[firstEx.exerciseId]) : "");
+    setRepsInput(firstPhase === "input" ? String(parseTopReps(firstEx.reps) ?? "") : "");
     setPhaseExiting(false);
     setSessionLog({});
     setCompletedExercises(new Set());
@@ -224,9 +227,11 @@ export default function WorkoutApp() {
       setCurrentSet(nextSet);
       if (nextPhase === "input") {
         const loggedSets = sessionLog[nextEx.exerciseId];
-        const lastLoggedKg = loggedSets && loggedSets.length > 0 ? loggedSets[loggedSets.length - 1].kg : undefined;
-        const prefillKg = lastLoggedKg ?? lastWeights[nextEx.exerciseId];
+        const lastLogged = loggedSets && loggedSets.length > 0 ? loggedSets[loggedSets.length - 1] : undefined;
+        const prefillKg = lastLogged?.kg ?? lastWeights[nextEx.exerciseId];
         setKgInput(prefillKg ? String(prefillKg) : "");
+        const prefillReps = lastLogged?.reps ?? parseTopReps(nextEx.reps);
+        setRepsInput(prefillReps ? String(prefillReps) : "");
       }
     });
   }
@@ -264,7 +269,7 @@ export default function WorkoutApp() {
           if (holdTimerRef.current) clearInterval(holdTimerRef.current);
           const newLog = { ...sessionLog };
           if (!newLog[ex.exerciseId]) newLog[ex.exerciseId] = [];
-          newLog[ex.exerciseId].push({ set: currentSet + 1, kg: 0 });
+          newLog[ex.exerciseId].push({ set: currentSet + 1, kg: 0, reps: null });
           setSessionLog(newLog);
           if (currentSet + 1 >= ex.sets) {
             const completed = new Set([...completedExercises, exerciseIndex]);
@@ -289,7 +294,7 @@ export default function WorkoutApp() {
     if (ex.unit === "corpo") {
       const newLog = { ...sessionLog };
       if (!newLog[ex.exerciseId]) newLog[ex.exerciseId] = [];
-      newLog[ex.exerciseId].push({ set: currentSet + 1, kg: 0 });
+      newLog[ex.exerciseId].push({ set: currentSet + 1, kg: 0, reps: null });
       setSessionLog(newLog);
       if (currentSet + 1 >= ex.sets) {
         const completed = new Set([...completedExercises, exerciseIndex]);
@@ -314,9 +319,10 @@ export default function WorkoutApp() {
     const ex = getCurrentExercise();
     if (!ex || !currentWorkout) return;
     const kg = parseFloat(kgInput) || 0;
+    const reps = parseInt(repsInput, 10);
     const newLog = { ...sessionLog };
     if (!newLog[ex.exerciseId]) newLog[ex.exerciseId] = [];
-    newLog[ex.exerciseId].push({ set: currentSet + 1, kg });
+    newLog[ex.exerciseId].push({ set: currentSet + 1, kg, reps: Number.isFinite(reps) ? reps : null });
     setSessionLog(newLog);
 
     if (currentSet + 1 >= ex.sets) {
@@ -918,7 +924,7 @@ export default function WorkoutApp() {
                   {entry.exercises[ex.exerciseId].map((s, j) => (
                     <div key={j} style={styles.histSetBadge}>
                       <span style={styles.histSetLabel}>{`S${s.set}`}</span>
-                      <span style={styles.histSetKg}>{`${s.kg}kg`}</span>
+                      <span style={styles.histSetKg}>{s.reps ? `${s.kg}kg×${s.reps}` : `${s.kg}kg`}</span>
                     </div>
                   ))}
                 </div>
@@ -1227,8 +1233,11 @@ export default function WorkoutApp() {
             <div>
               <label style={styles.inputLabel}>{exercise.unit === "halter" ? "KG por halter" : "KG total"}</label>
               <div style={styles.inputRow}>
-                <input type="number" inputMode="decimal" value={kgInput} onChange={(e) => setKgInput(e.target.value)} onFocus={(e) => e.target.select()} style={styles.kgInput} placeholder="0" />
+                <input type="number" inputMode="decimal" value={kgInput} onChange={(e) => setKgInput(e.target.value)} onFocus={(e) => e.target.select()} style={{ ...styles.kgInput, width: 92 }} placeholder="0" />
                 <span style={styles.kgUnit}>kg</span>
+                <span style={{ fontSize: 16, color: C.faint, margin: "0 2px" }}>×</span>
+                <input type="number" inputMode="numeric" value={repsInput} onChange={(e) => setRepsInput(e.target.value)} onFocus={(e) => e.target.select()} style={{ ...styles.kgInput, width: 52, fontSize: 28, color: C.white }} placeholder="0" />
+                <span style={styles.kgUnit}>reps</span>
               </div>
               <div style={{ height: 1, background: "rgba(255,255,255,.08)", margin: "0 0 10px" }} />
               <div style={styles.kgAdjRow}>
