@@ -1,6 +1,7 @@
 "use client";
 
-import { isMealDone, isMealSkipped, type AlmocoPicks, type DietDayPicks, type DietMeal } from "@/lib/diet";
+import { useState } from "react";
+import { isMealCustom, isMealDone, isMealSkipped, type AlmocoPicks, type DietDayPicks, type DietMeal, type MacroValues } from "@/lib/diet";
 import { C, styles } from "@/lib/styles";
 
 export const MEAL_ICON: Record<string, string> = {
@@ -11,9 +12,14 @@ function truncate(s: string, n: number): string {
   return s.length > n ? s.slice(0, n) + "…" : s;
 }
 
+function customMacros(meal: DietMeal, picks: DietDayPicks): MacroValues | undefined {
+  return picks.customMeals[meal.key];
+}
+
 export function mealSummary(meal: DietMeal, picks: DietDayPicks): string {
   if (meal.key === "almoco") {
     const a = picks.almoco;
+    if (a.custom) return `Fora da dieta — ${customMacros(meal, picks)?.kcal ?? 0} kcal`;
     if (a.skipped) return "Pulada hoje";
     if (a.carb == null && a.leg == null && a.prot == null) return "Escolha carboidrato, leguminosa e proteína";
     const parts: string[] = [];
@@ -27,8 +33,12 @@ export function mealSummary(meal: DietMeal, picks: DietDayPicks): string {
   if (idx == null) return "Toque para escolher";
   if (idx === "none") return "Sem sobremesa hoje";
   if (idx === "skip") return "Pulada hoje";
+  if (idx === "custom") return `Fora da dieta — ${customMacros(meal, picks)?.kcal ?? 0} kcal`;
   return truncate(meal.options?.[idx as number]?.label ?? "", 42);
 }
+
+type CustomForm = { kcal: string; p: string; c: string; g: string };
+const EMPTY_CUSTOM_FORM: CustomForm = { kcal: "", p: "", c: "", g: "" };
 
 /** Expandable meal card: header always visible (chevron + status badge), body animates open/closed via grid-template-rows. */
 export function MealCard({
@@ -42,6 +52,9 @@ export function MealCard({
 }) {
   const done = isMealDone(meal, picks);
   const skipped = isMealSkipped(meal, picks);
+  const custom = isMealCustom(meal, picks);
+  const [customFormOpen, setCustomFormOpen] = useState(false);
+  const [customForm, setCustomForm] = useState<CustomForm>(EMPTY_CUSTOM_FORM);
 
   function selectSimple(mealKey: "cafe" | "lanche" | "jantar", idx: number) {
     onChange({ ...picks, [mealKey]: idx });
@@ -53,17 +66,41 @@ export function MealCard({
     onChange({ ...picks, [portionKey]: val });
   }
   function selectAlmocoGroup(groupKey: keyof AlmocoPicks, idx: number) {
-    onChange({ ...picks, almoco: { ...picks.almoco, [groupKey]: idx, skipped: false } });
+    onChange({ ...picks, almoco: { ...picks.almoco, [groupKey]: idx, skipped: false, custom: false } });
   }
   function toggleAlmocoFruta() {
     onChange({ ...picks, almoco: { ...picks.almoco, fruta: !picks.almoco.fruta } });
   }
   function skipMeal() {
-    if (meal.key === "almoco") onChange({ ...picks, almoco: { ...picks.almoco, skipped: true } });
+    if (meal.key === "almoco") onChange({ ...picks, almoco: { ...picks.almoco, skipped: true, custom: false } });
     else onChange({ ...picks, [meal.key]: "skip" });
   }
   function unskipMeal() {
     if (meal.key === "almoco") onChange({ ...picks, almoco: { ...picks.almoco, skipped: false } });
+    else onChange({ ...picks, [meal.key]: null });
+  }
+  function openCustomForm() {
+    const existing = customMacros(meal, picks);
+    setCustomForm(existing ? { kcal: String(existing.kcal), p: String(existing.p), c: String(existing.c), g: String(existing.g) } : EMPTY_CUSTOM_FORM);
+    setCustomFormOpen(true);
+  }
+  function saveCustom() {
+    const macros: MacroValues = {
+      kcal: parseFloat(customForm.kcal) || 0,
+      p: parseFloat(customForm.p) || 0,
+      c: parseFloat(customForm.c) || 0,
+      g: parseFloat(customForm.g) || 0,
+    };
+    const nextCustomMeals = { ...picks.customMeals, [meal.key]: macros };
+    if (meal.key === "almoco") {
+      onChange({ ...picks, customMeals: nextCustomMeals, almoco: { ...picks.almoco, custom: true, skipped: false } });
+    } else {
+      onChange({ ...picks, customMeals: nextCustomMeals, [meal.key]: "custom" });
+    }
+    setCustomFormOpen(false);
+  }
+  function unsetCustom() {
+    if (meal.key === "almoco") onChange({ ...picks, almoco: { ...picks.almoco, custom: false } });
     else onChange({ ...picks, [meal.key]: null });
   }
 
@@ -72,6 +109,8 @@ export function MealCard({
     : done
     ? { background: "rgba(240,180,41,.16)", border: "1px solid rgba(240,180,41,.4)", color: C.honey }
     : { background: "transparent", border: "1px solid transparent", color: "transparent" };
+
+  const currentCustom = customMacros(meal, picks);
 
   return (
     <div style={styles.dietMealCard} onClick={(e) => e.stopPropagation()}>
@@ -92,13 +131,49 @@ export function MealCard({
               <div style={{ fontSize: 12.5, color: C.midGray, textAlign: "center", padding: "6px 0 10px" }}>Refeição pulada — não conta kcal.</div>
               <button style={styles.dietShopReset} onClick={unskipMeal}>Desfazer</button>
             </div>
+          ) : custom && !customFormOpen ? (
+            <div style={{ ...styles.dietMealBody, borderTop: `1px solid ${C.line}` }}>
+              <div style={{ fontSize: 12.5, color: C.midGray, textAlign: "center", padding: "6px 0 4px" }}>
+                Fora da dieta — {currentCustom?.kcal ?? 0} kcal (P {currentCustom?.p ?? 0}g · C {currentCustom?.c ?? 0}g · G {currentCustom?.g ?? 0}g)
+              </div>
+              <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 6 }}>
+                <button style={styles.dietShopReset} onClick={openCustomForm}>Editar</button>
+                <button style={styles.dietShopReset} onClick={unsetCustom}>Desfazer</button>
+              </div>
+            </div>
+          ) : customFormOpen ? (
+            <div style={{ ...styles.dietMealBody, borderTop: `1px solid ${C.line}` }}>
+              <div style={styles.dietGroupTitle}>Comi fora da dieta</div>
+              <div style={styles.dietMeasureGrid}>
+                {([
+                  { key: "kcal" as const, label: "Kcal" },
+                  { key: "p" as const, label: "Proteína (g)" },
+                  { key: "c" as const, label: "Carbo (g)" },
+                  { key: "g" as const, label: "Gordura (g)" },
+                ]).map((f) => (
+                  <div key={f.key} style={styles.dietMeasureField}>
+                    <div style={styles.dietMeasureLabel}>{f.label}</div>
+                    <input
+                      style={styles.dietMeasureInput}
+                      inputMode="decimal"
+                      value={customForm[f.key]}
+                      onChange={(e) => setCustomForm((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                      placeholder="0"
+                    />
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button style={{ ...styles.dietPortionBtn, flex: 1 }} onClick={() => setCustomFormOpen(false)}>Cancelar</button>
+                <button style={{ ...styles.dietPortionBtn, ...styles.dietPortionBtnActive, flex: 1 }} onClick={saveCustom}>Salvar</button>
+              </div>
+            </div>
           ) : (
             <div style={{ ...styles.dietMealBody, borderTop: `1px solid ${C.line}` }}>
-              {!meal.hasNoneOption && (
-                <button style={{ ...styles.dietShopReset, alignSelf: "flex-end", marginBottom: 2 }} onClick={skipMeal}>
-                  Pular refeição
-                </button>
-              )}
+              <div style={{ display: "flex", gap: 8, alignSelf: "flex-end", marginBottom: 2 }}>
+                <button style={styles.dietShopReset} onClick={openCustomForm}>Comi fora da dieta</button>
+                {!meal.hasNoneOption && <button style={styles.dietShopReset} onClick={skipMeal}>Pular refeição</button>}
+              </div>
               {meal.kind === "list" && meal.options && (
                 <>
                   {meal.options.map((opt, i) => {

@@ -93,29 +93,33 @@ export interface AlmocoPicks {
   prot: number | null;
   fruta: boolean;
   skipped: boolean;
+  custom: boolean;
 }
 
 export interface DietDayPicks {
-  cafe: number | "skip" | null;
+  cafe: number | "skip" | "custom" | null;
   cafePortion: number;
   almoco: AlmocoPicks;
-  lanche: number | "skip" | null;
+  lanche: number | "skip" | "custom" | null;
   lanchePortion: number;
-  jantar: number | "skip" | null;
+  jantar: number | "skip" | "custom" | null;
   jantarPortion: number;
-  sobremesa: number | "none" | null;
+  sobremesa: number | "none" | "skip" | "custom" | null;
+  /** User-entered macros for meals marked "custom" ("comi fora da dieta"), keyed by meal key. */
+  customMeals: Record<string, MacroValues>;
 }
 
 export function emptyDietDay(): DietDayPicks {
   return {
     cafe: null,
     cafePortion: 1,
-    almoco: { carb: null, leg: null, prot: null, fruta: false, skipped: false },
+    almoco: { carb: null, leg: null, prot: null, fruta: false, skipped: false, custom: false },
     lanche: null,
     lanchePortion: 1,
     jantar: null,
     jantarPortion: 1,
     sobremesa: null,
+    customMeals: {},
   };
 }
 
@@ -125,6 +129,13 @@ export function isMealSkipped(meal: DietMeal, picks: DietDayPicks): boolean {
   if (meal.hasNoneOption) return false; // sobremesa already has its own "none" option
   const idx = picks[meal.key as "cafe" | "lanche" | "jantar"];
   return idx === "skip";
+}
+
+/** "Comi fora da dieta" — the meal was eaten, but with user-entered macros instead of a plan option. */
+export function isMealCustom(meal: DietMeal, picks: DietDayPicks): boolean {
+  if (meal.key === "almoco") return picks.almoco.custom;
+  const idx = picks[meal.key === "sobremesa" ? "sobremesa" : (meal.key as "cafe" | "lanche" | "jantar")];
+  return idx === "custom";
 }
 
 export interface DietDayLog {
@@ -154,6 +165,7 @@ function mealTotal(plan: DietPlan, key: string, picks: DietDayPicks): MacroValue
   if (!meal) return zero;
 
   if (key === "almoco") {
+    if (picks.almoco.custom) return picks.customMeals.almoco ?? zero;
     if (!meal.groups || picks.almoco.skipped) return zero;
     const a = picks.almoco;
     const total = { ...zero };
@@ -171,8 +183,9 @@ function mealTotal(plan: DietPlan, key: string, picks: DietDayPicks): MacroValue
     return { kcal: Math.round(total.kcal), p: Math.round(total.p), c: Math.round(total.c), g: Math.round(total.g) };
   }
 
-  if (!meal.options) return zero;
   const idx = key === "sobremesa" ? picks.sobremesa : picks[key as "cafe" | "lanche" | "jantar"];
+  if (idx === "custom") return picks.customMeals[key] ?? zero;
+  if (!meal.options) return zero;
   if (idx == null || idx === "none" || idx === "skip") return zero;
   const opt = meal.options[idx as number];
   if (!opt) return zero;
@@ -195,7 +208,7 @@ export function dayTotals(plan: DietPlan, picks: DietDayPicks): MacroValues {
 export function isMealDone(meal: DietMeal, picks: DietDayPicks): boolean {
   if (meal.key === "almoco") {
     const a = picks.almoco;
-    return a.skipped || (a.carb != null && a.leg != null && a.prot != null);
+    return a.skipped || a.custom || (a.carb != null && a.leg != null && a.prot != null);
   }
   const idx = meal.key === "sobremesa" ? picks.sobremesa : picks[meal.key as "cafe" | "lanche" | "jantar"];
   return idx != null;
