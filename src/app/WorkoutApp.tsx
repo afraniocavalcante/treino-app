@@ -59,7 +59,7 @@ function initialPhaseFor(ex: ProgramWorkoutExercise): Phase {
   return "input";
 }
 
-export default function WorkoutApp() {
+export default function WorkoutApp({ onGoHub }: { onGoHub?: () => void } = {}) {
   const supabase = createClient();
 
   const [loading, setLoading] = useState(true);
@@ -536,6 +536,7 @@ export default function WorkoutApp() {
         <div key={screenTick} style={{ animation: screenAnim }}>
           <div style={styles.accentBar} />
           <div style={styles.homeHeader}>
+            {onGoHub && <button style={styles.hubHomeBtn} onClick={onGoHub}>← HUB</button>}
             <form action={signOut}>
               <button type="submit" style={styles.signOutBtn}>Sair</button>
             </form>
@@ -568,6 +569,7 @@ export default function WorkoutApp() {
       <div key={screenTick} style={{ animation: screenAnim }}>
         <div style={styles.accentBar} />
         <div style={styles.homeHeader}>
+          {onGoHub && <button style={styles.hubHomeBtn} onClick={onGoHub}>← HUB</button>}
           <form action={signOut}>
             <button type="submit" style={styles.signOutBtn}>Sair</button>
           </form>

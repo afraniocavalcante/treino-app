@@ -1,5 +1,5 @@
-import WorkoutApp from "./WorkoutApp";
+import Hub from "./Hub";
 
 export default function Home() {
-  return <WorkoutApp />;
+  return <Hub />;
 }

@@ -24,6 +24,7 @@ export const C = {
   line: "rgba(255,255,255,.06)",
   red: "#FF5F52",
   green: "#E8FF47", // o verde de sucesso passa a ser o próprio acento
+  honey: "#F0B429", // NOVO — acento de carboidrato / dieta
 };
 
 export const DISPLAY = "'Sora', -apple-system, BlinkMacSystemFont, sans-serif";
@@ -60,6 +61,7 @@ export const styles: Record<string, CSSProperties> = {
   logoTitle: { fontFamily: DISPLAY, fontSize: 30, fontWeight: 600, letterSpacing: -0.6, lineHeight: 1.14, color: C.white, margin: 0 },
   logoSub: { color: C.midGray, fontSize: 12.5, margin: "12px 0 0", letterSpacing: 0.2 },
   signOutBtn: { position: "absolute", top: 22, right: 22, background: "rgba(255,255,255,.05)", border: `1px solid ${C.bgHeader}`, color: C.midGray, borderRadius: 10, padding: "7px 13px", fontSize: 11, fontWeight: 500, cursor: "pointer" },
+  hubHomeBtn: { position: "absolute", top: 22, left: 22, background: "rgba(255,255,255,.05)", border: `1px solid ${C.bgHeader}`, color: C.midGray, borderRadius: 10, padding: "7px 13px", fontSize: 11, fontWeight: 500, cursor: "pointer" }, // NOVO
 
   weekCard: { ...glass, margin: "0 26px 16px", borderRadius: 20, padding: 16 },
   weekDotsRow: { display: "flex", gap: 6, alignItems: "flex-end", height: 34 },
@@ -242,4 +244,87 @@ export const styles: Record<string, CSSProperties> = {
   sheetBody: { fontSize: 13, color: C.midGray, margin: "10px 0 0", lineHeight: 1.55 }, // NOVO
 
   loadingWrap: { minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: C.midGray, fontSize: 13 },
+
+  // ── Hub ─────────────────────────────────────────────────
+  hubHeader: { padding: "38px 26px 6px" },
+  hubGreeting: { fontFamily: DISPLAY, fontSize: 26, fontWeight: 600, letterSpacing: -0.5, margin: 0 },
+  hubSub: { fontSize: 12.5, color: C.midGray, margin: "8px 0 0" },
+  hubCards: { padding: "18px 26px 0", display: "flex", flexDirection: "column", gap: 14 },
+  hubModuleCard: { display: "flex", alignItems: "center", gap: 14, width: "100%", background: "rgba(255,255,255,.035)", border: `1px solid ${C.bgHeader}`, borderRadius: 22, padding: "18px 20px", textAlign: "left", color: C.white, cursor: "pointer", transition: `transform .18s ${EASE}` }, // NOVO
+  hubModuleIcon: { width: 48, height: 48, flexShrink: 0, borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }, // NOVO
+  hubModuleBody: { flex: 1, display: "flex", flexDirection: "column", gap: 4 }, // NOVO
+  hubModuleTitle: { fontFamily: DISPLAY, fontSize: 17, fontWeight: 600 }, // NOVO
+  hubModuleSub: { fontSize: 12, color: C.midGray }, // NOVO
+  hubModuleStat: { fontFamily: DISPLAY, fontSize: 13, fontWeight: 600, color: C.accent }, // NOVO
+  hubBottomNav: { position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 440, display: "flex", background: "rgba(14,14,12,.88)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderTop: `1px solid ${C.bgHeader}`, padding: "10px 12px calc(10px + env(safe-area-inset-bottom))" }, // NOVO
+  hubNavBtn: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "transparent", border: "none", padding: "4px 0", cursor: "pointer", color: C.midGray, fontSize: 10.5, fontWeight: 600 }, // NOVO
+  hubNavBtnActive: { color: C.accent }, // NOVO
+  hubNavDot: { width: 5, height: 5, borderRadius: "50%", background: "currentColor", opacity: 0 }, // NOVO
+  hubNavDotActive: { opacity: 1 }, // NOVO
+
+  // ── Dieta ───────────────────────────────────────────────
+  dietHeader: { padding: "30px 26px 16px" },
+  dietStreakPill: { display: "inline-flex", alignItems: "center", gap: 6, background: C.accentSoft, border: `1px solid ${C.accentEdge}`, borderRadius: 10, padding: "5px 10px", fontSize: 12, fontWeight: 700, color: C.accent }, // NOVO
+  dietKcalCard: { ...glass, margin: "0 20px", borderRadius: 24, padding: "18px 20px" }, // NOVO
+  dietRingOuter: { width: 84, height: 84, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }, // NOVO (background set inline: conic-gradient)
+  dietRingInner: { width: 66, height: 66, borderRadius: "50%", background: "#0E0E0C", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }, // NOVO
+  dietRingKcal: { fontFamily: DISPLAY, fontSize: 18, fontWeight: 600, color: C.white, lineHeight: 1 }, // NOVO
+  dietRingTarget: { fontSize: 8.5, color: C.midGray, marginTop: 2 }, // NOVO
+  dietMacroRow: { display: "flex", justifyContent: "space-between", fontSize: 11.5, fontWeight: 600, marginBottom: 3 }, // NOVO
+  dietMacroTrack: { height: 7, borderRadius: 5, background: "rgba(255,255,255,.08)", overflow: "hidden" }, // NOVO
+  dietMacroFill: { height: "100%", borderRadius: 5, transition: `width .3s ${EASE}` }, // NOVO
+  dietWarningBanner: { marginTop: 12, padding: "9px 12px", borderRadius: 12, background: "rgba(255,95,82,.12)", border: "1px solid rgba(255,95,82,.3)", color: C.red, fontSize: 11.5, fontWeight: 600 }, // NOVO
+
+  dietMealList: { padding: "16px 20px 0", display: "flex", flexDirection: "column", gap: 10 }, // NOVO
+  dietMealCard: { ...glass, borderRadius: 20, padding: "15px 17px" }, // NOVO
+  dietMealHead: { display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }, // NOVO
+  dietMealIcon: { width: 36, height: 36, borderRadius: 12, background: "rgba(240,180,41,.14)", color: C.honey, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }, // NOVO
+  dietMealName: { fontSize: 15, fontWeight: 600 }, // NOVO
+  dietMealSummary: { fontSize: 11.5, color: C.midGray, marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, // NOVO
+  dietMealBadge: { width: 24, height: 24, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#0A0A0B" }, // NOVO
+  dietMealBody: { marginTop: 12, paddingTop: 12, borderTop: `1px solid ${C.line}`, display: "flex", flexDirection: "column", gap: 6, animation: `tabFadeUp .2s ${EASE}` }, // NOVO
+  dietOptionRow: { display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", borderRadius: 13, cursor: "pointer", transition: `background .18s ${EASE}` }, // NOVO
+  dietOptionRowSelected: { background: C.accentSoft }, // NOVO
+  dietRadio: { width: 16, height: 16, borderRadius: "50%", flexShrink: 0, border: `2px solid ${C.faint}`, transition: `all .18s ${EASE}` }, // NOVO
+  dietRadioSelected: { border: `2px solid ${C.accent}`, background: C.accent }, // NOVO
+  dietOptionLabel: { flex: 1, fontSize: 13, fontWeight: 500, lineHeight: 1.35 }, // NOVO
+  dietOptionMacro: { fontSize: 10.5, color: C.midGray, marginTop: 1 }, // NOVO
+  dietOptionKcal: { fontSize: 11, fontWeight: 700, color: C.midGray, whiteSpace: "nowrap" }, // NOVO
+  dietGroupTitle: { fontSize: 10, fontWeight: 700, letterSpacing: 1.6, color: C.faint, textTransform: "uppercase", margin: "8px 0 4px" }, // NOVO
+  dietPortionRow: { display: "flex", gap: 7, marginTop: 6 }, // NOVO
+  dietPortionBtn: { flex: 1, padding: "8px 0", borderRadius: 11, border: `1px solid ${C.bgHeader}`, background: "transparent", color: C.white, fontSize: 12, fontWeight: 700, cursor: "pointer" }, // NOVO
+  dietPortionBtnActive: { background: C.accent, border: "none", color: "#0A0A0B" }, // NOVO
+
+  dietSuppMini: { ...glass, borderRadius: 20, padding: "14px 17px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }, // NOVO
+  dietSuppIcon: { width: 36, height: 36, borderRadius: 12, background: C.accentSoft, color: C.accent, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }, // NOVO
+
+  dietSectionCard: { ...glass, margin: "0 20px", borderRadius: 22, padding: "18px 20px" }, // NOVO
+  dietSectionTitle: { fontFamily: DISPLAY, fontSize: 15, fontWeight: 600, marginBottom: 12 }, // NOVO
+  dietWeekBars: { display: "flex", gap: 7, alignItems: "flex-end", height: 76, marginBottom: 10 }, // NOVO
+  dietWeekBarCol: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 5, height: "100%", justifyContent: "flex-end" }, // NOVO
+  dietWeekBar: { width: "100%", borderRadius: 4, transition: `height .3s ${EASE}` }, // NOVO
+  dietWeekBarLabel: { fontSize: 9, fontWeight: 600, color: C.faint }, // NOVO
+  dietInsightText: { fontSize: 11.5, color: C.midGray, lineHeight: 1.6 }, // NOVO
+
+  dietMeasureGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 9, marginBottom: 12 }, // NOVO
+  dietMeasureField: { display: "flex", flexDirection: "column", gap: 4 }, // NOVO
+  dietMeasureLabel: { fontSize: 10, fontWeight: 600, color: C.midGray }, // NOVO
+  dietMeasureInput: { padding: "10px 12px", background: "rgba(255,255,255,.05)", border: `1px solid ${C.bgHeader}`, borderRadius: 12, color: C.white, fontSize: 13, outline: "none" }, // NOVO
+  dietMeasureHistRow: { display: "flex", justifyContent: "space-between", padding: "8px 10px", borderRadius: 10, background: "rgba(255,255,255,.03)" }, // NOVO
+
+  dietShopHeader: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", marginBottom: 4 }, // NOVO
+  dietShopCount: { fontSize: 12, color: C.midGray }, // NOVO
+  dietShopReset: { background: "transparent", border: `1px solid ${C.bgHeader}`, color: C.lightGray, borderRadius: 10, padding: "6px 12px", fontSize: 11, fontWeight: 600, cursor: "pointer" }, // NOVO
+  dietShopRow: { display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", cursor: "pointer" }, // NOVO
+  dietShopCheck: { width: 18, height: 18, borderRadius: 6, border: `2px solid ${C.faint}`, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "#0A0A0B", fontWeight: 700 }, // NOVO
+  dietShopCheckOn: { background: C.accent, border: "none" }, // NOVO
+  dietShopLabel: { fontSize: 13, fontWeight: 500 }, // NOVO
+  dietShopLabelOn: { textDecoration: "line-through", opacity: 0.45 }, // NOVO
+
+  dietStatCols: { display: "flex", gap: 18, marginTop: 12 }, // NOVO
+  dietStatColLabel: { fontSize: 10, fontWeight: 700, color: C.midGray, letterSpacing: 0.6 }, // NOVO
+  dietStatColValue: { fontSize: 13, fontWeight: 700, marginTop: 3 }, // NOVO
+  dietBulletRow: { display: "flex", gap: 9, alignItems: "flex-start" }, // NOVO
+  dietBulletDot: { width: 5, height: 5, borderRadius: "50%", background: C.honey, marginTop: 6, flexShrink: 0 }, // NOVO
+  dietFruitGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }, // NOVO
 };
