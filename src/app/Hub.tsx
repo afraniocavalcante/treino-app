@@ -9,6 +9,7 @@ import { dayTotals, emptyDietDay, getDietStreak, isDayComplete, isMealDone, type
 import { getPerfectStreak, getTopBadges, getTotalPerfectDays, getTrainingVolumeByDate, isDeloadPhase } from "@/lib/insights";
 import { C, styles } from "@/lib/styles";
 import { signOut } from "@/lib/auth";
+import { guardOffline, loadWithCache, useOnline } from "@/lib/offline";
 import WorkoutApp from "./WorkoutApp";
 import DietApp from "./DietApp";
 import Settings from "./Settings";
@@ -18,6 +19,15 @@ import { MealCard, findNextMeal } from "./dietShared";
 
 type Route = "hub" | "treino" | "dieta" | "settings";
 type DietTab = "hoje" | "progresso" | "compras" | "mais";
+
+interface HubBundle {
+  p: Program | null;
+  h: HistoryEntry[];
+  plan: DietPlan | null;
+  today: { picks: DietDayPicks; supplements: Record<string, boolean> };
+  dh: DietDayLog[];
+  ms: DietMeasurement[];
+}
 
 function capitalizeFirst(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
@@ -51,29 +61,37 @@ export default function Hub() {
   const [dietHistory, setDietHistory] = useState<DietDayLog[]>([]);
   const [measurements, setMeasurements] = useState<DietMeasurement[]>([]);
   const [mealExpanded, setMealExpanded] = useState(true);
+  const [usingCache, setUsingCache] = useState(false);
+  const online = useOnline();
 
   useEffect(() => {
     if (route !== "hub") return;
     let cancelled = false;
     (async () => {
-      const [p, h, plan, today, dh, ms] = await Promise.all([
-        getActiveProgram(supabase),
-        getHistory(supabase),
-        getDietPlan(supabase),
-        getTodayDietLog(supabase),
-        getDietDayLogs(supabase),
-        getDietMeasurements(supabase),
-      ]);
+      const { data, offline } = await loadWithCache<HubBundle>("hub", async () => {
+        const [p, h, plan, today, dh, ms] = await Promise.all([
+          getActiveProgram(supabase),
+          getHistory(supabase),
+          getDietPlan(supabase),
+          getTodayDietLog(supabase),
+          getDietDayLogs(supabase),
+          getDietMeasurements(supabase),
+        ]);
+        return { p, h, plan, today, dh, ms };
+      });
       if (cancelled) return;
-      setProgram(p);
-      setTrainHistory(h);
-      setDietPlan(plan);
-      setTodayPicks(today.picks);
-      setTodaySupplements(today.supplements);
-      setDietHistory(dh);
-      setMeasurements(ms);
+      setProgram(data.p);
+      setTrainHistory(data.h);
+      setDietPlan(data.plan);
+      setTodayPicks(data.today.picks);
+      setTodaySupplements(data.today.supplements);
+      setDietHistory(data.dh);
+      setMeasurements(data.ms);
+      setUsingCache(offline);
       setLoading(false);
-    })();
+    })().catch(() => {
+      if (!cancelled) setLoading(false);
+    });
     return () => {
       cancelled = true;
     };
@@ -91,6 +109,7 @@ export default function Hub() {
   }
 
   function persistTodayPicks(next: DietDayPicks) {
+    if (guardOffline(online)) return;
     setTodayPicks(next);
     saveTodayDietLog(supabase, next, todaySupplements).catch((err) => console.error("Falha ao salvar dieta:", err));
   }
@@ -154,6 +173,10 @@ export default function Hub() {
             </div>
           )}
         </div>
+
+        {(!online || usingCache) && (
+          <div style={styles.offlineBanner}>📡 Sem conexão — modo de visualização, mudanças não serão salvas agora.</div>
+        )}
 
         {deload && <div style={styles.hubBanner}>📉 Semana de deload no treino — pode valer manter ou subir levemente as kcal essa semana.</div>}
 

@@ -273,6 +273,7 @@ export const styles: Record<string, CSSProperties> = {
   hubStreakPill: { display: "inline-flex", alignItems: "center", gap: 6, background: C.steelSoft, border: `1px solid ${C.steelEdge}`, borderRadius: 10, padding: "5px 11px", fontSize: 12, fontWeight: 700, color: C.steelLight }, // NOVO
   hubBadgePill: { display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(159,180,196,.08)", border: "1px solid rgba(159,180,196,.22)", borderRadius: 10, padding: "5px 11px", fontSize: 11.5, fontWeight: 600, color: C.steelMid }, // NOVO
   hubBanner: { margin: "14px 20px 0", padding: "11px 15px", borderRadius: 14, background: "rgba(240,180,41,.08)", border: "1px solid rgba(240,180,41,.26)", fontSize: 12, color: "#E0AE4E", lineHeight: 1.55 }, // NOVO
+  offlineBanner: { margin: "14px 20px 0", padding: "10px 14px", borderRadius: 14, background: "rgba(159,180,196,.1)", border: "1px solid rgba(159,180,196,.3)", fontSize: 12, color: C.steelLight, lineHeight: 1.5, display: "flex", alignItems: "center", gap: 8 }, // NOVO
 
   hubTrackCard: { borderRadius: 18, padding: "14px 18px", margin: "16px 20px 0", background: "rgba(255,255,255,.035)", border: `1px solid ${C.bgHeader}`, display: "flex", alignItems: "center", justifyContent: "space-between" }, // NOVO
   hubTrackLabel: { fontSize: 12, fontWeight: 700, color: C.lightGray, letterSpacing: 0.3 }, // NOVO

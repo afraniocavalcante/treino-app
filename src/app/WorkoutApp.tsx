@@ -36,6 +36,7 @@ import {
 import { C, DISPLAY, EASE, G, styles } from "@/lib/styles";
 import { cancelRestTimerNotification, scheduleRecoveryMealNudge, scheduleRestTimerNotification } from "@/lib/notifications";
 import { signOut } from "@/lib/auth";
+import { guardOffline, loadWithCache, useOnline } from "@/lib/offline";
 import ProgressChart from "./ProgressChart";
 import ProgramsOverview from "./ProgramsOverview";
 import ProgramEditor from "./ProgramEditor";
@@ -53,6 +54,16 @@ const MONTH_NAMES_FULL = [
 
 type Screen = "home" | "workout" | "done" | "history" | "programs" | "programEditor" | "library" | "conflict" | "preview" | "stats" | "completed";
 type Phase = "active" | "rest" | "input" | "hold";
+
+interface WorkoutBundle {
+  p: Program | null;
+  lib: LibraryExercise[];
+  h: HistoryEntry[];
+  w: Record<string, number>;
+  sp: Program | null;
+  cp: Program[];
+  seq: [string, number][]; // Map doesn't survive JSON (de)serialization for the offline cache
+}
 
 function initialPhaseFor(ex: ProgramWorkoutExercise): Phase {
   if (ex.holdSeconds) return "active";
@@ -100,27 +111,34 @@ export default function WorkoutApp({ onGoHub, autoStartWorkoutId }: { onGoHub?: 
   const [completedPrograms, setCompletedPrograms] = useState<Program[]>([]);
   const [programSeq, setProgramSeq] = useState<Map<string, number>>(new Map());
 
+  const [usingCache, setUsingCache] = useState(false);
+  const online = useOnline();
+
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const holdTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const phaseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   async function loadAll() {
-    const [p, lib, h, w, sp, cp, seq] = await Promise.all([
-      getActiveProgram(supabase),
-      getExerciseLibrary(supabase),
-      getHistory(supabase),
-      getLastWeights(supabase),
-      getScheduledProgram(supabase),
-      getCompletedPrograms(supabase),
-      getProgramSequence(supabase),
-    ]);
-    setProgram(p);
-    setLibrary(lib);
-    setHistory(h);
-    setLastWeights(w);
-    setScheduledProgram(sp);
-    setCompletedPrograms(cp);
-    setProgramSeq(seq);
+    const { data, offline } = await loadWithCache<WorkoutBundle>("workout", async () => {
+      const [p, lib, h, w, sp, cp, seq] = await Promise.all([
+        getActiveProgram(supabase),
+        getExerciseLibrary(supabase),
+        getHistory(supabase),
+        getLastWeights(supabase),
+        getScheduledProgram(supabase),
+        getCompletedPrograms(supabase),
+        getProgramSequence(supabase),
+      ]);
+      return { p, lib, h, w, sp, cp, seq: Array.from(seq.entries()) };
+    });
+    setProgram(data.p);
+    setLibrary(data.lib);
+    setHistory(data.h);
+    setLastWeights(data.w);
+    setScheduledProgram(data.sp);
+    setCompletedPrograms(data.cp);
+    setProgramSeq(new Map(data.seq));
+    setUsingCache(offline);
   }
 
   useEffect(() => {
@@ -156,6 +174,7 @@ export default function WorkoutApp({ onGoHub, autoStartWorkoutId }: { onGoHub?: 
 
   async function persistSession(log: SessionLog, workout: ProgramWorkout) {
     if (!program) return;
+    if (guardOffline(online)) return;
     const entry = {
       date: formatDate(new Date()),
       week: getCurrentWeek(program, history),
@@ -203,6 +222,7 @@ export default function WorkoutApp({ onGoHub, autoStartWorkoutId }: { onGoHub?: 
 
   function startWorkout(workout: ProgramWorkout) {
     if (!program || workout.exercises.length === 0) return;
+    if (guardOffline(online)) return;
     const firstEx = workout.exercises[0];
     const firstPhase = initialPhaseFor(firstEx);
     setActiveWorkoutId(workout.id);
@@ -591,6 +611,9 @@ export default function WorkoutApp({ onGoHub, autoStartWorkoutId }: { onGoHub?: 
           <h1 style={styles.logoTitle}>{program.name.toUpperCase()}</h1>
           <p style={styles.logoSub}>{program.weeks} Semanas</p>
         </div>
+        {(!online || usingCache) && (
+          <div style={{ ...styles.offlineBanner, margin: "0 26px 16px" }}>📡 Sem conexão — modo de visualização, treinos não serão salvos agora.</div>
+        )}
         <div style={styles.weekCard}>
           <div style={styles.weekDotsRow}>
             {Array.from({ length: program.weeks }).map((_, i) => {

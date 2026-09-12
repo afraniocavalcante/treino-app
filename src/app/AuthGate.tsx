@@ -21,11 +21,19 @@ export default function AuthGate() {
     const supabase = createClient();
     let cancelled = false;
 
-    supabase.auth.getUser().then(({ data }) => {
-      if (cancelled) return;
-      setAuthed(!!data.user);
-      setLoading(false);
-    });
+    // getSession() reads the persisted session from local storage — no network
+    // needed, so a valid login survives closing the app or going offline.
+    // getUser() (used before) revalidates against the server on every call,
+    // which was kicking people back to the login screen with no connection.
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (cancelled) return;
+        setAuthed(!!data.session?.user);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       setAuthed(!!session?.user);

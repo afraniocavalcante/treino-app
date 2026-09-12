@@ -25,9 +25,18 @@ import {
 } from "@/lib/diet";
 import { C, DISPLAY, styles } from "@/lib/styles";
 import { disableMealReminders, enableMealReminders, isNativePlatform } from "@/lib/notifications";
+import { guardOffline, loadWithCache, useOnline } from "@/lib/offline";
 import { MealCard } from "./dietShared";
 
 type Tab = "hoje" | "progresso" | "compras" | "mais";
+
+interface DietBundle {
+  p: DietPlan | null;
+  today: { picks: DietDayPicks; supplements: Record<string, boolean> };
+  h: DietDayLog[];
+  m: DietMeasurement[];
+  shop: Record<string, boolean>;
+}
 
 export default function DietApp({
   onExit, initialTab, initialOpenMealKey,
@@ -49,27 +58,35 @@ export default function DietApp({
   const [openMeal, setOpenMeal] = useState<string | null>(initialOpenMealKey ?? null);
   const [measureForm, setMeasureForm] = useState({ weight: "", waist: "", hip: "", arm: "", thigh: "" });
   const [remindersOn, setRemindersOn] = useState(false);
+  const [usingCache, setUsingCache] = useState(false);
+  const online = useOnline();
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const [p, today, h, m, shop] = await Promise.all([
-        getDietPlan(supabase),
-        getTodayDietLog(supabase),
-        getDietDayLogs(supabase),
-        getDietMeasurements(supabase),
-        getDietShoppingState(supabase),
-      ]);
+      const { data, offline } = await loadWithCache<DietBundle>("diet", async () => {
+        const [p, today, h, m, shop] = await Promise.all([
+          getDietPlan(supabase),
+          getTodayDietLog(supabase),
+          getDietDayLogs(supabase),
+          getDietMeasurements(supabase),
+          getDietShoppingState(supabase),
+        ]);
+        return { p, today, h, m, shop };
+      });
       if (cancelled) return;
-      setPlan(p);
-      setPicks(today.picks);
-      setSupplementsToday(today.supplements);
-      setHistory(h);
-      setMeasurements(m);
-      setShoppingState(shop);
+      setPlan(data.p);
+      setPicks(data.today.picks);
+      setSupplementsToday(data.today.supplements);
+      setHistory(data.h);
+      setMeasurements(data.m);
+      setShoppingState(data.shop);
+      setUsingCache(offline);
       setRemindersOn(localStorage.getItem("diet-reminders-on") === "1");
       setLoading(false);
-    })();
+    })().catch(() => {
+      if (!cancelled) setLoading(false);
+    });
     return () => {
       cancelled = true;
     };
@@ -77,6 +94,7 @@ export default function DietApp({
   }, []);
 
   function persist(nextPicks: DietDayPicks, nextSupplements: Record<string, boolean>) {
+    if (guardOffline(online)) return;
     setPicks(nextPicks);
     setSupplementsToday(nextSupplements);
     saveTodayDietLog(supabase, nextPicks, nextSupplements).catch((err) => console.error("Falha ao salvar dieta:", err));
@@ -143,6 +161,10 @@ export default function DietApp({
           </div>
         </div>
 
+        {(!online || usingCache) && (
+          <div style={styles.offlineBanner}>📡 Sem conexão — modo de visualização, mudanças não serão salvas agora.</div>
+        )}
+
         {tab === "hoje" && (
           <>
             <div style={styles.dietKcalCard}>
@@ -201,6 +223,7 @@ export default function DietApp({
         {tab === "progresso" && (
           <ProgressTab plan={plan} history={history} picks={picks} measurements={measurements} measureForm={measureForm} setMeasureForm={setMeasureForm}
             onSave={async () => {
+              if (guardOffline(online)) return;
               if (!measureForm.weight) return;
               const entry = await addDietMeasurement(supabase, {
                 weight: parseFloat(measureForm.weight) || null,
@@ -220,11 +243,13 @@ export default function DietApp({
             plan={plan}
             shoppingState={shoppingState}
             onToggle={(itemKey) => {
+              if (guardOffline(online)) return;
               const next = !shoppingState[itemKey];
               setShoppingState((prev) => ({ ...prev, [itemKey]: next }));
               setDietShoppingItem(supabase, itemKey, next).catch((err) => console.error("Falha ao salvar compras:", err));
             }}
             onReset={() => {
+              if (guardOffline(online)) return;
               setShoppingState({});
               clearDietShoppingState(supabase).catch((err) => console.error("Falha ao limpar compras:", err));
             }}
