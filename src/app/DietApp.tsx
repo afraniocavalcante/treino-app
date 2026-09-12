@@ -73,7 +73,7 @@ export default function DietApp({
           getDietShoppingState(supabase),
         ]);
         return { p, today, h, m, shop };
-      });
+      }, online);
       if (cancelled) return;
       setPlan(data.p);
       setPicks(data.today.picks);

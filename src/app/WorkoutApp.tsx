@@ -130,7 +130,7 @@ export default function WorkoutApp({ onGoHub, autoStartWorkoutId }: { onGoHub?: 
         getProgramSequence(supabase),
       ]);
       return { p, lib, h, w, sp, cp, seq: Array.from(seq.entries()) };
-    });
+    }, online);
     setProgram(data.p);
     setLibrary(data.lib);
     setHistory(data.h);

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { OnlineProvider } from "@/lib/offline";
 import { styles } from "@/lib/styles";
 import { notifyAppReady } from "@/lib/updater";
 import LoginForm from "./login/LoginForm";
@@ -46,5 +47,5 @@ export default function AuthGate() {
   }, []);
 
   if (loading) return <div style={styles.loadingWrap}>Carregando…</div>;
-  return authed ? <Hub /> : <LoginForm />;
+  return <OnlineProvider>{authed ? <Hub /> : <LoginForm />}</OnlineProvider>;
 }

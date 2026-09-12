@@ -78,7 +78,7 @@ export default function Hub() {
           getDietMeasurements(supabase),
         ]);
         return { p, h, plan, today, dh, ms };
-      });
+      }, online);
       if (cancelled) return;
       setProgram(data.p);
       setTrainHistory(data.h);
