@@ -60,7 +60,7 @@ function initialPhaseFor(ex: ProgramWorkoutExercise): Phase {
   return "input";
 }
 
-export default function WorkoutApp({ onGoHub }: { onGoHub?: () => void } = {}) {
+export default function WorkoutApp({ onGoHub, autoStartWorkoutId }: { onGoHub?: () => void; autoStartWorkoutId?: string } = {}) {
   const supabase = createClient();
 
   const [loading, setLoading] = useState(true);
@@ -140,6 +140,17 @@ export default function WorkoutApp({ onGoHub }: { onGoHub?: () => void } = {}) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const autoStartedRef = useRef(false);
+  useEffect(() => {
+    if (loading || autoStartedRef.current || !autoStartWorkoutId || !program) return;
+    const workout = program.workouts.find((w) => w.id === autoStartWorkoutId);
+    if (workout) {
+      autoStartedRef.current = true;
+      startWorkout(workout);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, program, autoStartWorkoutId]);
 
   const currentWorkout = program?.workouts.find((w) => w.id === activeWorkoutId) ?? null;
 

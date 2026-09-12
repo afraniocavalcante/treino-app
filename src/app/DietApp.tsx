@@ -18,26 +18,16 @@ import {
   emptyDietDay,
   formatDietDate,
   getDietStreak,
-  isMealDone,
-  type AlmocoPicks,
   type DietDayLog,
   type DietDayPicks,
-  type DietMeal,
   type DietMeasurement,
   type DietPlan,
 } from "@/lib/diet";
 import { C, DISPLAY, styles } from "@/lib/styles";
 import { disableMealReminders, enableMealReminders, isNativePlatform } from "@/lib/notifications";
+import { MealCard } from "./dietShared";
 
 type Tab = "hoje" | "progresso" | "compras" | "mais";
-
-const MEAL_ICON: Record<string, string> = {
-  cafe: "☕", almoco: "🍽️", lanche: "🍎", jantar: "🌙", sobremesa: "🍰",
-};
-
-function truncate(s: string, n: number): string {
-  return s.length > n ? s.slice(0, n) + "…" : s;
-}
 
 export default function DietApp({ onExit }: { onExit: () => void }) {
   const supabase = createClient();
@@ -114,21 +104,6 @@ export default function DietApp({ onExit }: { onExit: () => void }) {
     setOpenMeal((cur) => (cur === key ? null : key));
   }
 
-  function selectSimple(mealKey: "cafe" | "lanche" | "jantar", idx: number) {
-    persist({ ...picks, [mealKey]: idx }, supplementsToday);
-  }
-  function selectSobremesa(idx: number | "none") {
-    persist({ ...picks, sobremesa: idx }, supplementsToday);
-  }
-  function setPortion(mealKey: "cafePortion" | "lanchePortion" | "jantarPortion", val: number) {
-    persist({ ...picks, [mealKey]: val }, supplementsToday);
-  }
-  function selectAlmocoGroup(groupKey: keyof AlmocoPicks, idx: number) {
-    persist({ ...picks, almoco: { ...picks.almoco, [groupKey]: idx } }, supplementsToday);
-  }
-  function toggleAlmocoFruta() {
-    persist({ ...picks, almoco: { ...picks.almoco, fruta: !picks.almoco.fruta } }, supplementsToday);
-  }
   function toggleSupplement(key: string) {
     persist(picks, { ...supplementsToday, [key]: !supplementsToday[key] });
   }
@@ -144,23 +119,6 @@ export default function DietApp({ onExit }: { onExit: () => void }) {
       setRemindersOn(false);
       localStorage.setItem("diet-reminders-on", "0");
     }
-  }
-
-  function mealSummary(meal: DietMeal): string {
-    if (meal.key === "almoco") {
-      const a = picks.almoco;
-      if (a.carb == null && a.leg == null && a.prot == null) return "Escolha carboidrato, leguminosa e proteína";
-      const parts: string[] = [];
-      const grp = (k: string) => meal.groups?.radioGroups.find((g) => g.key === k);
-      if (a.carb != null) parts.push(grp("carb")?.items[a.carb] ?? "");
-      if (a.leg != null) parts.push(grp("leg")?.items[a.leg] ?? "");
-      if (a.prot != null) parts.push(grp("prot")?.items[a.prot] ?? "");
-      return truncate(parts.filter(Boolean).join(" + "), 40);
-    }
-    const idx = meal.key === "sobremesa" ? picks.sobremesa : picks[meal.key as "cafe" | "lanche" | "jantar"];
-    if (idx == null) return "Toque para escolher";
-    if (idx === "none") return "Sem sobremesa hoje";
-    return truncate(meal.options?.[idx as number]?.label ?? "", 42);
   }
 
   const suppDone = plan.supplements.filter((s) => supplementsToday[s.key]).length;
@@ -211,105 +169,16 @@ export default function DietApp({ onExit }: { onExit: () => void }) {
             </div>
 
             <div style={styles.dietMealList}>
-              {plan.meals.map((meal) => {
-                const done = isMealDone(meal, picks);
-                const isOpen = openMeal === meal.key;
-                return (
-                  <div key={meal.id} style={styles.dietMealCard}>
-                    <div style={styles.dietMealHead} onClick={() => toggleMeal(meal.key)}>
-                      <div style={styles.dietMealIcon}>{MEAL_ICON[meal.key] ?? "🍴"}</div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={styles.dietMealName}>{meal.label}</div>
-                        <div style={styles.dietMealSummary}>{mealSummary(meal)}</div>
-                      </div>
-                      <div style={{ ...styles.dietMealBadge, background: done ? C.accent : "rgba(255,255,255,.06)" }}>{done ? "✓" : ""}</div>
-                    </div>
-
-                    {isOpen && (
-                      <div style={styles.dietMealBody}>
-                        {meal.kind === "list" && meal.options && (
-                          <>
-                            {meal.options.map((opt, i) => {
-                              const idx = meal.key === "sobremesa" ? picks.sobremesa : picks[meal.key as "cafe" | "lanche" | "jantar"];
-                              const selected = idx === i;
-                              return (
-                                <div
-                                  key={i}
-                                  style={{ ...styles.dietOptionRow, ...(selected ? styles.dietOptionRowSelected : {}) }}
-                                  onClick={() => (meal.key === "sobremesa" ? selectSobremesa(i) : selectSimple(meal.key as "cafe" | "lanche" | "jantar", i))}
-                                >
-                                  <div style={{ ...styles.dietRadio, ...(selected ? styles.dietRadioSelected : {}) }} />
-                                  <div style={{ flex: 1 }}>
-                                    <div style={styles.dietOptionLabel}>{opt.label}</div>
-                                    <div style={styles.dietOptionMacro}>P {opt.p}g · C {opt.c}g · G {opt.g}g</div>
-                                  </div>
-                                  <div style={styles.dietOptionKcal}>{opt.kcal} kcal</div>
-                                </div>
-                              );
-                            })}
-                            {meal.hasNoneOption && (
-                              <div
-                                style={{ ...styles.dietOptionRow, ...(picks.sobremesa === "none" ? styles.dietOptionRowSelected : {}) }}
-                                onClick={() => selectSobremesa("none")}
-                              >
-                                <div style={{ ...styles.dietRadio, ...(picks.sobremesa === "none" ? styles.dietRadioSelected : {}) }} />
-                                <div style={styles.dietOptionLabel}>Não vou comer sobremesa hoje</div>
-                              </div>
-                            )}
-                            {meal.allowPortion && (
-                              <div style={styles.dietPortionRow}>
-                                {[0.5, 1, 1.5, 2].map((v) => {
-                                  const portionKey = (meal.key + "Portion") as "cafePortion" | "lanchePortion" | "jantarPortion";
-                                  const active = picks[portionKey] === v;
-                                  return (
-                                    <button
-                                      key={v}
-                                      style={{ ...styles.dietPortionBtn, ...(active ? styles.dietPortionBtnActive : {}) }}
-                                      onClick={() => setPortion(portionKey, v)}
-                                    >
-                                      {v}x
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </>
-                        )}
-
-                        {meal.kind === "builder" && meal.groups && (
-                          <>
-                            {meal.groups.radioGroups.map((grp) => (
-                              <div key={grp.key}>
-                                <div style={styles.dietGroupTitle}>{grp.title}</div>
-                                {grp.items.map((label, i) => {
-                                  const selected = picks.almoco[grp.key as keyof AlmocoPicks] === i;
-                                  return (
-                                    <div
-                                      key={i}
-                                      style={{ ...styles.dietOptionRow, padding: "7px 10px", ...(selected ? styles.dietOptionRowSelected : {}) }}
-                                      onClick={() => selectAlmocoGroup(grp.key as keyof AlmocoPicks, i)}
-                                    >
-                                      <div style={{ ...styles.dietRadio, ...(selected ? styles.dietRadioSelected : {}) }} />
-                                      <div style={styles.dietOptionLabel}>{label}</div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            ))}
-                            <div
-                              style={{ ...styles.dietOptionRow, padding: "7px 10px", marginTop: 4, ...(picks.almoco.fruta ? styles.dietOptionRowSelected : {}) }}
-                              onClick={toggleAlmocoFruta}
-                            >
-                              <div style={{ ...styles.dietRadio, borderRadius: 5, ...(picks.almoco.fruta ? styles.dietRadioSelected : {}) }} />
-                              <div style={styles.dietOptionLabel}>{meal.groups.toggle.label}</div>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+              {plan.meals.map((meal) => (
+                <MealCard
+                  key={meal.id}
+                  meal={meal}
+                  picks={picks}
+                  isOpen={openMeal === meal.key}
+                  onToggleOpen={() => toggleMeal(meal.key)}
+                  onChange={(next) => persist(next, supplementsToday)}
+                />
+              ))}
 
               <div style={styles.dietSuppMini} onClick={() => setTab("mais")}>
                 <div style={styles.dietSuppIcon}>💊</div>
