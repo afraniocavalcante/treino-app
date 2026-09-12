@@ -34,7 +34,7 @@ import {
   type SessionLog,
 } from "@/lib/program";
 import { C, DISPLAY, EASE, G, styles } from "@/lib/styles";
-import { cancelRestTimerNotification, scheduleRestTimerNotification } from "@/lib/notifications";
+import { cancelRestTimerNotification, scheduleRecoveryMealNudge, scheduleRestTimerNotification } from "@/lib/notifications";
 import { signOut } from "./actions";
 import ProgressChart from "./ProgressChart";
 import ProgramsOverview from "./ProgramsOverview";
@@ -176,6 +176,7 @@ export default function WorkoutApp({ onGoHub, autoStartWorkoutId }: { onGoHub?: 
       await upsertLastWeights(supabase, newLastWeights);
       setHistory((prev) => [...prev, { id, ...entry }]);
       setLastWeights(newLastWeights);
+      scheduleRecoveryMealNudge();
     } finally {
       setSaving(false);
     }

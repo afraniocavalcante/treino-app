@@ -36,6 +36,23 @@ export async function cancelRestTimerNotification(): Promise<void> {
   await LocalNotifications.cancel({ notifications: [{ id: REST_TIMER_NOTIFICATION_ID }] });
 }
 
+const RECOVERY_NUDGE_ID = 9002;
+
+/** One-shot nudge fired a bit after a workout finishes, pointing back at the diet module. */
+export async function scheduleRecoveryMealNudge(delayMinutes = 15): Promise<void> {
+  if (!(await ensurePermission())) return;
+  await LocalNotifications.schedule({
+    notifications: [
+      {
+        id: RECOVERY_NUDGE_ID,
+        title: "Treino concluído 🎉",
+        body: "Hora de repor: registre sua próxima refeição na Dieta.",
+        schedule: { at: new Date(Date.now() + delayMinutes * 60 * 1000) },
+      },
+    ],
+  });
+}
+
 const MEAL_REMINDER_BASE_ID = 9100;
 const MEAL_REMINDER_TIMES: { key: string; label: string; hour: number; minute: number }[] = [
   { key: "cafe", label: "Café da manhã", hour: 7, minute: 30 },

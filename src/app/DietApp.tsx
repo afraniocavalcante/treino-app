@@ -29,7 +29,13 @@ import { MealCard } from "./dietShared";
 
 type Tab = "hoje" | "progresso" | "compras" | "mais";
 
-export default function DietApp({ onExit }: { onExit: () => void }) {
+export default function DietApp({
+  onExit, initialTab, initialOpenMealKey,
+}: {
+  onExit: () => void;
+  initialTab?: Tab;
+  initialOpenMealKey?: string;
+}) {
   const supabase = createClient();
 
   const [loading, setLoading] = useState(true);
@@ -39,8 +45,8 @@ export default function DietApp({ onExit }: { onExit: () => void }) {
   const [history, setHistory] = useState<DietDayLog[]>([]);
   const [measurements, setMeasurements] = useState<DietMeasurement[]>([]);
   const [shoppingState, setShoppingState] = useState<Record<string, boolean>>({});
-  const [tab, setTab] = useState<Tab>("hoje");
-  const [openMeal, setOpenMeal] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>(initialTab ?? "hoje");
+  const [openMeal, setOpenMeal] = useState<string | null>(initialOpenMealKey ?? null);
   const [measureForm, setMeasureForm] = useState({ weight: "", waist: "", hip: "", arm: "", thigh: "" });
   const [remindersOn, setRemindersOn] = useState(false);
 
