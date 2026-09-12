@@ -35,7 +35,7 @@ import {
 } from "@/lib/program";
 import { C, DISPLAY, EASE, G, styles } from "@/lib/styles";
 import { cancelRestTimerNotification, scheduleRecoveryMealNudge, scheduleRestTimerNotification } from "@/lib/notifications";
-import { signOut } from "./actions";
+import { signOut } from "@/lib/auth";
 import ProgressChart from "./ProgressChart";
 import ProgramsOverview from "./ProgramsOverview";
 import ProgramEditor from "./ProgramEditor";
@@ -556,9 +556,7 @@ export default function WorkoutApp({ onGoHub, autoStartWorkoutId }: { onGoHub?: 
           <div style={styles.accentBar} />
           <div style={styles.homeHeader}>
             {onGoHub && <button style={styles.hubHomeBtn} onClick={onGoHub}>← HUB</button>}
-            <form action={signOut}>
-              <button type="submit" style={styles.signOutBtn}>Sair</button>
-            </form>
+            <button onClick={signOut} style={styles.signOutBtn}>Sair</button>
             <h1 style={styles.logoTitle}>TREINO</h1>
             <p style={styles.logoSub}>Nenhum programa ativo</p>
           </div>
@@ -589,9 +587,7 @@ export default function WorkoutApp({ onGoHub, autoStartWorkoutId }: { onGoHub?: 
         <div style={styles.accentBar} />
         <div style={styles.homeHeader}>
           {onGoHub && <button style={styles.hubHomeBtn} onClick={onGoHub}>← HUB</button>}
-          <form action={signOut}>
-            <button type="submit" style={styles.signOutBtn}>Sair</button>
-          </form>
+          <button onClick={signOut} style={styles.signOutBtn}>Sair</button>
           <h1 style={styles.logoTitle}>{program.name.toUpperCase()}</h1>
           <p style={styles.logoSub}>{program.weeks} Semanas</p>
         </div>

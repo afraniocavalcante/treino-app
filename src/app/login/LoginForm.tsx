@@ -1,12 +1,28 @@
 "use client";
 
-import { useActionState, useState } from "react";
-import { signIn } from "./actions";
+import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { C, DISPLAY, G, styles } from "@/lib/styles";
 
 export default function LoginForm() {
-  const [state, formAction, pending] = useActionState(signIn, null);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const email = String(formData.get("email") ?? "");
+    const password = String(formData.get("password") ?? "");
+
+    setPending(true);
+    setError(null);
+    const supabase = createClient();
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    setPending(false);
+    if (signInError) setError("Email ou senha inválidos.");
+    // On success, the auth-state listener in AuthGate picks up the new session and swaps the screen.
+  }
 
   return (
     <div style={styles.loginWrap}>
@@ -18,7 +34,7 @@ export default function LoginForm() {
       </h1>
       <p style={styles.loginSub}>Entre para ver seus treinos</p>
 
-      <form action={formAction} style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 28 }}>
+      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 28 }}>
         <label style={{ ...styles.field, ...(focusedField === "email" ? styles.fieldFocused : null) }}>
           <span style={styles.fieldLabel}>EMAIL</span>
           <input
@@ -45,9 +61,7 @@ export default function LoginForm() {
           />
         </label>
 
-        {state?.error && (
-          <p style={{ color: C.red, fontSize: 13, margin: 0 }}>{state.error}</p>
-        )}
+        {error && <p style={{ color: C.red, fontSize: 13, margin: 0 }}>{error}</p>}
 
         <button
           type="submit"

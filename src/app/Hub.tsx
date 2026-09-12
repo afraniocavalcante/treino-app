@@ -8,7 +8,7 @@ import { getDietDayLogs, getDietMeasurements, getDietPlan, getTodayDietLog, save
 import { dayTotals, emptyDietDay, getDietStreak, isDayComplete, isMealDone, type DietDayLog, type DietDayPicks, type DietMeasurement, type DietPlan } from "@/lib/diet";
 import { getPerfectStreak, getTopBadges, getTotalPerfectDays, getTrainingVolumeByDate, isDeloadPhase } from "@/lib/insights";
 import { C, styles } from "@/lib/styles";
-import { signOut } from "./actions";
+import { signOut } from "@/lib/auth";
 import WorkoutApp from "./WorkoutApp";
 import DietApp from "./DietApp";
 import ConsistencyHeatmap from "./ConsistencyHeatmap";
@@ -139,9 +139,7 @@ export default function Hub() {
     <div style={styles.page}>
       <div style={{ ...styles.container, paddingBottom: 48 }}>
         <div style={styles.hubHeader}>
-          <form action={signOut}>
-            <button type="submit" style={styles.signOutBtn}>Sair</button>
-          </form>
+          <button onClick={signOut} style={styles.signOutBtn}>Sair</button>
           <h1 style={styles.hubGreeting}>Hoje</h1>
           <p style={styles.hubSub}>{capitalizeFirst(new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" }))}</p>
           {program && dietPlan && (

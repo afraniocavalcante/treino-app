@@ -3,14 +3,10 @@ import type { CapacitorConfig } from "@capacitor/cli";
 const config: CapacitorConfig = {
   appId: "com.afranio.treinoapp",
   appName: "Treino & Dieta",
-  webDir: "public",
-  server: {
-    // The app is dynamic (Supabase Auth, live data) — the WebView loads the
-    // deployed site directly instead of a static bundle. `webDir` above is
-    // unused at runtime but required by the CLI.
-    url: "https://treino-app-snowy.vercel.app",
-    cleartext: false,
-  },
+  // Fully static build (next.config.ts: output "export") bundled locally —
+  // the app launches instantly and its shell works offline. Only the actual
+  // Supabase calls (auth, reading/saving data) need a network connection.
+  webDir: "out",
   ios: {
     contentInset: "always",
   },

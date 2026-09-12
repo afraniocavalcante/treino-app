@@ -1,5 +1,5 @@
-import Hub from "./Hub";
+import AuthGate from "./AuthGate";
 
 export default function Home() {
-  return <Hub />;
+  return <AuthGate />;
 }
