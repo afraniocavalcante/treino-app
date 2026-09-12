@@ -92,15 +92,16 @@ export interface AlmocoPicks {
   leg: number | null;
   prot: number | null;
   fruta: boolean;
+  skipped: boolean;
 }
 
 export interface DietDayPicks {
-  cafe: number | null;
+  cafe: number | "skip" | null;
   cafePortion: number;
   almoco: AlmocoPicks;
-  lanche: number | null;
+  lanche: number | "skip" | null;
   lanchePortion: number;
-  jantar: number | null;
+  jantar: number | "skip" | null;
   jantarPortion: number;
   sobremesa: number | "none" | null;
 }
@@ -109,13 +110,21 @@ export function emptyDietDay(): DietDayPicks {
   return {
     cafe: null,
     cafePortion: 1,
-    almoco: { carb: null, leg: null, prot: null, fruta: false },
+    almoco: { carb: null, leg: null, prot: null, fruta: false, skipped: false },
     lanche: null,
     lanchePortion: 1,
     jantar: null,
     jantarPortion: 1,
     sobremesa: null,
   };
+}
+
+/** A skipped meal counts as done (for streaks/checklists) but contributes no macros — the "avoid overshooting kcal" escape hatch. */
+export function isMealSkipped(meal: DietMeal, picks: DietDayPicks): boolean {
+  if (meal.key === "almoco") return picks.almoco.skipped;
+  if (meal.hasNoneOption) return false; // sobremesa already has its own "none" option
+  const idx = picks[meal.key as "cafe" | "lanche" | "jantar"];
+  return idx === "skip";
 }
 
 export interface DietDayLog {
@@ -145,7 +154,7 @@ function mealTotal(plan: DietPlan, key: string, picks: DietDayPicks): MacroValue
   if (!meal) return zero;
 
   if (key === "almoco") {
-    if (!meal.groups) return zero;
+    if (!meal.groups || picks.almoco.skipped) return zero;
     const a = picks.almoco;
     const total = { ...zero };
     const add = (m: MacroValues) => {
@@ -164,7 +173,7 @@ function mealTotal(plan: DietPlan, key: string, picks: DietDayPicks): MacroValue
 
   if (!meal.options) return zero;
   const idx = key === "sobremesa" ? picks.sobremesa : picks[key as "cafe" | "lanche" | "jantar"];
-  if (idx == null || idx === "none") return zero;
+  if (idx == null || idx === "none" || idx === "skip") return zero;
   const opt = meal.options[idx as number];
   if (!opt) return zero;
   const portion = key === "cafe" ? picks.cafePortion : key === "lanche" ? picks.lanchePortion : key === "jantar" ? picks.jantarPortion : 1;
@@ -186,7 +195,7 @@ export function dayTotals(plan: DietPlan, picks: DietDayPicks): MacroValues {
 export function isMealDone(meal: DietMeal, picks: DietDayPicks): boolean {
   if (meal.key === "almoco") {
     const a = picks.almoco;
-    return a.carb != null && a.leg != null && a.prot != null;
+    return a.skipped || (a.carb != null && a.leg != null && a.prot != null);
   }
   const idx = meal.key === "sobremesa" ? picks.sobremesa : picks[meal.key as "cafe" | "lanche" | "jantar"];
   return idx != null;

@@ -1,6 +1,6 @@
 "use client";
 
-import { isMealDone, type AlmocoPicks, type DietDayPicks, type DietMeal } from "@/lib/diet";
+import { isMealDone, isMealSkipped, type AlmocoPicks, type DietDayPicks, type DietMeal } from "@/lib/diet";
 import { C, styles } from "@/lib/styles";
 
 export const MEAL_ICON: Record<string, string> = {
@@ -14,6 +14,7 @@ function truncate(s: string, n: number): string {
 export function mealSummary(meal: DietMeal, picks: DietDayPicks): string {
   if (meal.key === "almoco") {
     const a = picks.almoco;
+    if (a.skipped) return "Pulada hoje";
     if (a.carb == null && a.leg == null && a.prot == null) return "Escolha carboidrato, leguminosa e proteína";
     const parts: string[] = [];
     const grp = (k: string) => meal.groups?.radioGroups.find((g) => g.key === k);
@@ -25,6 +26,7 @@ export function mealSummary(meal: DietMeal, picks: DietDayPicks): string {
   const idx = meal.key === "sobremesa" ? picks.sobremesa : picks[meal.key as "cafe" | "lanche" | "jantar"];
   if (idx == null) return "Toque para escolher";
   if (idx === "none") return "Sem sobremesa hoje";
+  if (idx === "skip") return "Pulada hoje";
   return truncate(meal.options?.[idx as number]?.label ?? "", 42);
 }
 
@@ -39,6 +41,7 @@ export function MealCard({
   onChange: (next: DietDayPicks) => void;
 }) {
   const done = isMealDone(meal, picks);
+  const skipped = isMealSkipped(meal, picks);
 
   function selectSimple(mealKey: "cafe" | "lanche" | "jantar", idx: number) {
     onChange({ ...picks, [mealKey]: idx });
@@ -50,10 +53,18 @@ export function MealCard({
     onChange({ ...picks, [portionKey]: val });
   }
   function selectAlmocoGroup(groupKey: keyof AlmocoPicks, idx: number) {
-    onChange({ ...picks, almoco: { ...picks.almoco, [groupKey]: idx } });
+    onChange({ ...picks, almoco: { ...picks.almoco, [groupKey]: idx, skipped: false } });
   }
   function toggleAlmocoFruta() {
     onChange({ ...picks, almoco: { ...picks.almoco, fruta: !picks.almoco.fruta } });
+  }
+  function skipMeal() {
+    if (meal.key === "almoco") onChange({ ...picks, almoco: { ...picks.almoco, skipped: true } });
+    else onChange({ ...picks, [meal.key]: "skip" });
+  }
+  function unskipMeal() {
+    if (meal.key === "almoco") onChange({ ...picks, almoco: { ...picks.almoco, skipped: false } });
+    else onChange({ ...picks, [meal.key]: null });
   }
 
   return (
@@ -64,11 +75,25 @@ export function MealCard({
           <div style={styles.dietMealName}>{meal.label}</div>
           <div style={styles.dietMealSummary}>{mealSummary(meal, picks)}</div>
         </div>
-        <div style={{ ...styles.dietMealBadge, background: done ? C.accent : "rgba(255,255,255,.06)" }}>{done ? "✓" : ""}</div>
+        <div style={{ ...styles.dietMealBadge, background: skipped ? "rgba(255,255,255,.12)" : done ? C.accent : "rgba(255,255,255,.06)" }}>
+          {skipped ? "–" : done ? "✓" : ""}
+        </div>
       </div>
 
-      {isOpen && (
+      {isOpen && skipped && (
         <div style={styles.dietMealBody}>
+          <div style={{ fontSize: 12.5, color: C.midGray, textAlign: "center", padding: "6px 0 10px" }}>Refeição pulada — não conta kcal.</div>
+          <button style={styles.dietShopReset} onClick={unskipMeal}>Desfazer</button>
+        </div>
+      )}
+
+      {isOpen && !skipped && (
+        <div style={styles.dietMealBody}>
+          {!meal.hasNoneOption && (
+            <button style={{ ...styles.dietShopReset, alignSelf: "flex-end", marginBottom: 2 }} onClick={skipMeal}>
+              Pular refeição
+            </button>
+          )}
           {meal.kind === "list" && meal.options && (
             <>
               {meal.options.map((opt, i) => {
