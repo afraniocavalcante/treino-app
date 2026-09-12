@@ -6,8 +6,8 @@ import { getActiveProgram, getHistory } from "@/lib/data";
 import { getCurrentWeek, getNextWorkoutIndex, getPhaseInfo, getTrainingStreak, isRestDay, formatDate, type Program, type HistoryEntry } from "@/lib/program";
 import { getDietDayLogs, getDietMeasurements, getDietPlan, getTodayDietLog, saveTodayDietLog } from "@/lib/dietData";
 import { dayTotals, emptyDietDay, getDietStreak, isDayComplete, isMealDone, type DietDayLog, type DietDayPicks, type DietMeasurement, type DietPlan } from "@/lib/diet";
-import { getPerfectStreak, getProteinForWorkout, getTopBadges, getTotalPerfectDays, getTrainingVolumeByDate, isDeloadPhase } from "@/lib/insights";
-import { C, DISPLAY, styles } from "@/lib/styles";
+import { getPerfectStreak, getTopBadges, getTotalPerfectDays, getTrainingVolumeByDate, isDeloadPhase } from "@/lib/insights";
+import { C, styles } from "@/lib/styles";
 import { signOut } from "./actions";
 import WorkoutApp from "./WorkoutApp";
 import DietApp from "./DietApp";
@@ -17,6 +17,23 @@ import { MealCard, findNextMeal } from "./dietShared";
 
 type Route = "hub" | "treino" | "dieta";
 type DietTab = "hoje" | "progresso" | "compras" | "mais";
+
+function capitalizeFirst(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function Ring({ frac, total, color, icon }: { frac: number; total: number; color: string; icon: string }) {
+  const deg = total > 0 ? Math.round((frac / total) * 360) : 0;
+  return (
+    <div style={styles.hubRingCol}>
+      <div style={styles.hubRingWrap}>
+        <div style={{ ...styles.hubRingMask, background: `conic-gradient(${color} ${deg}deg, rgba(255,255,255,.08) 0)` }} />
+        <div style={styles.hubRingIcon}>{icon}</div>
+      </div>
+      <span style={styles.hubRingFrac}>{frac} de {total}</span>
+    </div>
+  );
+}
 
 export default function Hub() {
   const supabase = createClient();
@@ -32,7 +49,7 @@ export default function Hub() {
   const [todaySupplements, setTodaySupplements] = useState<Record<string, boolean>>({});
   const [dietHistory, setDietHistory] = useState<DietDayLog[]>([]);
   const [measurements, setMeasurements] = useState<DietMeasurement[]>([]);
-  const [openMeal, setOpenMeal] = useState(false);
+  const [mealExpanded, setMealExpanded] = useState(true);
 
   useEffect(() => {
     if (route !== "hub") return;
@@ -105,33 +122,18 @@ export default function Hub() {
   const nextMeal = dietPlan ? findNextMeal(dietPlan.meals, todayPicks) : null;
   const dietStreak = dietPlan ? getDietStreak(dietPlan, todayPicks, dietHistory) : 0;
   const totals = dietPlan ? dayTotals(dietPlan, todayPicks) : { kcal: 0, p: 0, c: 0, g: 0 };
+  const kcalPct = dietPlan ? Math.min(100, Math.round((totals.kcal / dietPlan.kcalTarget) * 100)) : 0;
   const perfectStreak = getPerfectStreak(trainedDates, dietedDates);
   const totalPerfectDays = getTotalPerfectDays(trainedDates, dietedDates);
   const badges = getTopBadges(perfectStreak, totalPerfectDays);
 
-  const proteinComparison =
-    dietPlan && nextWorkout ? getProteinForWorkout(trainHistory, dietHistory, dietPlan, nextWorkout.id, todayStr) : null;
+  const requiredMeals = dietPlan ? dietPlan.meals.filter((m) => m.key !== "sobremesa") : [];
+  const mealsDone = requiredMeals.filter((m) => isMealDone(m, todayPicks)).length;
+  const suppTotal = dietPlan ? dietPlan.supplements.length : 0;
+  const suppDone = dietPlan ? dietPlan.supplements.filter((s) => todaySupplements[s.key]).length : 0;
+  const treinoDone = restToday || trainedToday ? 1 : 0;
 
-  const tasks: { key: string; label: string; done: boolean; onClick: () => void }[] = [];
-  if (program && !restToday && nextWorkout) {
-    tasks.push({ key: "treino", label: `Treino: ${nextWorkout.name}`, done: trainedToday, onClick: () => goTreino(nextWorkout!.id) });
-  }
-  if (dietPlan) {
-    for (const meal of dietPlan.meals) {
-      if (meal.key === "sobremesa") continue;
-      tasks.push({ key: meal.key, label: meal.label, done: isMealDone(meal, todayPicks), onClick: () => goDieta("hoje", meal.key) });
-    }
-    if (dietPlan.supplements.length > 0) {
-      const suppDone = dietPlan.supplements.filter((s) => todaySupplements[s.key]).length;
-      tasks.push({
-        key: "supplements",
-        label: `Suplementos (${suppDone}/${dietPlan.supplements.length})`,
-        done: suppDone === dietPlan.supplements.length,
-        onClick: () => goDieta("mais"),
-      });
-    }
-  }
-  const tasksDone = tasks.filter((t) => t.done).length;
+  const workoutPending = !!(program && !restToday && nextWorkout && !trainedToday);
 
   return (
     <div style={styles.page}>
@@ -141,113 +143,86 @@ export default function Hub() {
             <button type="submit" style={styles.signOutBtn}>Sair</button>
           </form>
           <h1 style={styles.hubGreeting}>Hoje</h1>
-          <p style={styles.hubSub}>{new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })}</p>
+          <p style={styles.hubSub}>{capitalizeFirst(new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" }))}</p>
           {program && dietPlan && (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
-              <div style={styles.dietStreakPill}>🔥 {perfectStreak} {perfectStreak === 1 ? "dia perfeito" : "dias perfeitos"}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
+              <div style={styles.hubStreakPill}>🔥 {perfectStreak} {perfectStreak === 1 ? "dia perfeito" : "dias perfeitos"}</div>
               {badges.map((b) => (
-                <div key={b.id} style={{ ...styles.dietStreakPill, background: "rgba(255,255,255,.06)", border: `1px solid ${C.bgHeader}`, color: C.lightGray }}>
-                  {b.emoji} {b.label}
-                </div>
+                <div key={b.id} style={styles.hubBadgePill}>{b.emoji} {b.label}</div>
               ))}
             </div>
           )}
         </div>
 
-        {deload && (
-          <div style={{ margin: "14px 20px 0", padding: "10px 14px", borderRadius: 14, background: "rgba(240,180,41,.1)", border: "1px solid rgba(240,180,41,.3)", fontSize: 12, color: C.honey, lineHeight: 1.5 }}>
-            📉 Semana de deload no treino — pode valer manter ou subir levemente as kcal essa semana.
-          </div>
-        )}
+        {deload && <div style={styles.hubBanner}>📉 Semana de deload no treino — pode valer manter ou subir levemente as kcal essa semana.</div>}
 
-        {tasks.length > 0 && (
-          <div style={{ ...styles.dietSectionCard, margin: "14px 20px 0" }}>
-            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 }}>
-              <span style={styles.dietSectionTitle}>Hoje, falta fazer</span>
-              <span style={{ fontSize: 11, color: C.midGray }}>{tasksDone} de {tasks.length}</span>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {tasks.map((t) => (
-                <div key={t.key} style={styles.dietShopRow} onClick={t.onClick}>
-                  <div style={{ ...styles.dietShopCheck, ...(t.done ? styles.dietShopCheckOn : {}) }}>{t.done ? "✓" : ""}</div>
-                  <div style={{ ...styles.dietShopLabel, ...(t.done ? styles.dietShopLabelOn : {}) }}>{t.label}</div>
-                </div>
-              ))}
+        {program && dietPlan && (
+          <div style={styles.hubTrackCard}>
+            <span style={styles.hubTrackLabel}>Seu dia até agora</span>
+            <div style={styles.hubRingRow}>
+              <Ring frac={treinoDone} total={1} color={C.accent} icon="🏋️" />
+              <Ring frac={mealsDone} total={requiredMeals.length} color={C.honey} icon="🍽️" />
+              <Ring frac={suppDone} total={suppTotal} color={C.steel} icon="💊" />
             </div>
           </div>
         )}
 
-        <div style={styles.hubCards}>
-          {/* Treino */}
-          <div style={styles.dietSectionCard}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }} onClick={() => goTreino()}>
-              <div style={{ ...styles.hubModuleIcon, background: "rgba(232,255,71,.14)" }}>🏋️</div>
+        {dietPlan && (
+          <div style={{ ...styles.hubActionCard, border: `1px solid ${C.honeyEdge}` }} onClick={() => setMealExpanded((v) => !v)}>
+            <div style={styles.hubActionHead}>
+              <div style={{ ...styles.hubModuleIcon, background: "rgba(240,180,41,.14)" }}>🍽️</div>
               <div style={{ flex: 1 }}>
-                <div style={styles.hubModuleTitle}>Treino</div>
-                <div style={styles.hubModuleSub}>
-                  {!program ? "Nenhum programa ativo" : restToday ? "Hoje é dia de descanso" : nextWorkout ? `${nextWorkout.emoji} ${nextWorkout.name}` : ""}
-                </div>
-                {program && <div style={styles.hubModuleStat}>🔥 {trainStreak} {trainStreak === 1 ? "dia" : "dias"} · Semana {week}/{program.weeks}</div>}
+                <div style={styles.hubModuleTitle}>Dieta</div>
+                <div style={styles.hubModuleSub}>{totals.kcal} de {dietPlan.kcalTarget} kcal hoje</div>
+                <div style={{ ...styles.hubModuleStat, color: C.honey, marginTop: 2 }}>🔥 {dietStreak} {dietStreak === 1 ? "dia" : "dias"}</div>
               </div>
-              <div style={{ color: C.midGray, fontSize: 18, fontWeight: 700 }}>›</div>
+              <button style={styles.hubViewBtn} onClick={(e) => { e.stopPropagation(); goDieta(); }}>Ver dieta →</button>
             </div>
-            {program && !restToday && nextWorkout && (
-              <button
-                className="tab-press"
-                style={{ ...styles.confirmBtn, marginTop: 14, ...(trainedToday ? { background: "rgba(255,255,255,.06)", color: C.midGray, boxShadow: "none" } : {}) }}
-                disabled={trainedToday}
-                onClick={() => goTreino(nextWorkout!.id)}
-              >
-                {trainedToday ? "✓ Treino de hoje concluído" : `Treinar: ${nextWorkout.name} →`}
-              </button>
-            )}
-            {proteinComparison && proteinComparison.count > 0 && (
-              <div style={{ fontSize: 11, color: C.midGray, marginTop: 10, lineHeight: 1.5 }}>
-                📊 Em dias de {nextWorkout!.name}, sua proteína média foi {proteinComparison.avg}g (hoje até agora: {totals.p}g).
-              </div>
-            )}
-          </div>
+            <div style={styles.hubKcalTrack}>
+              <div style={{ ...styles.hubKcalFill, width: `${kcalPct}%` }} />
+            </div>
 
-          {/* Dieta — próxima refeição, expansível e funcional */}
-          {dietPlan && (
-            <div style={styles.dietSectionCard}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", flex: 1 }} onClick={() => goDieta()}>
-                  <div style={{ ...styles.hubModuleIcon, background: "rgba(240,180,41,.14)" }}>🍽️</div>
-                  <div>
-                    <div style={styles.hubModuleTitle}>Dieta</div>
-                    <div style={styles.hubModuleSub}>{totals.kcal} de {dietPlan.kcalTarget} kcal hoje</div>
-                    <div style={{ ...styles.hubModuleStat, color: C.honey }}>🔥 {dietStreak} {dietStreak === 1 ? "dia" : "dias"}</div>
-                  </div>
-                </div>
-                <div style={{ color: C.midGray, fontSize: 18, fontWeight: 700 }} onClick={() => goDieta()}>›</div>
-              </div>
-
-              {nextMeal ? (
+            {nextMeal && (
+              <>
+                <div style={styles.hubUpperLabel}>Próxima refeição</div>
                 <MealCard
                   meal={nextMeal}
                   picks={todayPicks}
-                  isOpen={openMeal}
-                  onToggleOpen={() => setOpenMeal((v) => !v)}
+                  isOpen={mealExpanded}
+                  onToggleOpen={() => setMealExpanded((v) => !v)}
                   onChange={persistTodayPicks}
                 />
-              ) : (
-                <div style={{ fontSize: 12.5, color: C.midGray, textAlign: "center", padding: "6px 0" }}>Todas as refeições de hoje já foram registradas 🎉</div>
-              )}
+              </>
+            )}
+          </div>
+        )}
+
+        {program && (
+          <div
+            style={{ ...styles.hubCompactRow, border: `1px solid ${workoutPending ? "rgba(232,255,71,.28)" : C.bgHeader}`, cursor: workoutPending ? "pointer" : "default" }}
+            onClick={workoutPending ? () => goTreino(nextWorkout!.id) : undefined}
+          >
+            <div style={styles.hubCompactIcon}>🏋️</div>
+            <div style={{ flex: 1 }}>
+              <div style={styles.hubCompactTitle}>{restToday ? "Dia de descanso" : nextWorkout ? `${nextWorkout.emoji} ${nextWorkout.name}` : "—"}</div>
+              <div style={styles.hubCompactSub}>🔥 {trainStreak} {trainStreak === 1 ? "dia" : "dias"} · Semana {week}/{program.weeks}</div>
             </div>
-          )}
-        </div>
+            {restToday ? (
+              <span style={{ fontSize: 11.5, color: C.midGray, flexShrink: 0 }}>Descanso</span>
+            ) : trainedToday ? (
+              <div style={styles.hubDoneBadge}>✓</div>
+            ) : (
+              <div style={styles.hubCtaText}><span>Treinar</span><span style={{ fontSize: 14 }}>›</span></div>
+            )}
+          </div>
+        )}
 
         {program && dietPlan && (
           <>
+            <div style={styles.hubRetroLabel}>Retrospectiva</div>
             <ConsistencyHeatmap trainedDates={trainedDates} dietDates={dietedDates} />
             <WeightVolumeChart measurements={measurements} volumeByDate={getTrainingVolumeByDate(trainHistory)} />
-            <div style={{ ...styles.dietSectionCard, margin: "16px 20px 0" }}>
-              <div style={{ fontFamily: DISPLAY, fontSize: 12, fontWeight: 600, letterSpacing: 1, color: C.midGray, marginBottom: 8 }}>RESUMO</div>
-              <div style={{ fontSize: 12.5, color: C.lightGray, lineHeight: 1.6 }}>
-                {totalPerfectDays} {totalPerfectDays === 1 ? "dia completo" : "dias completos"} (treino + dieta) registrados até agora.
-              </div>
-            </div>
+            <div style={styles.hubRetroFoot}>{totalPerfectDays} {totalPerfectDays === 1 ? "dia completo" : "dias completos"} (treino + dieta) registrados até agora.</div>
           </>
         )}
       </div>

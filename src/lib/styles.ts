@@ -25,6 +25,13 @@ export const C = {
   red: "#FF5F52",
   green: "#E8FF47", // o verde de sucesso passa a ser o próprio acento
   honey: "#F0B429", // NOVO — acento de carboidrato / dieta
+  honeySoft: "rgba(240,180,41,.10)", // NOVO
+  honeyEdge: "rgba(240,180,41,.22)", // NOVO
+  steel: "#9FB4C4", // NOVO — acento neutro para tudo que é combinado (treino + dieta) ou retrospectivo
+  steelLight: "#C9DAE4", // NOVO
+  steelMid: "#AEBFC8", // NOVO
+  steelSoft: "rgba(159,180,196,.10)", // NOVO
+  steelEdge: "rgba(159,180,196,.28)", // NOVO
 };
 
 export const DISPLAY = "'Sora', -apple-system, BlinkMacSystemFont, sans-serif";
@@ -262,6 +269,44 @@ export const styles: Record<string, CSSProperties> = {
   hubNavDot: { width: 5, height: 5, borderRadius: "50%", background: "currentColor", opacity: 0 }, // NOVO
   hubNavDotActive: { opacity: 1 }, // NOVO
 
+  // ── Hub redesign (aço = tom neutro para dados combinados/retrospectivos) ──
+  hubStreakPill: { display: "inline-flex", alignItems: "center", gap: 6, background: C.steelSoft, border: `1px solid ${C.steelEdge}`, borderRadius: 10, padding: "5px 11px", fontSize: 12, fontWeight: 700, color: C.steelLight }, // NOVO
+  hubBadgePill: { display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(159,180,196,.08)", border: "1px solid rgba(159,180,196,.22)", borderRadius: 10, padding: "5px 11px", fontSize: 11.5, fontWeight: 600, color: C.steelMid }, // NOVO
+  hubBanner: { margin: "14px 20px 0", padding: "11px 15px", borderRadius: 14, background: "rgba(240,180,41,.08)", border: "1px solid rgba(240,180,41,.26)", fontSize: 12, color: "#E0AE4E", lineHeight: 1.55 }, // NOVO
+
+  hubTrackCard: { borderRadius: 18, padding: "14px 18px", margin: "16px 20px 0", background: "rgba(255,255,255,.035)", border: `1px solid ${C.bgHeader}`, display: "flex", alignItems: "center", justifyContent: "space-between" }, // NOVO
+  hubTrackLabel: { fontSize: 12, fontWeight: 700, color: C.lightGray, letterSpacing: 0.3 }, // NOVO
+  hubRingRow: { display: "flex", gap: 16 }, // NOVO
+  hubRingCol: { display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }, // NOVO
+  hubRingWrap: { width: 44, height: 44, position: "relative", flexShrink: 0 }, // NOVO
+  hubRingMask: { position: "absolute", inset: 0, borderRadius: "50%", WebkitMask: "radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 6px))", mask: "radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 6px))" } as CSSProperties, // NOVO
+  hubRingIcon: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }, // NOVO
+  hubRingFrac: { fontSize: 9.5, color: C.midGray, fontWeight: 600 }, // NOVO
+
+  hubActionCard: { borderRadius: 24, padding: "20px 22px", margin: "18px 20px 0", background: C.bgCard, backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", cursor: "pointer" }, // NOVO
+  hubActionHead: { display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }, // NOVO
+  hubViewBtn: { background: "transparent", border: `1px solid ${C.bgHeader}`, color: C.lightGray, borderRadius: 10, padding: "7px 12px", fontSize: 11, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }, // NOVO
+  hubKcalTrack: { height: 5, borderRadius: 3, background: "rgba(255,255,255,.07)", overflow: "hidden", marginBottom: 16 }, // NOVO
+  hubKcalFill: { height: "100%", borderRadius: 3, background: C.honey }, // NOVO
+  hubUpperLabel: { fontSize: 11, fontWeight: 700, letterSpacing: 1, color: C.faint, textTransform: "uppercase", marginBottom: 8 }, // NOVO
+
+  hubCompactRow: { borderRadius: 18, padding: "14px 18px", margin: "16px 20px 0", background: "rgba(255,255,255,.035)", display: "flex", alignItems: "center", gap: 12 }, // NOVO
+  hubCompactIcon: { width: 40, height: 40, borderRadius: 13, background: "rgba(232,255,71,.14)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }, // NOVO
+  hubCompactTitle: { fontSize: 14, fontWeight: 600 }, // NOVO
+  hubCompactSub: { fontSize: 11.5, color: C.midGray, marginTop: 1 }, // NOVO
+  hubDoneBadge: { width: 26, height: 26, borderRadius: "50%", background: "rgba(232,255,71,.16)", border: "1px solid rgba(232,255,71,.4)", color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, flexShrink: 0 }, // NOVO
+  hubCtaText: { display: "flex", alignItems: "center", gap: 5, flexShrink: 0, color: C.accent, fontSize: 12, fontWeight: 600 }, // NOVO
+
+  hubRetroLabel: { margin: "26px 20px 0 22px", fontSize: 11, fontWeight: 700, letterSpacing: 1.4, color: C.faint, textTransform: "uppercase" }, // NOVO
+  hubRetroCard: { borderRadius: 18, padding: "16px 18px", margin: "10px 20px 0", background: "rgba(255,255,255,.025)", border: "1px solid rgba(255,255,255,.055)" }, // NOVO
+  hubRetroTitle: { fontSize: 12.5, fontWeight: 600, color: C.lightGray }, // NOVO
+  hubRetroFoot: { textAlign: "center", fontSize: 11.5, color: C.faint, lineHeight: 1.6, margin: "16px 20px 0" }, // NOVO
+
+  mealChevron: { fontSize: 13, color: C.midGray, flexShrink: 0, transition: `transform .25s ${EASE}` }, // NOVO
+  mealBodyWrap: { display: "grid", overflow: "hidden", transition: `grid-template-rows .32s ${EASE}` }, // NOVO (gridTemplateRows set inline)
+  fruitSwitchTrack: { width: 38, height: 22, borderRadius: 11, flexShrink: 0, cursor: "pointer", position: "relative", transition: `background .15s ${EASE}` }, // NOVO
+  fruitSwitchThumb: { width: 16, height: 16, borderRadius: "50%", position: "absolute", top: 2, transition: `left .15s ${EASE}` }, // NOVO
+
   // ── Dieta ───────────────────────────────────────────────
   dietHeader: { padding: "30px 26px 16px" },
   dietStreakPill: { display: "inline-flex", alignItems: "center", gap: 6, background: C.accentSoft, border: `1px solid ${C.accentEdge}`, borderRadius: 10, padding: "5px 10px", fontSize: 12, fontWeight: 700, color: C.accent }, // NOVO
@@ -284,16 +329,16 @@ export const styles: Record<string, CSSProperties> = {
   dietMealBadge: { width: 24, height: 24, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#0A0A0B" }, // NOVO
   dietMealBody: { marginTop: 12, paddingTop: 12, borderTop: `1px solid ${C.line}`, display: "flex", flexDirection: "column", gap: 6, animation: `tabFadeUp .2s ${EASE}` }, // NOVO
   dietOptionRow: { display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", borderRadius: 13, cursor: "pointer", transition: `background .18s ${EASE}` }, // NOVO
-  dietOptionRowSelected: { background: C.accentSoft }, // NOVO
+  dietOptionRowSelected: { background: C.honeySoft }, // NOVO
   dietRadio: { width: 16, height: 16, borderRadius: "50%", flexShrink: 0, border: `2px solid ${C.faint}`, transition: `all .18s ${EASE}` }, // NOVO
-  dietRadioSelected: { border: `2px solid ${C.accent}`, background: C.accent }, // NOVO
+  dietRadioSelected: { border: "none", background: C.honey }, // NOVO
   dietOptionLabel: { flex: 1, fontSize: 13, fontWeight: 500, lineHeight: 1.35 }, // NOVO
   dietOptionMacro: { fontSize: 10.5, color: C.midGray, marginTop: 1 }, // NOVO
   dietOptionKcal: { fontSize: 11, fontWeight: 700, color: C.midGray, whiteSpace: "nowrap" }, // NOVO
   dietGroupTitle: { fontSize: 10, fontWeight: 700, letterSpacing: 1.6, color: C.faint, textTransform: "uppercase", margin: "8px 0 4px" }, // NOVO
   dietPortionRow: { display: "flex", gap: 7, marginTop: 6 }, // NOVO
   dietPortionBtn: { flex: 1, padding: "8px 0", borderRadius: 11, border: `1px solid ${C.bgHeader}`, background: "transparent", color: C.white, fontSize: 12, fontWeight: 700, cursor: "pointer" }, // NOVO
-  dietPortionBtnActive: { background: C.accent, border: "none", color: "#0A0A0B" }, // NOVO
+  dietPortionBtnActive: { background: C.honey, border: "none", color: "#0A0A0B" }, // NOVO
 
   dietSuppMini: { ...glass, borderRadius: 20, padding: "14px 17px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }, // NOVO
   dietSuppIcon: { width: 36, height: 36, borderRadius: 12, background: C.accentSoft, color: C.accent, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }, // NOVO

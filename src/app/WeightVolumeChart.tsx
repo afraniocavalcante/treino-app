@@ -29,8 +29,8 @@ export default function WeightVolumeChart({
 
   if (points.length === 0) {
     return (
-      <div style={{ ...styles.dietSectionCard, margin: "16px 20px 0" }}>
-        <div style={styles.dietSectionTitle}>Peso × carga de treino</div>
+      <div style={styles.hubRetroCard}>
+        <div style={styles.hubRetroTitle}>Peso × carga de treino</div>
         <div style={{ fontSize: 12, color: C.midGray, textAlign: "center", padding: "10px 0" }}>
           Registre seu peso na Dieta pra ver essa correlação aqui.
         </div>
@@ -55,23 +55,21 @@ export default function WeightVolumeChart({
   const barW = Math.min(14, (plotW / points.length) * 0.5);
 
   return (
-    <div style={{ ...styles.dietSectionCard, margin: "16px 20px 0" }}>
-      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 4 }}>
-        <span style={styles.dietSectionTitle}>Peso × carga de treino</span>
-      </div>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 6 }}>
-        <span style={{ fontFamily: DISPLAY, fontSize: 20, fontWeight: 700, color: C.honey }}>
+    <div style={styles.hubRetroCard}>
+      <div style={{ ...styles.hubRetroTitle, marginBottom: 4 }}>Peso × carga de treino</div>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6 }}>
+        <span style={{ fontFamily: DISPLAY, fontSize: 18, fontWeight: 700, color: C.steelMid }}>
           {active ? active.weight : points[points.length - 1].weight}
-          <span style={{ fontSize: 11, color: C.midGray, fontWeight: 600 }}> kg</span>
+          <span style={{ fontSize: 10.5, color: C.faint, fontWeight: 600 }}> kg</span>
         </span>
-        <span style={{ fontSize: 10.5, color: C.midGray }}>{active ? formatDateDisplay(active.date) : "peso mais recente"}</span>
+        <span style={{ fontSize: 10.5, color: C.faint }}>{active ? formatDateDisplay(active.date) : "peso mais recente"}</span>
       </div>
 
       <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} style={{ display: "block", overflow: "visible" }}>
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={C.honey} stopOpacity="0.2" />
-            <stop offset="100%" stopColor={C.honey} stopOpacity="0" />
+            <stop offset="0%" stopColor={C.steel} stopOpacity="0.2" />
+            <stop offset="100%" stopColor={C.steel} stopOpacity="0" />
           </linearGradient>
         </defs>
 
@@ -84,8 +82,8 @@ export default function WeightVolumeChart({
               width={barW}
               height={barH(p.volume)}
               rx={2}
-              fill={C.accentSoft}
-              stroke={C.accentEdge}
+              fill={C.steelSoft}
+              stroke={C.steelEdge}
             />
           ) : null
         )}
@@ -94,33 +92,33 @@ export default function WeightVolumeChart({
           <path
             d={linePath}
             fill="none"
-            stroke={C.honey}
-            strokeWidth="2.5"
+            stroke={C.steel}
+            strokeWidth="2.25"
             strokeLinecap="round"
             strokeLinejoin="round"
             pathLength={1}
-            style={{ filter: "drop-shadow(0 0 8px rgba(240,180,41,.45))", strokeDasharray: 1, animation: "tabChartDraw 900ms cubic-bezier(.2,.8,.2,1) both" }}
+            style={{ strokeDasharray: 1, animation: "tabChartDraw 900ms cubic-bezier(.2,.8,.2,1) both" }}
           />
         )}
 
         {points.map((p, i) => (
           <g key={p.date}>
             <circle cx={xAt(i)} cy={yAt(p.weight)} r={10} fill="transparent" onMouseEnter={() => setActiveIdx(i)} onClick={() => setActiveIdx(i === activeIdx ? null : i)} style={{ cursor: "pointer" }} />
-            <circle cx={xAt(i)} cy={yAt(p.weight)} r={i === activeIdx ? 5 : 3.5} fill={C.honey} stroke={C.bgCard} strokeWidth={1.5} />
+            <circle cx={xAt(i)} cy={yAt(p.weight)} r={i === activeIdx ? 5 : 3.5} fill={C.steel} stroke={C.bgCard} strokeWidth={1.5} />
           </g>
         ))}
 
-        <text x={xAt(0)} y={H - 6} fontSize="9.5" fill={C.midGray} textAnchor="start">{formatDateDisplay(points[0].date)}</text>
+        <text x={xAt(0)} y={H - 6} fontSize="9.5" fill={C.faint} textAnchor="start">{formatDateDisplay(points[0].date)}</text>
         {points.length > 1 && (
-          <text x={xAt(points.length - 1)} y={H - 6} fontSize="9.5" fill={C.midGray} textAnchor="end">{formatDateDisplay(points[points.length - 1].date)}</text>
+          <text x={xAt(points.length - 1)} y={H - 6} fontSize="9.5" fill={C.faint} textAnchor="end">{formatDateDisplay(points[points.length - 1].date)}</text>
         )}
       </svg>
-      <div style={{ display: "flex", gap: 14, marginTop: 4 }}>
+      <div style={{ display: "flex", gap: 14, marginTop: 2 }}>
         <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 9.5, color: C.midGray }}>
-          <span style={{ width: 10, height: 2, background: C.honey, display: "inline-block" }} /> peso
+          <span style={{ width: 10, height: 2, background: C.steel, display: "inline-block" }} /> peso
         </span>
         <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 9.5, color: C.midGray }}>
-          <span style={{ width: 8, height: 8, background: C.accentSoft, border: `1px solid ${C.accentEdge}`, borderRadius: 2, display: "inline-block" }} /> volume de treino no dia
+          <span style={{ width: 8, height: 8, background: C.steelSoft, border: `1px solid ${C.steelEdge}`, borderRadius: 2, display: "inline-block" }} /> volume de treino no dia
         </span>
       </div>
     </div>
