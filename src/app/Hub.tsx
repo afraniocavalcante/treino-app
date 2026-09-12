@@ -11,11 +11,12 @@ import { C, styles } from "@/lib/styles";
 import { signOut } from "@/lib/auth";
 import WorkoutApp from "./WorkoutApp";
 import DietApp from "./DietApp";
+import Settings from "./Settings";
 import ConsistencyHeatmap from "./ConsistencyHeatmap";
 import WeightVolumeChart from "./WeightVolumeChart";
 import { MealCard, findNextMeal } from "./dietShared";
 
-type Route = "hub" | "treino" | "dieta";
+type Route = "hub" | "treino" | "dieta" | "settings";
 type DietTab = "hoje" | "progresso" | "compras" | "mais";
 
 function capitalizeFirst(s: string): string {
@@ -96,6 +97,7 @@ export default function Hub() {
 
   if (route === "treino") return <WorkoutApp onGoHub={() => setRoute("hub")} autoStartWorkoutId={autoStartWorkoutId} />;
   if (route === "dieta") return <DietApp onExit={() => setRoute("hub")} initialTab={dietEntry.tab} initialOpenMealKey={dietEntry.mealKey} />;
+  if (route === "settings") return <Settings onExit={() => setRoute("hub")} />;
 
   if (loading) return <div style={styles.loadingWrap}>Carregando…</div>;
 
@@ -139,6 +141,7 @@ export default function Hub() {
     <div style={styles.page}>
       <div style={{ ...styles.container, paddingBottom: 48 }}>
         <div style={styles.hubHeader}>
+          <button onClick={() => setRoute("settings")} style={styles.hubHomeBtn}>⚙️</button>
           <button onClick={signOut} style={styles.signOutBtn}>Sair</button>
           <h1 style={styles.hubGreeting}>Hoje</h1>
           <p style={styles.hubSub}>{capitalizeFirst(new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" }))}</p>

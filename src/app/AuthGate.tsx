@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { styles } from "@/lib/styles";
+import { notifyAppReady } from "@/lib/updater";
 import LoginForm from "./login/LoginForm";
 import Hub from "./Hub";
 
@@ -16,6 +17,7 @@ export default function AuthGate() {
   const [authed, setAuthed] = useState(false);
 
   useEffect(() => {
+    notifyAppReady();
     const supabase = createClient();
     let cancelled = false;
 
