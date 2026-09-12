@@ -27,6 +27,7 @@ import {
   type DietPlan,
 } from "@/lib/diet";
 import { C, DISPLAY, styles } from "@/lib/styles";
+import { disableMealReminders, enableMealReminders, isNativePlatform } from "@/lib/notifications";
 
 type Tab = "hoje" | "progresso" | "compras" | "mais";
 
@@ -51,6 +52,7 @@ export default function DietApp({ onExit }: { onExit: () => void }) {
   const [tab, setTab] = useState<Tab>("hoje");
   const [openMeal, setOpenMeal] = useState<string | null>(null);
   const [measureForm, setMeasureForm] = useState({ weight: "", waist: "", hip: "", arm: "", thigh: "" });
+  const [remindersOn, setRemindersOn] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -69,6 +71,7 @@ export default function DietApp({ onExit }: { onExit: () => void }) {
       setHistory(h);
       setMeasurements(m);
       setShoppingState(shop);
+      setRemindersOn(localStorage.getItem("diet-reminders-on") === "1");
       setLoading(false);
     })();
     return () => {
@@ -128,6 +131,19 @@ export default function DietApp({ onExit }: { onExit: () => void }) {
   }
   function toggleSupplement(key: string) {
     persist(picks, { ...supplementsToday, [key]: !supplementsToday[key] });
+  }
+
+  async function toggleReminders() {
+    const next = !remindersOn;
+    if (next) {
+      const granted = await enableMealReminders();
+      setRemindersOn(granted);
+      localStorage.setItem("diet-reminders-on", granted ? "1" : "0");
+    } else {
+      await disableMealReminders();
+      setRemindersOn(false);
+      localStorage.setItem("diet-reminders-on", "0");
+    }
   }
 
   function mealSummary(meal: DietMeal): string {
@@ -341,7 +357,7 @@ export default function DietApp({ onExit }: { onExit: () => void }) {
         )}
 
         {tab === "mais" && (
-          <MaisTab plan={plan} supplementsToday={supplementsToday} onToggleSupplement={toggleSupplement} />
+          <MaisTab plan={plan} supplementsToday={supplementsToday} onToggleSupplement={toggleSupplement} remindersOn={remindersOn} onToggleReminders={toggleReminders} />
         )}
       </div>
 
@@ -491,11 +507,13 @@ function ShoppingTab({
 }
 
 function MaisTab({
-  plan, supplementsToday, onToggleSupplement,
+  plan, supplementsToday, onToggleSupplement, remindersOn, onToggleReminders,
 }: {
   plan: DietPlan;
   supplementsToday: Record<string, boolean>;
   onToggleSupplement: (key: string) => void;
+  remindersOn: boolean;
+  onToggleReminders: () => void;
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 18 }}>
@@ -551,6 +569,23 @@ function MaisTab({
               <div style={{ fontSize: 12.5, lineHeight: 1.5 }}>{r}</div>
             </div>
           ))}
+        </div>
+      </div>
+
+      <div style={styles.dietSectionCard}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ fontFamily: DISPLAY, fontWeight: 600, fontSize: 14.5 }}>Lembretes de refeição</div>
+          <button
+            style={{ ...styles.dietPortionBtn, width: "auto", padding: "6px 14px", ...(remindersOn ? styles.dietPortionBtnActive : {}) }}
+            onClick={onToggleReminders}
+          >
+            {remindersOn ? "Ativado" : "Desativado"}
+          </button>
+        </div>
+        <div style={{ fontSize: 11.5, color: C.midGray, marginTop: 8, lineHeight: 1.5 }}>
+          {isNativePlatform()
+            ? "Notifica no horário de cada refeição, mesmo com o app fechado."
+            : "Disponível apenas no app nativo (iOS) — no navegador as notificações não persistem com o app fechado."}
         </div>
       </div>
 

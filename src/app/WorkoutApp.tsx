@@ -34,6 +34,7 @@ import {
   type SessionLog,
 } from "@/lib/program";
 import { C, DISPLAY, EASE, G, styles } from "@/lib/styles";
+import { cancelRestTimerNotification, scheduleRestTimerNotification } from "@/lib/notifications";
 import { signOut } from "./actions";
 import ProgressChart from "./ProgressChart";
 import ProgramsOverview from "./ProgramsOverview";
@@ -242,12 +243,15 @@ export default function WorkoutApp({ onGoHub }: { onGoHub?: () => void } = {}) {
     let t = restSeconds ?? program.restSeconds;
     setRestTime(t);
     setRestTotal(t);
+    const nextEx = getCurrentExercise();
+    scheduleRestTimerNotification(t, nextEx?.name ?? "próxima série");
     timerRef.current = setInterval(() => {
       t -= 1;
       setRestTime(t);
       if (t <= 0) {
         if (timerRef.current) clearInterval(timerRef.current);
         timerRef.current = null;
+        cancelRestTimerNotification();
         onDone();
       }
     }, 1000);
@@ -345,12 +349,14 @@ export default function WorkoutApp({ onGoHub }: { onGoHub?: () => void } = {}) {
   function jumpToExercise(idx: number) {
     if (completedExercises.has(idx)) return;
     if (timerRef.current) clearInterval(timerRef.current);
+    cancelRestTimerNotification();
     goToStep(idx, 0);
   }
 
   function skipRest() {
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = null;
+    cancelRestTimerNotification();
     const ex = getCurrentExercise();
     if (!ex || !currentWorkout) return;
     if (currentSet + 1 >= ex.sets) {
@@ -374,6 +380,7 @@ export default function WorkoutApp({ onGoHub }: { onGoHub?: () => void } = {}) {
     setShowExitConfirm(false);
     if (timerRef.current) clearInterval(timerRef.current);
     if (holdTimerRef.current) clearInterval(holdTimerRef.current);
+    cancelRestTimerNotification();
     if (completed && currentWorkout && Object.keys(sessionLog).length > 0) {
       persistSession(sessionLog, currentWorkout);
       goScreen("done");
