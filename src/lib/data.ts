@@ -85,6 +85,35 @@ export async function upsertLastWeights(
   if (error) throw error;
 }
 
+/**
+ * Shared by WorkoutApp.tsx's own persistSession and the Apple Watch session
+ * listener (Hub.tsx) — same save path regardless of where the session was
+ * actually trained, so there's one place that knows how "finishing a
+ * workout" turns into a saved session + updated last-used weights.
+ */
+export async function persistWorkoutSession(
+  supabase: SupabaseClient,
+  entry: {
+    date: string;
+    week: number;
+    programId: string;
+    programWorkoutId: string;
+    workoutLabel: string;
+    workoutEmoji: string;
+    sessionLabel: string;
+    exercises: SessionLog;
+  },
+  lastWeights: Record<string, number>
+): Promise<{ id: string; lastWeights: Record<string, number> }> {
+  const id = await saveSession(supabase, entry);
+  const newLastWeights = { ...lastWeights };
+  Object.entries(entry.exercises).forEach(([exId, sets]) => {
+    if (sets && sets.length > 0) newLastWeights[exId] = Math.max(...sets.map((s) => s.kg || 0));
+  });
+  await upsertLastWeights(supabase, newLastWeights);
+  return { id, lastWeights: newLastWeights };
+}
+
 export async function getExerciseLibrary(supabase: SupabaseClient): Promise<LibraryExercise[]> {
   const { data, error } = await supabase
     .from("exercise_library")

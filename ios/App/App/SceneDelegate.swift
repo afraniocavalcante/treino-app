@@ -1,6 +1,15 @@
 import UIKit
 import Capacitor
 
+/// WatchBridgePlugin isn't an installed npm Capacitor package, so it's not in
+/// capacitor.config.json's auto-registration list — it has to be registered
+/// by hand once the bridge exists, which capacitorDidLoad() is for.
+class MainViewController: CAPBridgeViewController {
+    override func capacitorDidLoad() {
+        bridge?.registerPluginInstance(WatchBridgePlugin())
+    }
+}
+
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     var window: UIWindow?
 
@@ -8,7 +17,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let windowScene = scene as? UIWindowScene else { return }
 
         window = UIWindow(windowScene: windowScene)
-        let rootViewController = CAPBridgeViewController()
+        let rootViewController = MainViewController()
         // Colors the native strip behind the status bar/Dynamic Island — that
         // area sits outside the WebView (Capacitor insets the WebView below
         // it), so CSS can't reach it. Cream matches the app's majority

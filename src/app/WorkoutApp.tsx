@@ -9,8 +9,7 @@ import {
   getLastWeights,
   getProgramSequence,
   getScheduledProgram,
-  saveSession as saveSessionRemote,
-  upsertLastWeights,
+  persistWorkoutSession,
 } from "@/lib/data";
 import {
   formatDate,
@@ -33,8 +32,9 @@ import {
   type SessionLog,
 } from "@/lib/program";
 import { C, DISPLAY, EASE, G, styles } from "@/lib/styles";
-import { cancelRestTimerNotification, scheduleRecoveryMealNudge, scheduleRestTimerNotification } from "@/lib/notifications";
+import { cancelRestTimerNotification, isNativePlatform, scheduleRecoveryMealNudge, scheduleRestTimerNotification } from "@/lib/notifications";
 import { guardOffline, loadWithCache, useOnline } from "@/lib/offline";
+import { sendTodayWorkout } from "@/lib/watchBridge";
 import ProgressChart from "./ProgressChart";
 import Heatmap from "./Heatmap";
 
@@ -162,6 +162,32 @@ export default function WorkoutApp({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, program, autoStartWorkoutId]);
 
+  // Keeps the Apple Watch app in sync with "today's workout" — sent again
+  // whenever the underlying data changes (e.g. after finishing a session,
+  // getNextWorkoutIndex rotates to the next one).
+  useEffect(() => {
+    if (loading || !program || !isNativePlatform()) return;
+    const nextIdx = getNextWorkoutIndex(program, history);
+    const workout = program.workouts[nextIdx];
+    if (!workout) return;
+    sendTodayWorkout({
+      programId: program.id,
+      programWorkoutId: workout.id,
+      workoutLabel: workout.name,
+      workoutEmoji: workout.emoji,
+      sessionLabel: getSessionLabel(program, workout, history),
+      exercises: workout.exercises.map((ex) => ({
+        id: ex.exerciseId,
+        name: ex.name,
+        unit: ex.unit,
+        sets: ex.sets,
+        reps: ex.reps,
+        restSeconds: ex.restSeconds ?? program.restSeconds,
+        lastKg: lastWeights[ex.exerciseId] ?? null,
+      })),
+    });
+  }, [loading, program, history, lastWeights]);
+
   const currentWorkout = program?.workouts.find((w) => w.id === activeWorkoutId) ?? null;
 
   async function persistSession(log: SessionLog, workout: ProgramWorkout) {
@@ -179,12 +205,7 @@ export default function WorkoutApp({
     };
     setSaving(true);
     try {
-      const id = await saveSessionRemote(supabase, entry);
-      const newLastWeights = { ...lastWeights };
-      Object.entries(log).forEach(([exId, sets]) => {
-        if (sets && sets.length > 0) newLastWeights[exId] = Math.max(...sets.map((s) => s.kg || 0));
-      });
-      await upsertLastWeights(supabase, newLastWeights);
+      const { id, lastWeights: newLastWeights } = await persistWorkoutSession(supabase, entry, lastWeights);
       setHistory((prev) => [...prev, { id, ...entry }]);
       setLastWeights(newLastWeights);
       scheduleRecoveryMealNudge();

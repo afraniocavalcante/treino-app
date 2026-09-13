@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { getActiveProgram, getHistory } from "@/lib/data";
+import { getActiveProgram, getHistory, getLastWeights, persistWorkoutSession } from "@/lib/data";
 import { getCurrentWeek, getNextWorkoutIndex, getPhaseInfo, isRestDay, formatDate, type Program, type HistoryEntry } from "@/lib/program";
+import { drainPendingSessions, onSessionReceived, type WatchCompletedSession } from "@/lib/watchBridge";
 import { getDietDayLogs, getDietMeasurements, getDietPlan, getTodayDietLog, saveTodayDietLog } from "@/lib/dietData";
 import { emptyDietDay, isDayFullyComplete, isMealDone, type DietDayLog, type DietDayPicks, type DietMeasurement, type DietPlan } from "@/lib/diet";
 import { getPerfectStreak, getTotalPerfectDays, getTrainingVolumeByDate, isDeloadPhase } from "@/lib/insights";
@@ -98,6 +99,57 @@ export default function Hub() {
     });
     return () => {
       cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Sessions trained on the Apple Watch arrive via WatchConnectivity (native
+  // plugin, see WatchBridgePlugin.swift) — refs avoid resubscribing every time
+  // program/trainHistory change, since this listener is set up once.
+  const programRef = useRef<Program | null>(null);
+  const trainHistoryRef = useRef<HistoryEntry[]>([]);
+  useEffect(() => {
+    programRef.current = program;
+  }, [program]);
+  useEffect(() => {
+    trainHistoryRef.current = trainHistory;
+  }, [trainHistory]);
+
+  useEffect(() => {
+    async function processCompletedSession(session: WatchCompletedSession) {
+      const activeProgram = programRef.current;
+      if (!activeProgram || activeProgram.id !== session.programId) return;
+      const entry = {
+        date: session.date,
+        week: getCurrentWeek(activeProgram, trainHistoryRef.current),
+        programId: session.programId,
+        programWorkoutId: session.programWorkoutId,
+        workoutLabel: session.workoutLabel,
+        workoutEmoji: session.workoutEmoji ?? "",
+        sessionLabel: session.sessionLabel,
+        exercises: session.exercises,
+      };
+      const lastWeights = await getLastWeights(supabase);
+      const { id } = await persistWorkoutSession(supabase, entry, lastWeights);
+      setTrainHistory((prev) => [...prev, { id, ...entry }]);
+    }
+
+    async function drainAndProcess() {
+      const sessions = await drainPendingSessions();
+      for (const session of sessions) {
+        await processCompletedSession(session).catch((err) =>
+          console.error("Falha ao salvar sessão vinda do Apple Watch:", err)
+        );
+      }
+    }
+
+    drainAndProcess();
+    const listenerPromise = onSessionReceived(() => {
+      drainAndProcess();
+    });
+
+    return () => {
+      listenerPromise.then((handle) => handle.remove());
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
