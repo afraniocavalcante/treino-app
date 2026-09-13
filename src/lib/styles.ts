@@ -70,7 +70,12 @@ export const styles: Record<string, CSSProperties> = {
   // The single top-level app frame (rendered once, in Hub.tsx) — fixed to the
   // real screen height and never itself scrolls. Replaces `page` for every
   // screen that lives behind the tab bar (everything except login/loading).
-  appShell: { height: "100dvh", width: "100%", maxWidth: 440, margin: "0 auto", display: "flex", flexDirection: "column", overflow: "hidden", background: G.screen, backgroundAttachment: "fixed", color: C.white, fontFamily: BODY },
+  // "var(--app-vh, 100dvh)": 100dvh alone can be measured before the WKWebView's
+  // safe-area insetting has actually settled right after launch (briefly taller
+  // than the real visible area, showing native chrome below the tab bar until
+  // something forces a reflow). useViewportHeight (offline.ts) sets --app-vh
+  // from the actual window.innerHeight on mount/resize, which is already settled.
+  appShell: { height: "var(--app-vh, 100dvh)", width: "100%", maxWidth: 440, margin: "0 auto", display: "flex", flexDirection: "column", overflow: "hidden", background: G.screen, backgroundAttachment: "fixed", color: C.white, fontFamily: BODY },
   // The one scrolling region inside appShell — whichever module is active
   // lives in here. The tab bar sits below this as a normal flex sibling
   // (not position:fixed), so it can't drift the way a fixed element can in
