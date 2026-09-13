@@ -8,7 +8,17 @@ const config: CapacitorConfig = {
   // Supabase calls (auth, reading/saving data) need a network connection.
   webDir: "out",
   ios: {
-    contentInset: "always",
+    // "never" lets the WebView draw full-bleed under the status bar/notch, so
+    // our own background (cream/navy, set in CSS) shows there instead of the
+    // native root view's white — the page pads itself with
+    // env(safe-area-inset-top) instead. StatusBar.setOverlaysWebView keeps the
+    // status bar itself transparent so this actually shows through.
+    contentInset: "never",
+  },
+  plugins: {
+    StatusBar: {
+      overlaysWebView: true,
+    },
   },
 };
 
