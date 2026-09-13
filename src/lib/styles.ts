@@ -66,8 +66,8 @@ const glass: CSSProperties = {
 };
 
 export const styles: Record<string, CSSProperties> = {
-  page: { minHeight: "100vh", background: C.bgPage, display: "flex", justifyContent: "center", fontFamily: BODY },
-  container: { width: "100%", maxWidth: 440, minHeight: "100vh", background: G.screen, backgroundAttachment: "fixed", color: C.white, position: "relative", overflow: "hidden", paddingBottom: 96 },
+  page: { minHeight: "100dvh", background: C.bgPage, display: "flex", justifyContent: "center", fontFamily: BODY },
+  container: { width: "100%", maxWidth: 440, minHeight: "100dvh", background: G.screen, backgroundAttachment: "fixed", color: C.white, position: "relative", overflow: "hidden", paddingBottom: 96 },
   accentBar: { height: 2, background: C.accent, boxShadow: "none" },
 
   // ── Home ────────────────────────────────────────────────
@@ -198,7 +198,7 @@ export const styles: Record<string, CSSProperties> = {
   histSetKg: { fontFamily: DISPLAY, fontSize: 11.5, fontWeight: 600, color: C.white },
 
   // ── Conclusão ───────────────────────────────────────────
-  doneWrap: { minHeight: "100vh", background: G.screenDone, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 30px", textAlign: "center" },
+  doneWrap: { minHeight: "100dvh", background: G.screenDone, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 30px", textAlign: "center" },
   doneBadgeWrap: { position: "relative", width: 112, height: 112, display: "flex", alignItems: "center", justifyContent: "center" },
   doneGlow: { position: "absolute", inset: 0, borderRadius: "50%", background: C.accent, filter: "blur(22px)", opacity: 0.28, animation: "tabGlowBreathe 3.2s ease-in-out infinite" },
   doneCheck: { width: 80, height: 80, borderRadius: "50%", background: "rgba(13,27,42,.06)", border: "1.5px solid rgba(13,27,42,.6)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30, color: C.accent, animation: `tabPopIn .7s ${EASE} both` },
@@ -242,7 +242,7 @@ export const styles: Record<string, CSSProperties> = {
 
   // ── Login ───────────────────────────────────────────────
   // Login continua em navy fixo mesmo com o resto do app em paleta clara — cores literais, não vêm de C.*.
-  loginWrap: { minHeight: "100vh", background: "#0D1B2A", display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "0 28px 56px", position: "relative", overflow: "hidden" }, // NOVO
+  loginWrap: { minHeight: "100dvh", background: "#0D1B2A", display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "0 28px 56px", position: "relative", overflow: "hidden" }, // NOVO
   loginMark: { width: 52, height: 52, borderRadius: 6, background: "#C97B4A", color: "#F5EFE3", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: DISPLAY, fontSize: 22, fontWeight: 700, position: "relative", zIndex: 1 }, // NOVO
   loginTitle: { fontFamily: DISPLAY, fontSize: 32, fontWeight: 600, letterSpacing: -0.5, lineHeight: 1.15, margin: "26px 0 0", color: "#F5EFE3", position: "relative", zIndex: 1 }, // NOVO
   loginSub: { fontSize: 13, color: "#9BA8B6", margin: "12px 0 0", lineHeight: 1.5, position: "relative", zIndex: 1 }, // NOVO
@@ -258,7 +258,7 @@ export const styles: Record<string, CSSProperties> = {
   sheetTitle: { fontFamily: DISPLAY, fontSize: 22, fontWeight: 600, letterSpacing: -0.3, lineHeight: 1.24, margin: "20px 0 0" }, // NOVO
   sheetBody: { fontSize: 13, color: C.midGray, margin: "10px 0 0", lineHeight: 1.55 }, // NOVO
 
-  loadingWrap: { minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: C.midGray, fontSize: 13 },
+  loadingWrap: { minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", color: C.midGray, fontSize: 13 },
 
   // ── Hub ─────────────────────────────────────────────────
   hubHeader: { padding: "38px 26px 6px" },

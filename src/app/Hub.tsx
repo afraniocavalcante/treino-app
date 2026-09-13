@@ -70,7 +70,6 @@ export default function Hub() {
   const online = useOnline();
 
   useEffect(() => {
-    if (route !== "hub" && route !== "insights") return;
     let cancelled = false;
     (async () => {
       const { data, offline } = await loadWithCache<HubBundle>("hub", async () => {
@@ -101,7 +100,7 @@ export default function Hub() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [route]);
+  }, []);
 
   function goTreino(workoutId?: string) {
     setAutoStartWorkoutId(workoutId);
@@ -142,33 +141,6 @@ export default function Hub() {
     else goSettings();
   }
 
-  if (route === "treino") {
-    return (
-      <>
-        <WorkoutApp onGoHub={() => setRoute("hub")} onOpenProgramSettings={() => goSettings("treino")} autoStartWorkoutId={autoStartWorkoutId} />
-        <TabBar active={activeTab} onChange={handleTabChange} />
-      </>
-    );
-  }
-  if (route === "dieta") {
-    return (
-      <>
-        <DietApp onExit={() => setRoute("hub")} initialTab={dietEntry.tab} initialOpenMealKey={dietEntry.mealKey} />
-        <TabBar active={activeTab} onChange={handleTabChange} />
-      </>
-    );
-  }
-  if (route === "settings") {
-    return (
-      <>
-        <Settings onExit={() => setRoute("hub")} initialTab={settingsTab} />
-        <TabBar active={activeTab} onChange={handleTabChange} />
-      </>
-    );
-  }
-
-  if (loading) return <div style={styles.loadingWrap}>Carregando…</div>;
-
   const todayStr = formatDate(new Date());
   const trainedToday = trainHistory.some((e) => e.date === todayStr);
   const trainedDates = new Set(trainHistory.map((e) => e.date));
@@ -199,24 +171,12 @@ export default function Hub() {
 
   const workoutPending = !!(program && !restToday && nextWorkout && !trainedToday);
 
-  if (route === "insights") {
-    return (
-      <>
-        <Insights
-          perfectStreak={perfectStreak}
-          totalPerfectDays={totalPerfectDays}
-          trainedDates={trainedDates}
-          dietedDates={dietedDates}
-          measurements={measurements}
-          volumeByDate={getTrainingVolumeByDate(trainHistory)}
-        />
-        <TabBar active={activeTab} onChange={handleTabChange} />
-      </>
-    );
-  }
-
   return (
     <>
+    <div style={{ display: route === "hub" ? "block" : "none" }}>
+    {loading ? (
+      <div style={styles.loadingWrap}>Carregando…</div>
+    ) : (
     <div style={styles.page}>
       <div style={styles.container}>
         <div style={{ padding: "26px 22px 2px" }}>
@@ -328,6 +288,36 @@ export default function Hub() {
         )}
       </div>
     </div>
+    )}
+    </div>
+
+    <div style={{ display: route === "dieta" ? "block" : "none" }}>
+      <DietApp onExit={() => setRoute("hub")} initialTab={dietEntry.tab} initialOpenMealKey={dietEntry.mealKey} />
+    </div>
+
+    <div style={{ display: route === "treino" ? "block" : "none" }}>
+      <WorkoutApp onGoHub={() => setRoute("hub")} onOpenProgramSettings={() => goSettings("treino")} autoStartWorkoutId={autoStartWorkoutId} />
+    </div>
+
+    <div style={{ display: route === "insights" ? "block" : "none" }}>
+      {loading ? (
+        <div style={styles.loadingWrap}>Carregando…</div>
+      ) : (
+        <Insights
+          perfectStreak={perfectStreak}
+          totalPerfectDays={totalPerfectDays}
+          trainedDates={trainedDates}
+          dietedDates={dietedDates}
+          measurements={measurements}
+          volumeByDate={getTrainingVolumeByDate(trainHistory)}
+        />
+      )}
+    </div>
+
+    <div style={{ display: route === "settings" ? "block" : "none" }}>
+      <Settings onExit={() => setRoute("hub")} initialTab={settingsTab} />
+    </div>
+
     <TabBar active={activeTab} onChange={handleTabChange} />
     </>
   );
