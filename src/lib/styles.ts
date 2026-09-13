@@ -60,7 +60,7 @@ const glass: CSSProperties = {
 
 export const styles: Record<string, CSSProperties> = {
   page: { minHeight: "100vh", background: C.bgPage, display: "flex", justifyContent: "center", fontFamily: BODY },
-  container: { width: "100%", maxWidth: 440, minHeight: "100vh", background: G.screen, backgroundAttachment: "fixed", color: C.white, position: "relative", overflow: "hidden", paddingBottom: 48 },
+  container: { width: "100%", maxWidth: 440, minHeight: "100vh", background: G.screen, backgroundAttachment: "fixed", color: C.white, position: "relative", overflow: "hidden", paddingBottom: 96 },
   accentBar: { height: 2, background: C.accent, boxShadow: "0 0 14px rgba(232,255,71,.8)" },
 
   // ── Home ────────────────────────────────────────────────
@@ -263,11 +263,17 @@ export const styles: Record<string, CSSProperties> = {
   hubModuleTitle: { fontFamily: DISPLAY, fontSize: 17, fontWeight: 600 }, // NOVO
   hubModuleSub: { fontSize: 12, color: C.midGray }, // NOVO
   hubModuleStat: { fontFamily: DISPLAY, fontSize: 13, fontWeight: 600, color: C.accent }, // NOVO
-  hubBottomNav: { position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 440, display: "flex", background: "rgba(14,14,12,.88)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderTop: `1px solid ${C.bgHeader}`, padding: "10px 12px calc(10px + env(safe-area-inset-bottom))" }, // NOVO
-  hubNavBtn: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "transparent", border: "none", padding: "4px 0", cursor: "pointer", color: C.midGray, fontSize: 10.5, fontWeight: 600 }, // NOVO
+  hubBottomNav: { position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 440, display: "flex", background: "rgba(14,14,12,.92)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderTop: `1px solid ${C.bgHeader}`, padding: "10px 8px calc(10px + env(safe-area-inset-bottom))", zIndex: 50 }, // NOVO — barra fixa global do app (Hoje/Dieta/Treino/Config)
+  hubNavBtn: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "transparent", border: "none", padding: "4px 0", cursor: "pointer", color: C.midGray, fontSize: 10.5, fontWeight: 600 }, // NOVO
   hubNavBtnActive: { color: C.accent }, // NOVO
+  hubNavIcon: { fontSize: 19, lineHeight: 1 }, // NOVO
   hubNavDot: { width: 5, height: 5, borderRadius: "50%", background: "currentColor", opacity: 0 }, // NOVO
   hubNavDotActive: { opacity: 1 }, // NOVO
+
+  // ── Controle segmentado (sub-abas dentro de uma seção, ex.: Dieta Hoje/Progresso/Compras/Mais, Config Dieta/Treino) ──
+  segRow: { display: "flex", gap: 6, padding: "0 20px 14px" }, // NOVO
+  segBtn: { flex: 1, padding: "9px 0", borderRadius: 12, border: `1px solid ${C.bgHeader}`, background: "rgba(255,255,255,.03)", color: C.midGray, fontSize: 12, fontWeight: 600, cursor: "pointer", textAlign: "center" }, // NOVO
+  segBtnActive: { background: C.accentSoft, border: `1px solid ${C.accentEdge}`, color: C.accent }, // NOVO
 
   // ── Hub redesign (aço = tom neutro para dados combinados/retrospectivos) ──
   hubStreakPill: { display: "inline-flex", alignItems: "center", gap: 6, background: C.steelSoft, border: `1px solid ${C.steelEdge}`, borderRadius: 10, padding: "5px 11px", fontSize: 12, fontWeight: 700, color: C.steelLight }, // NOVO

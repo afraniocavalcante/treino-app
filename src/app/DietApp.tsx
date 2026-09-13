@@ -149,7 +149,7 @@ export default function DietApp({
 
   return (
     <div style={styles.page}>
-      <div style={{ ...styles.container, paddingBottom: 96 }}>
+      <div style={styles.container}>
         <div style={styles.dietHeader}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <button style={styles.exitBtn} onClick={onExit}>← HUB</button>
@@ -164,6 +164,19 @@ export default function DietApp({
         {(!online || usingCache) && (
           <div style={styles.offlineBanner}>📡 Sem conexão — modo de visualização, mudanças não serão salvas agora.</div>
         )}
+
+        <div style={styles.segRow}>
+          {([
+            { key: "hoje", label: "Hoje" },
+            { key: "progresso", label: "Progresso" },
+            { key: "compras", label: "Compras" },
+            { key: "mais", label: "Mais" },
+          ] as { key: Tab; label: string }[]).map((n) => (
+            <button key={n.key} style={{ ...styles.segBtn, ...(tab === n.key ? styles.segBtnActive : {}) }} onClick={() => setTab(n.key)}>
+              {n.label}
+            </button>
+          ))}
+        </div>
 
         {tab === "hoje" && (
           <>
@@ -259,20 +272,6 @@ export default function DietApp({
         {tab === "mais" && (
           <MaisTab plan={plan} supplementsToday={supplementsToday} onToggleSupplement={toggleSupplement} remindersOn={remindersOn} onToggleReminders={toggleReminders} />
         )}
-      </div>
-
-      <div style={styles.hubBottomNav}>
-        {([
-          { key: "hoje", label: "Hoje" },
-          { key: "progresso", label: "Progresso" },
-          { key: "compras", label: "Compras" },
-          { key: "mais", label: "Mais" },
-        ] as { key: Tab; label: string }[]).map((n) => (
-          <button key={n.key} style={{ ...styles.hubNavBtn, ...(tab === n.key ? styles.hubNavBtnActive : {}) }} onClick={() => setTab(n.key)}>
-            <div style={{ ...styles.hubNavDot, ...(tab === n.key ? styles.hubNavDotActive : {}) }} />
-            <span>{n.label}</span>
-          </button>
-        ))}
       </div>
     </div>
   );

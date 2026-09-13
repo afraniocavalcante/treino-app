@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
   getActiveProgram,
-  getCompletedPrograms,
   getExerciseLibrary,
   getHistory,
   getLastWeights,
@@ -38,10 +37,6 @@ import { cancelRestTimerNotification, scheduleRecoveryMealNudge, scheduleRestTim
 import { signOut } from "@/lib/auth";
 import { guardOffline, loadWithCache, useOnline } from "@/lib/offline";
 import ProgressChart from "./ProgressChart";
-import ProgramsOverview from "./ProgramsOverview";
-import ProgramEditor from "./ProgramEditor";
-import { CopyWorkoutButton } from "./programShared";
-import ExerciseLibrary from "./ExerciseLibrary";
 import Heatmap from "./Heatmap";
 
 const RING_R = 44;
@@ -52,7 +47,7 @@ const MONTH_NAMES_FULL = [
   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
 ];
 
-type Screen = "home" | "workout" | "done" | "history" | "programs" | "programEditor" | "library" | "conflict" | "preview" | "stats" | "completed";
+type Screen = "home" | "workout" | "done" | "history" | "conflict" | "preview" | "stats";
 type Phase = "active" | "rest" | "input" | "hold";
 
 interface WorkoutBundle {
@@ -61,7 +56,6 @@ interface WorkoutBundle {
   h: HistoryEntry[];
   w: Record<string, number>;
   sp: Program | null;
-  cp: Program[];
   seq: [string, number][]; // Map doesn't survive JSON (de)serialization for the offline cache
 }
 
@@ -71,7 +65,11 @@ function initialPhaseFor(ex: ProgramWorkoutExercise): Phase {
   return "input";
 }
 
-export default function WorkoutApp({ onGoHub, autoStartWorkoutId }: { onGoHub?: () => void; autoStartWorkoutId?: string } = {}) {
+export default function WorkoutApp({
+  onGoHub,
+  onOpenProgramSettings,
+  autoStartWorkoutId,
+}: { onGoHub?: () => void; onOpenProgramSettings?: () => void; autoStartWorkoutId?: string } = {}) {
   const supabase = createClient();
 
   const [loading, setLoading] = useState(true);
@@ -106,9 +104,6 @@ export default function WorkoutApp({ onGoHub, autoStartWorkoutId }: { onGoHub?: 
   const [saving, setSaving] = useState(false);
   const [gifModalUrl, setGifModalUrl] = useState<string | null>(null);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
-  const [wantScheduleForm, setWantScheduleForm] = useState(false);
-  const [editingTarget, setEditingTarget] = useState<"active" | "scheduled">("active");
-  const [completedPrograms, setCompletedPrograms] = useState<Program[]>([]);
   const [programSeq, setProgramSeq] = useState<Map<string, number>>(new Map());
 
   const [usingCache, setUsingCache] = useState(false);
@@ -120,23 +115,21 @@ export default function WorkoutApp({ onGoHub, autoStartWorkoutId }: { onGoHub?: 
 
   async function loadAll() {
     const { data, offline } = await loadWithCache<WorkoutBundle>("workout", async () => {
-      const [p, lib, h, w, sp, cp, seq] = await Promise.all([
+      const [p, lib, h, w, sp, seq] = await Promise.all([
         getActiveProgram(supabase),
         getExerciseLibrary(supabase),
         getHistory(supabase),
         getLastWeights(supabase),
         getScheduledProgram(supabase),
-        getCompletedPrograms(supabase),
         getProgramSequence(supabase),
       ]);
-      return { p, lib, h, w, sp, cp, seq: Array.from(seq.entries()) };
+      return { p, lib, h, w, sp, seq: Array.from(seq.entries()) };
     }, online);
     setProgram(data.p);
     setLibrary(data.lib);
     setHistory(data.h);
     setLastWeights(data.w);
     setScheduledProgram(data.sp);
-    setCompletedPrograms(data.cp);
     setProgramSeq(new Map(data.seq));
     setUsingCache(offline);
   }
@@ -441,56 +434,6 @@ export default function WorkoutApp({ onGoHub, autoStartWorkoutId }: { onGoHub?: 
     return shell(<div style={styles.loadingWrap}>Carregando…</div>);
   }
 
-  if (screen === "programs") {
-    return shell(
-      <ProgramsOverview
-        supabase={supabase}
-        program={program}
-        scheduledProgram={scheduledProgram}
-        completedCount={completedPrograms.length}
-        library={library}
-        history={history}
-        onBack={() => goScreen("home")}
-        onChanged={loadAll}
-        onOpenActive={() => {
-          setEditingTarget("active");
-          goScreen("programEditor");
-        }}
-        onOpenScheduled={() => {
-          setEditingTarget("scheduled");
-          goScreen("programEditor");
-        }}
-        onOpenCompleted={() => goScreen("completed")}
-        onOpenLibrary={() => goScreen("library")}
-      />
-    );
-  }
-
-  if (screen === "programEditor") {
-    return shell(
-      <ProgramEditor
-        supabase={supabase}
-        program={editingTarget === "active" ? program : scheduledProgram}
-        library={library}
-        history={history}
-        target={editingTarget}
-        programSeq={programSeq}
-        onBack={() => {
-          setWantScheduleForm(false);
-          goScreen("programs");
-        }}
-        onChanged={loadAll}
-        startWithCreateForm={wantScheduleForm}
-      />
-    );
-  }
-
-  if (screen === "library") {
-    return shell(
-      <ExerciseLibrary supabase={supabase} library={library} onBack={() => goScreen("programs")} onChanged={loadAll} />
-    );
-  }
-
   if (screen === "conflict" && conflictWorkout && program) {
     const todayStr = formatDate(new Date());
     const doneEntry = history.filter((e) => e.date === todayStr).slice(-1)[0];
@@ -584,7 +527,7 @@ export default function WorkoutApp({ onGoHub, autoStartWorkoutId }: { onGoHub?: 
             <p style={{ color: C.midGray, fontSize: 13, marginBottom: 20 }}>
               Crie um programa com seus treinos e exercícios para começar.
             </p>
-            <button className="tab-press" onClick={() => goScreen("programs")} style={styles.okBtn}>
+            <button className="tab-press" onClick={() => onOpenProgramSettings?.()} style={styles.okBtn}>
               Criar programa
             </button>
           </div>
@@ -662,11 +605,7 @@ export default function WorkoutApp({ onGoHub, autoStartWorkoutId }: { onGoHub?: 
             </div>
             <button
               className="tab-press"
-              onClick={() => {
-                setWantScheduleForm(true);
-                setEditingTarget("scheduled");
-                goScreen("programEditor");
-              }}
+              onClick={() => onOpenProgramSettings?.()}
               style={{ ...styles.okBtn, padding: "12px 20px", fontSize: 13 }}
             >
               Cadastrar próximo programa
@@ -733,7 +672,7 @@ export default function WorkoutApp({ onGoHub, autoStartWorkoutId }: { onGoHub?: 
         </div>
         <div style={styles.homeFooter}>
           <button className="tab-press" onClick={() => goScreen("history")} style={{ ...styles.historyBtn, flex: 1, margin: 0 }}>Progressão</button>
-          <button className="tab-press" onClick={() => goScreen("programs")} style={{ ...styles.historyBtn, flex: 1, margin: 0, border: "none", color: C.midGray }}>
+          <button className="tab-press" onClick={() => onOpenProgramSettings?.()} style={{ ...styles.historyBtn, flex: 1, margin: 0, border: "none", color: C.midGray }}>
             📋 Programas
           </button>
         </div>
@@ -791,46 +730,6 @@ export default function WorkoutApp({ onGoHub, autoStartWorkoutId }: { onGoHub?: 
         <button className="tab-press" onClick={() => goScreen("home")} style={styles.doneBtn} disabled={saving}>
           {saving ? "Salvando…" : "Voltar ao Início"}
         </button>
-      </div>
-    );
-  }
-
-  if (screen === "completed") {
-    return shell(
-      <div key={screenTick} style={{ animation: screenAnim }}>
-        <div style={styles.topNav}>
-          <button onClick={() => goScreen("programs")} style={styles.backBtn}>← Programas</button>
-        </div>
-        <div style={styles.histBody}>
-          <h2 style={styles.histTitle}>Programas Concluídos</h2>
-          {completedPrograms.length === 0 && (
-            <div style={styles.emptyState}>Nenhum programa concluído ainda.</div>
-          )}
-          {[...completedPrograms].reverse().map((p) => {
-            const seq = programSeq.get(p.id) ?? 0;
-            return (
-              <div key={p.id} style={{ marginBottom: 30 }}>
-                <div style={styles.groupHeader}>
-                  <span style={styles.groupName}>{`P${seq} · ${p.name}`}</span>
-                  <span style={styles.groupRule} />
-                  <span style={styles.groupCount}>{`${p.weeks} SEMANAS`}</span>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {p.workouts.map((w) => (
-                    <div key={w.id} style={{ ...styles.histExCard, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-                      <span style={{ minWidth: 0 }}>
-                        <div style={styles.histExName}>{`${w.emoji} P${seq} ${w.name}`}</div>
-                        <div style={{ fontSize: 11, color: C.midGray, marginTop: 2 }}>{`${w.exercises.length} exercícios`}</div>
-                      </span>
-                      <CopyWorkoutButton seq={seq} workout={w} />
-                    </div>
-                  ))}
-                  {p.workouts.length === 0 && <div style={{ fontSize: 12, color: C.midGray }}>Sem treinos registrados.</div>}
-                </div>
-              </div>
-            );
-          })}
-        </div>
       </div>
     );
   }

@@ -4,10 +4,13 @@ import { useState } from "react";
 import { isNativePlatform } from "@/lib/notifications";
 import { applyUpdate, checkForUpdate, getCurrentVersion, type UpdateManifest } from "@/lib/updater";
 import { C, DISPLAY, styles } from "@/lib/styles";
+import TreinoSettings from "./TreinoSettings";
 
 type CheckState = "idle" | "checking" | "upToDate" | "available" | "applying" | "error";
+type SettingsTab = "dieta" | "treino";
 
-export default function Settings({ onExit }: { onExit: () => void }) {
+export default function Settings({ onExit, initialTab }: { onExit: () => void; initialTab?: SettingsTab }) {
+  const [tab, setTab] = useState<SettingsTab>(initialTab ?? "dieta");
   const [state, setState] = useState<CheckState>("idle");
   const [manifest, setManifest] = useState<UpdateManifest | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
@@ -94,6 +97,26 @@ export default function Settings({ onExit }: { onExit: () => void }) {
             </>
           )}
         </div>
+
+        <div style={{ ...styles.segRow, margin: "20px 0 0" }}>
+          <button style={{ ...styles.segBtn, ...(tab === "dieta" ? styles.segBtnActive : {}) }} onClick={() => setTab("dieta")}>
+            🍽️ Dieta
+          </button>
+          <button style={{ ...styles.segBtn, ...(tab === "treino" ? styles.segBtnActive : {}) }} onClick={() => setTab("treino")}>
+            🏋️ Treino
+          </button>
+        </div>
+
+        {tab === "dieta" && (
+          <div style={{ ...styles.dietSectionCard, margin: "0 20px" }}>
+            <div style={styles.dietSectionTitle}>Plano alimentar</div>
+            <div style={{ fontSize: 12.5, color: C.midGray, lineHeight: 1.5 }}>
+              Em breve: crie e edite seu próprio plano alimentar por aqui, com nome (PA1, PA2…) e data de validade — hoje o plano ainda é cadastrado direto no banco de dados.
+            </div>
+          </div>
+        )}
+
+        {tab === "treino" && <TreinoSettings onExit={onExit} />}
       </div>
     </div>
   );

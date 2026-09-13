@@ -13,12 +13,14 @@ import { guardOffline, loadWithCache, useOnline } from "@/lib/offline";
 import WorkoutApp from "./WorkoutApp";
 import DietApp from "./DietApp";
 import Settings from "./Settings";
+import TabBar, { type AppTab } from "./TabBar";
 import ConsistencyHeatmap from "./ConsistencyHeatmap";
 import WeightVolumeChart from "./WeightVolumeChart";
 import { MealCard, findNextMeal } from "./dietShared";
 
 type Route = "hub" | "treino" | "dieta" | "settings";
 type DietTab = "hoje" | "progresso" | "compras" | "mais";
+type SettingsTab = "dieta" | "treino";
 
 interface HubBundle {
   p: Program | null;
@@ -51,6 +53,7 @@ export default function Hub() {
   const [route, setRoute] = useState<Route>("hub");
   const [autoStartWorkoutId, setAutoStartWorkoutId] = useState<string | undefined>(undefined);
   const [dietEntry, setDietEntry] = useState<{ tab?: DietTab; mealKey?: string }>({});
+  const [settingsTab, setSettingsTab] = useState<SettingsTab>("dieta");
   const [loading, setLoading] = useState(true);
 
   const [program, setProgram] = useState<Program | null>(null);
@@ -108,15 +111,50 @@ export default function Hub() {
     setRoute("dieta");
   }
 
+  function goSettings(tab?: SettingsTab) {
+    setSettingsTab(tab ?? "dieta");
+    setRoute("settings");
+  }
+
   function persistTodayPicks(next: DietDayPicks) {
     if (guardOffline(online)) return;
     setTodayPicks(next);
     saveTodayDietLog(supabase, next, todaySupplements).catch((err) => console.error("Falha ao salvar dieta:", err));
   }
 
-  if (route === "treino") return <WorkoutApp onGoHub={() => setRoute("hub")} autoStartWorkoutId={autoStartWorkoutId} />;
-  if (route === "dieta") return <DietApp onExit={() => setRoute("hub")} initialTab={dietEntry.tab} initialOpenMealKey={dietEntry.mealKey} />;
-  if (route === "settings") return <Settings onExit={() => setRoute("hub")} />;
+  const activeTab: AppTab = route === "hub" ? "hub" : route === "dieta" ? "dieta" : route === "treino" ? "treino" : "settings";
+
+  function handleTabChange(tab: AppTab) {
+    if (tab === "hub") setRoute("hub");
+    else if (tab === "dieta") goDieta();
+    else if (tab === "treino") goTreino();
+    else goSettings();
+  }
+
+  if (route === "treino") {
+    return (
+      <>
+        <WorkoutApp onGoHub={() => setRoute("hub")} onOpenProgramSettings={() => goSettings("treino")} autoStartWorkoutId={autoStartWorkoutId} />
+        <TabBar active={activeTab} onChange={handleTabChange} />
+      </>
+    );
+  }
+  if (route === "dieta") {
+    return (
+      <>
+        <DietApp onExit={() => setRoute("hub")} initialTab={dietEntry.tab} initialOpenMealKey={dietEntry.mealKey} />
+        <TabBar active={activeTab} onChange={handleTabChange} />
+      </>
+    );
+  }
+  if (route === "settings") {
+    return (
+      <>
+        <Settings onExit={() => setRoute("hub")} initialTab={settingsTab} />
+        <TabBar active={activeTab} onChange={handleTabChange} />
+      </>
+    );
+  }
 
   if (loading) return <div style={styles.loadingWrap}>Carregando…</div>;
 
@@ -157,10 +195,10 @@ export default function Hub() {
   const workoutPending = !!(program && !restToday && nextWorkout && !trainedToday);
 
   return (
+    <>
     <div style={styles.page}>
-      <div style={{ ...styles.container, paddingBottom: 48 }}>
+      <div style={styles.container}>
         <div style={styles.hubHeader}>
-          <button onClick={() => setRoute("settings")} style={styles.hubHomeBtn}>⚙️</button>
           <button onClick={signOut} style={styles.signOutBtn}>Sair</button>
           <h1 style={styles.hubGreeting}>Hoje</h1>
           <p style={styles.hubSub}>{capitalizeFirst(new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" }))}</p>
@@ -251,5 +289,7 @@ export default function Hub() {
         )}
       </div>
     </div>
+    <TabBar active={activeTab} onChange={handleTabChange} />
+    </>
   );
 }
