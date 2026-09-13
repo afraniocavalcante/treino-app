@@ -70,7 +70,7 @@ export const styles: Record<string, CSSProperties> = {
   // The single top-level app frame (rendered once, in Hub.tsx) — fixed to the
   // real screen height and never itself scrolls. Replaces `page` for every
   // screen that lives behind the tab bar (everything except login/loading).
-  appShell: { height: "100dvh", width: "100%", maxWidth: 440, margin: "0 auto", display: "flex", flexDirection: "column", overflow: "hidden", background: G.screen, backgroundAttachment: "fixed", color: C.white, fontFamily: BODY },
+  appShell: { height: "100%", width: "100%", maxWidth: 440, margin: "0 auto", display: "flex", flexDirection: "column", overflow: "hidden", background: G.screen, backgroundAttachment: "fixed", color: C.white, fontFamily: BODY },
   // The one scrolling region inside appShell — whichever module is active
   // lives in here. The tab bar sits below this as a normal flex sibling
   // (not position:fixed), so it can't drift the way a fixed element can in
