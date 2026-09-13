@@ -115,7 +115,7 @@ export const styles: Record<string, CSSProperties> = {
   homeFooter: { display: "flex", gap: 10, padding: "30px 26px 0" }, // NOVO
 
   // ── Treino: navegação ───────────────────────────────────
-  workoutNav: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "26px 26px 18px" },
+  workoutNav: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 22px 14px" },
   workoutNavLeft: { display: "flex", alignItems: "center", gap: 10 },
   workoutNavTitle: { fontFamily: DISPLAY, fontSize: 12, fontWeight: 600, letterSpacing: 1 },
   weekBadge: { fontSize: 10, fontWeight: 600, letterSpacing: 0.6, color: C.cream, background: C.accent, padding: "3px 8px", borderRadius: 6 },
@@ -124,28 +124,28 @@ export const styles: Record<string, CSSProperties> = {
   progressFill: { height: "100%", background: C.accent, boxShadow: "none", transition: `width .5s ${EASE}` }, // NOVO
 
   // ── Treino: exercício atual ─────────────────────────────
-  currentCard: { ...glass, margin: "18px 20px 0", borderRadius: 28, padding: "18px 22px 16px", textAlign: "center", boxShadow: G.card },
+  currentCard: { ...glass, margin: "18px 20px 0", borderRadius: 14, padding: "18px 22px 16px", textAlign: "center", boxShadow: G.card },
   currentLabel: { fontSize: 10, fontWeight: 600, letterSpacing: 2.6, color: C.accent, marginBottom: 8 },
   currentName: { fontFamily: DISPLAY, fontSize: 29, fontWeight: 600, lineHeight: 1.14, letterSpacing: -0.4, margin: 0 },
   currentReps: { fontSize: 13, color: C.lightGray, marginTop: 6 },
   lastKgHint: { fontSize: 12, color: C.midGray, marginTop: 20 },
   setsRow: { display: "flex", justifyContent: "center", gap: 10, margin: "10px 0 0" },
-  setDot: { width: 44, height: 44, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid transparent", background: "rgba(13,27,42,.06)", color: C.faint, transition: `all .22s ${EASE}` },
+  setDot: { width: 40, height: 40, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid transparent", background: "rgba(13,27,42,.06)", color: C.faint, transition: `all .22s ${EASE}` },
   setDotDone: { background: G.lime, color: C.cream, boxShadow: G.glowChip }, // NOVO
   setDotCurrent: { background: "transparent", border: `2px solid ${C.accent}`, color: C.accent, animation: "tabDotPulse 1.9s ease-in-out infinite" }, // NOVO
   setDotText: { fontSize: 14, fontWeight: 700 },
-  okBtn: { width: "100%", marginTop: 20, padding: 18, background: G.lime, color: C.cream, border: "none", borderRadius: 16, fontFamily: DISPLAY, fontSize: 14.5, fontWeight: 700, letterSpacing: 0.4, cursor: "pointer", boxShadow: "none" },
+  okBtn: { width: "100%", marginTop: 20, padding: 16, background: G.lime, color: C.cream, border: "none", borderRadius: 8, fontFamily: DISPLAY, fontSize: 14.5, fontWeight: 700, letterSpacing: 0.4, cursor: "pointer", boxShadow: "none" },
 
   // ── Treino: registro de carga ───────────────────────────
   inputLabel: { fontSize: 10, letterSpacing: 2.6, color: C.accent, fontWeight: 600, display: "block", marginBottom: 6, textTransform: "uppercase" },
   inputRow: { display: "flex", alignItems: "baseline", justifyContent: "center", gap: 8, marginBottom: 8 },
-  kgInput: { width: 150, border: "none", background: "transparent", color: C.accent, fontFamily: DISPLAY, fontSize: 50, fontWeight: 300, letterSpacing: -1.5, lineHeight: 1, textAlign: "center", outline: "none", fontVariantNumeric: "tabular-nums", textShadow: "none" },
+  kgInput: { minWidth: 0, border: "none", background: "transparent", color: C.accent, fontFamily: DISPLAY, fontSize: 44, fontWeight: 500, letterSpacing: 0, lineHeight: 1, textAlign: "center", outline: "none", fontVariantNumeric: "tabular-nums", textShadow: "none" },
   kgUnit: { fontSize: 18, fontWeight: 500, color: C.midGray }, // NOVO
   kgAdjRow: { display: "flex", gap: 10, width: "100%", marginTop: 2, marginBottom: 12 }, // NOVO
-  kgAdjBtn: { flex: 1, padding: "10px 0", background: "rgba(13,27,42,.06)", border: `1px solid ${C.bgHeader}`, color: C.white, borderRadius: 14, fontFamily: DISPLAY, fontSize: 14, fontWeight: 600, cursor: "pointer" },
+  kgAdjBtn: { flex: 1, padding: "10px 0", background: "rgba(13,27,42,.06)", border: `1px solid ${C.bgHeader}`, color: C.white, borderRadius: 8, fontFamily: DISPLAY, fontSize: 14, fontWeight: 600, cursor: "pointer" },
   unitHint: { fontSize: 11, color: C.midGray, textAlign: "center", marginBottom: 8, letterSpacing: 0.3 },
-  confirmBtn: { width: "100%", padding: 13, background: G.lime, color: C.cream, border: "none", borderRadius: 16, fontFamily: DISPLAY, fontSize: 15, fontWeight: 700, cursor: "pointer", boxShadow: G.glowBtn },
-  ghostBtn: { width: "100%", padding: 15, background: "transparent", border: "1px solid rgba(13,27,42,.12)", color: C.lightGray, borderRadius: 14, fontFamily: DISPLAY, fontSize: 13, fontWeight: 500, cursor: "pointer" }, // NOVO
+  confirmBtn: { width: "100%", padding: 13, background: G.lime, color: C.cream, border: "none", borderRadius: 8, fontFamily: DISPLAY, fontSize: 15, fontWeight: 700, cursor: "pointer", boxShadow: G.glowBtn },
+  ghostBtn: { width: "100%", padding: 15, background: "transparent", border: "1px solid rgba(13,27,42,.12)", color: C.lightGray, borderRadius: 8, fontFamily: DISPLAY, fontSize: 13, fontWeight: 500, cursor: "pointer" }, // NOVO
 
   // ── Descanso ────────────────────────────────────────────
   restWrap: { display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 0" },
@@ -280,10 +280,16 @@ export const styles: Record<string, CSSProperties> = {
   hubModuleTitle: { fontFamily: DISPLAY, fontSize: 17, fontWeight: 600 }, // NOVO
   hubModuleSub: { fontSize: 12, color: C.midGray }, // NOVO
   hubModuleStat: { fontFamily: DISPLAY, fontSize: 13, fontWeight: 600, color: C.accent }, // NOVO
-  hubBottomNav: { flexShrink: 0, width: "100%", display: "flex", background: C.bgDark, padding: "10px 8px calc(10px + env(safe-area-inset-bottom))" }, // NOVO — barra global do app (Hoje/Dieta/Treino/Insights/Config), fluxo normal dentro do appShell (não fixed — evita o bug de deslocamento em WKWebView)
-  hubNavBtn: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "transparent", border: "none", padding: "5px 0", cursor: "pointer", color: "#7C8A9A", fontSize: 10.5, fontWeight: 600 }, // NOVO
+  // paddingBottom usa max(): não confiamos em env(safe-area-inset-bottom) sozinho
+  // pra determinar a altura visível da barra — em testes reais ele voltou valores
+  // inconsistentes entre módulos com o contentInset:"always" do iOS (às vezes 0,
+  // às vezes o valor real), o que fazia a barra parecer de tamanho diferente
+  // dependendo da tela. Um mínimo fixo garante a mesma altura sempre; se o
+  // dispositivo reportar um valor real maior (notch grande), esse prevalece.
+  hubBottomNav: { flexShrink: 0, width: "100%", display: "flex", background: C.bgDark, padding: "12px 8px max(26px, env(safe-area-inset-bottom, 26px))" }, // NOVO — barra global do app (Hoje/Dieta/Treino/Insights/Config), fluxo normal dentro do appShell (não fixed — evita o bug de deslocamento em WKWebView)
+  hubNavBtn: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 5, background: "transparent", border: "none", padding: "6px 0", cursor: "pointer", color: "#7C8A9A", fontSize: 11, fontWeight: 600 }, // NOVO
   hubNavBtnActive: { color: C.cream }, // NOVO
-  hubNavIcon: { fontSize: 19, lineHeight: 1 }, // NOVO — mantido por compat; ícones reais agora vêm de Icons.tsx
+  hubNavIcon: { fontSize: 21, lineHeight: 1 }, // NOVO — mantido por compat; ícones reais agora vêm de Icons.tsx
   hubNavDot: { width: 5, height: 5, borderRadius: "50%", background: "currentColor", opacity: 0 }, // NOVO
   hubNavDotActive: { opacity: 1 }, // NOVO
 

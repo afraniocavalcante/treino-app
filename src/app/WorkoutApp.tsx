@@ -1112,7 +1112,7 @@ export default function WorkoutApp({
               src={exerciseGifUrl}
               alt={exercise.name}
               onClick={() => setGifModalUrl(exerciseGifUrl)}
-              style={{ width: "100%", maxHeight: 72, objectFit: "contain", borderRadius: 12, background: C.bgHeader, marginBottom: 6, cursor: "pointer" }}
+              style={{ width: "auto", maxWidth: "100%", height: 72, objectFit: "contain", borderRadius: 12, marginBottom: 6, cursor: "pointer" }}
             />
           )}
           <div style={styles.currentLabel}>EXERCÍCIO ATUAL</div>
@@ -1165,10 +1165,10 @@ export default function WorkoutApp({
             <div>
               <label style={styles.inputLabel}>{exercise.unit === "halter" ? "KG por halter" : "KG total"}</label>
               <div style={styles.inputRow}>
-                <input type="number" inputMode="decimal" value={kgInput} onChange={(e) => setKgInput(e.target.value)} onFocus={(e) => e.target.select()} style={{ ...styles.kgInput, width: 92 }} placeholder="0" />
+                <input type="number" inputMode="decimal" value={kgInput} onChange={(e) => setKgInput(e.target.value)} onFocus={(e) => e.target.select()} style={{ ...styles.kgInput, width: 110 }} placeholder="0" />
                 <span style={styles.kgUnit}>kg</span>
                 <span style={{ fontSize: 16, color: C.faint, margin: "0 2px" }}>×</span>
-                <input type="number" inputMode="numeric" value={repsInput} onChange={(e) => setRepsInput(e.target.value)} onFocus={(e) => e.target.select()} style={{ ...styles.kgInput, width: 52, fontSize: 28, color: C.white }} placeholder="0" />
+                <input type="number" inputMode="numeric" value={repsInput} onChange={(e) => setRepsInput(e.target.value)} onFocus={(e) => e.target.select()} style={{ ...styles.kgInput, width: 64, fontSize: 28, color: C.accent }} placeholder="0" />
                 <span style={styles.kgUnit}>reps</span>
               </div>
               <div style={{ height: 1, background: "rgba(13,27,42,.08)", margin: "0 0 10px" }} />
@@ -1176,7 +1176,7 @@ export default function WorkoutApp({
                 <button className="tab-press" onClick={() => setKgInput(String(Math.max(0, (parseFloat(kgInput) || 0) - 2.5)))} style={styles.kgAdjBtn}>− 2,5</button>
                 <button className="tab-press" onClick={() => setKgInput(String((parseFloat(kgInput) || 0) + 2.5))} style={styles.kgAdjBtn}>+ 2,5</button>
               </div>
-              <div style={styles.unitHint}>{exercise.unit === "halter" ? "🏋️ cada halter" : "🏋️ peso total na máquina/barra"}</div>
+              <div style={styles.unitHint}>{exercise.unit === "halter" ? "cada halter" : "peso total na máquina/barra"}</div>
               <button className="tab-press" onClick={handleKgSubmit} style={styles.confirmBtn}>CONFIRMAR</button>
             </div>
           )}

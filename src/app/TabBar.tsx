@@ -25,7 +25,7 @@ export default function TabBar({ active, onChange }: { active: AppTab; onChange:
             style={{ ...styles.hubNavBtn, ...(on ? styles.hubNavBtnActive : {}) }}
             onClick={() => onChange(t.key)}
           >
-            <t.Icon size={18} color={on ? "#F5EFE3" : "#7C8A9A"} />
+            <t.Icon size={21} color={on ? "#F5EFE3" : "#7C8A9A"} />
             <span>{t.label}</span>
           </button>
         );
