@@ -5,6 +5,7 @@ import { isNativePlatform } from "@/lib/notifications";
 import { applyUpdate, checkForUpdate, getCurrentVersion, type UpdateManifest } from "@/lib/updater";
 import { C, DISPLAY, styles } from "@/lib/styles";
 import TreinoSettings from "./TreinoSettings";
+import DietSettings from "./DietSettings";
 
 type CheckState = "idle" | "checking" | "upToDate" | "available" | "applying" | "error";
 type SettingsTab = "dieta" | "treino";
@@ -107,14 +108,7 @@ export default function Settings({ onExit, initialTab }: { onExit: () => void; i
           </button>
         </div>
 
-        {tab === "dieta" && (
-          <div style={{ ...styles.dietSectionCard, margin: "0 20px" }}>
-            <div style={styles.dietSectionTitle}>Plano alimentar</div>
-            <div style={{ fontSize: 12.5, color: C.midGray, lineHeight: 1.5 }}>
-              Em breve: crie e edite seu próprio plano alimentar por aqui, com nome (PA1, PA2…) e data de validade — hoje o plano ainda é cadastrado direto no banco de dados.
-            </div>
-          </div>
-        )}
+        {tab === "dieta" && <DietSettings />}
 
         {tab === "treino" && <TreinoSettings onExit={onExit} />}
       </div>

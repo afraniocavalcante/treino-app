@@ -66,9 +66,14 @@ export interface DietFruitEquivalent {
   amount: string;
 }
 
+export type DietPlanStatus = "active" | "scheduled" | "completed";
+
 export interface DietPlan {
   id: string;
   name: string;
+  status: DietPlanStatus;
+  startDate: string | null;
+  endDate: string | null;
   kcalTarget: number;
   proteinTarget: number;
   carbTarget: number;
@@ -85,6 +90,16 @@ export interface DietPlan {
   supplements: DietSupplement[];
   supplementGroups: DietSupplementGroup[];
   shoppingCategories: DietShoppingCategory[];
+}
+
+/** Lightweight row for listing completed plans, without fetching their meals/supplements/etc. */
+export interface DietPlanSummary {
+  id: string;
+  name: string;
+  kcalTarget: number;
+  startDate: string | null;
+  endDate: string | null;
+  status: DietPlanStatus;
 }
 
 export interface AlmocoPicks {
