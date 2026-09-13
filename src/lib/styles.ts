@@ -67,7 +67,7 @@ const glass: CSSProperties = {
 
 export const styles: Record<string, CSSProperties> = {
   page: { minHeight: "100dvh", background: C.bgPage, display: "flex", justifyContent: "center", fontFamily: BODY },
-  container: { width: "100%", maxWidth: 440, minHeight: "100dvh", background: G.screen, backgroundAttachment: "fixed", color: C.white, position: "relative", overflow: "hidden", paddingTop: "env(safe-area-inset-top)", paddingBottom: 96 },
+  container: { width: "100%", maxWidth: 440, minHeight: "100dvh", background: G.screen, backgroundAttachment: "fixed", color: C.white, position: "relative", overflow: "hidden", paddingBottom: 96 },
   accentBar: { height: 2, background: C.accent, boxShadow: "none" },
 
   // ── Home ────────────────────────────────────────────────
