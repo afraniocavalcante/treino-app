@@ -20,6 +20,7 @@ export default function AuthGate() {
 
   useEffect(() => {
     notifyAppReady();
+    configureStatusBar();
     const supabase = createClient();
     let cancelled = false;
 
@@ -46,11 +47,6 @@ export default function AuthGate() {
       sub.subscription.unsubscribe();
     };
   }, []);
-
-  useEffect(() => {
-    if (loading) return;
-    configureStatusBar(authed ? "cream" : "navy");
-  }, [loading, authed]);
 
   if (loading) return <div style={styles.loadingWrap}>Carregando…</div>;
   return <OnlineProvider>{authed ? <Hub /> : <LoginForm />}</OnlineProvider>;

@@ -2,22 +2,19 @@ import { Capacitor } from "@capacitor/core";
 import { StatusBar, Style } from "@capacitor/status-bar";
 
 /**
- * On iOS the status bar is always a transparent overlay — setBackgroundColor
- * is Android-only and throws/no-ops on iOS. The actual "background" behind it
- * is whatever the WebView itself draws, which is why capacitor.config.ts sets
- * ios.contentInset to "never" (full-bleed WebView) and overlaysWebView: true
- * — the page's own CSS background (cream/navy) then shows through, with
- * env(safe-area-inset-top) padding keeping content clear of the notch.
- * setStyle (icon color) does work on both platforms. Style.Light means dark
- * icons/text (for the cream pages), Style.Dark means light icons/text (for
- * the navy login screen) — the naming is inverted from what you'd expect.
+ * The status bar strip sits in native chrome above the WebView (Capacitor
+ * insets the WebView below it — see capacitor.config.ts's ios.contentInset),
+ * so CSS can't reach it; its background is colored navy directly in
+ * SceneDelegate.swift (matches the bottom tab bar, framing the cream content
+ * top and bottom). Since that strip is always navy regardless of which
+ * screen is underneath, the icons stay light/white always too — Style.Dark
+ * means light icons/text, the naming is inverted from what you'd expect.
+ * setBackgroundColor is Android-only and a no-op on iOS; kept for Android.
  */
-export async function configureStatusBar(variant: "cream" | "navy"): Promise<void> {
+export async function configureStatusBar(): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
-  const color = variant === "navy" ? "#0D1B2A" : "#F5EFE3";
-  const style = variant === "navy" ? Style.Dark : Style.Light;
-  await StatusBar.setStyle({ style }).catch((err) => console.error("Falha ao definir o estilo da status bar:", err));
-  await StatusBar.setBackgroundColor({ color }).catch(() => {
-    // Expected to fail on iOS (Android-only API) — the WebView's own background handles it there.
+  await StatusBar.setStyle({ style: Style.Dark }).catch((err) => console.error("Falha ao definir o estilo da status bar:", err));
+  await StatusBar.setBackgroundColor({ color: "#0D1B2A" }).catch(() => {
+    // Expected to fail on iOS (Android-only API) — SceneDelegate.swift handles it there.
   });
 }

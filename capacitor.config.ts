@@ -7,12 +7,11 @@ const config: CapacitorConfig = {
   // the app launches instantly and its shell works offline. Only the actual
   // Supabase calls (auth, reading/saving data) need a network connection.
   webDir: "out",
-  // Colors the tiny native strip behind the status bar (outside the WebView
-  // itself, so CSS alone can't reach it) — without this it's plain white
-  // regardless of what the page underneath looks like. Matches the app's
-  // cream canvas; the login screen's navy is the one exception that won't
-  // get this treatment (native config can't vary this by screen).
-  backgroundColor: "#F5EFE3",
+  // Belt-and-suspenders for the status bar strip fix — this config key is
+  // Android-only in practice, the real iOS fix is the root view's
+  // backgroundColor set directly in SceneDelegate.swift. Navy matches the
+  // bottom tab bar.
+  backgroundColor: "#0D1B2A",
   ios: {
     // "always": Capacitor insets the WebView below the status bar itself
     // (the standard, reliable behavior) rather than drawing full-bleed under
