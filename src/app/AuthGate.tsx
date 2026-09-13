@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { OnlineProvider } from "@/lib/offline";
+import { configureStatusBar } from "@/lib/statusBar";
 import { styles } from "@/lib/styles";
 import { notifyAppReady } from "@/lib/updater";
 import LoginForm from "./login/LoginForm";
@@ -45,6 +46,11 @@ export default function AuthGate() {
       sub.subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (loading) return;
+    configureStatusBar(authed ? "cream" : "navy");
+  }, [loading, authed]);
 
   if (loading) return <div style={styles.loadingWrap}>Carregando…</div>;
   return <OnlineProvider>{authed ? <Hub /> : <LoginForm />}</OnlineProvider>;
