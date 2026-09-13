@@ -11,12 +11,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let rootViewController = CAPBridgeViewController()
         // Colors the native strip behind the status bar/Dynamic Island — that
         // area sits outside the WebView (Capacitor insets the WebView below
-        // it), so CSS can't reach it. Navy matches the bottom tab bar, so the
-        // app reads as navy-framed top and bottom with the cream content
-        // in between, rather than a mismatched plain white bar.
-        let navy = UIColor(red: 0x0D / 255.0, green: 0x1B / 255.0, blue: 0x2A / 255.0, alpha: 1.0)
-        rootViewController.view.backgroundColor = navy
-        window?.backgroundColor = navy
+        // it), so CSS can't reach it. Cream matches the app's majority
+        // background (every screen except login) so it blends in rather than
+        // reading as a distinct bar; only the bottom tab bar is navy.
+        let cream = UIColor(red: 0xF5 / 255.0, green: 0xEF / 255.0, blue: 0xE3 / 255.0, alpha: 1.0)
+        rootViewController.view.backgroundColor = cream
+        window?.backgroundColor = cream
         window?.rootViewController = rootViewController
         window?.makeKeyAndVisible()
 

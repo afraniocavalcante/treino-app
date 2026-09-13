@@ -9,9 +9,9 @@ const config: CapacitorConfig = {
   webDir: "out",
   // Belt-and-suspenders for the status bar strip fix — this config key is
   // Android-only in practice, the real iOS fix is the root view's
-  // backgroundColor set directly in SceneDelegate.swift. Navy matches the
-  // bottom tab bar.
-  backgroundColor: "#0D1B2A",
+  // backgroundColor set directly in SceneDelegate.swift. Matches the app's
+  // majority (cream) background — only the bottom tab bar is navy.
+  backgroundColor: "#F5EFE3",
   ios: {
     // "always": Capacitor insets the WebView below the status bar itself
     // (the standard, reliable behavior) rather than drawing full-bleed under

@@ -49,8 +49,7 @@ export default function Settings({ onExit, initialTab }: { onExit: () => void; i
   }
 
   return (
-    <div style={styles.page}>
-      <div style={styles.container}>
+    <div style={styles.container}>
         <div style={styles.dietHeader}>
           <button style={styles.exitBtn} onClick={onExit}>← HUB</button>
           <div style={{ fontFamily: DISPLAY, fontSize: 24, fontWeight: 600, marginTop: 14 }}>Configurações</div>
@@ -124,7 +123,6 @@ export default function Settings({ onExit, initialTab }: { onExit: () => void; i
         >
           <SignOutIcon size={14} />Sair
         </button>
-      </div>
     </div>
   );
 }

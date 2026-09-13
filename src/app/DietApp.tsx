@@ -108,14 +108,12 @@ export default function DietApp({
 
   if (!plan) {
     return (
-      <div style={styles.page}>
-        <div style={styles.container}>
-          <div style={styles.dietHeader}>
-            <button style={styles.exitBtn} onClick={onExit}>← HUB</button>
-            <div style={{ ...styles.dietSectionCard, margin: "20px 0 0" }}>
-              <div style={{ fontFamily: DISPLAY, fontWeight: 600, fontSize: 16 }}>Ainda sem plano cadastrado</div>
-              <div style={{ fontSize: 13, color: C.midGray, marginTop: 6, lineHeight: 1.5 }}>Nenhum plano alimentar foi importado ainda.</div>
-            </div>
+      <div style={styles.container}>
+        <div style={styles.dietHeader}>
+          <button style={styles.exitBtn} onClick={onExit}>← HUB</button>
+          <div style={{ ...styles.dietSectionCard, margin: "20px 0 0" }}>
+            <div style={{ fontFamily: DISPLAY, fontWeight: 600, fontSize: 16 }}>Ainda sem plano cadastrado</div>
+            <div style={{ fontSize: 13, color: C.midGray, marginTop: 6, lineHeight: 1.5 }}>Nenhum plano alimentar foi importado ainda.</div>
           </div>
         </div>
       </div>
@@ -149,8 +147,7 @@ export default function DietApp({
   const suppDone = plan.supplements.filter((s) => supplementsToday[s.key]).length;
 
   return (
-    <div style={styles.page}>
-      <div style={styles.container}>
+    <div style={styles.container}>
         <div style={styles.dietHeader}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <button style={styles.exitBtn} onClick={onExit}>← HUB</button>
@@ -273,7 +270,6 @@ export default function DietApp({
         {tab === "mais" && (
           <MaisTab plan={plan} supplementsToday={supplementsToday} onToggleSupplement={toggleSupplement} remindersOn={remindersOn} onToggleReminders={toggleReminders} />
         )}
-      </div>
     </div>
   );
 }

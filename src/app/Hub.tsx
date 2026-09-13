@@ -172,13 +172,13 @@ export default function Hub() {
   const workoutPending = !!(program && !restToday && nextWorkout && !trainedToday);
 
   return (
-    <>
+    <div style={styles.appShell}>
+    <div style={styles.appShellScroll}>
     <div style={{ display: route === "hub" ? "block" : "none" }}>
     {loading ? (
       <div style={styles.loadingWrap}>Carregando…</div>
     ) : (
-    <div style={styles.page}>
-      <div style={styles.container}>
+    <div style={styles.container}>
         <div style={{ padding: "26px 22px 2px" }}>
           <h1 style={{ ...styles.hubGreeting, fontSize: 20 }}>{capitalizeFirst(new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" }))}</h1>
         </div>
@@ -286,7 +286,6 @@ export default function Hub() {
         {program && dietPlan && (
           <ConsistencyHeatmap trainedDates={trainedDates} dietDates={dietedDates} weeks={12} onTitleClick={() => setRoute("insights")} />
         )}
-      </div>
     </div>
     )}
     </div>
@@ -317,8 +316,9 @@ export default function Hub() {
     <div style={{ display: route === "settings" ? "block" : "none" }}>
       <Settings onExit={() => setRoute("hub")} initialTab={settingsTab} />
     </div>
+    </div>
 
     <TabBar active={activeTab} onChange={handleTabChange} />
-    </>
+    </div>
   );
 }

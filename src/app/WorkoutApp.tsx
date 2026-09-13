@@ -423,11 +423,7 @@ export default function WorkoutApp({
   const screenAnim = `tabScreenIn .45s ${EASE} both`;
   const stagger = (i: number, base = 0) => `tabFadeUp .5s ${EASE} ${(base + i * 0.06).toFixed(2)}s both`;
 
-  const shell = (children: React.ReactNode) => (
-    <div style={styles.page}>
-      <div style={styles.container}>{children}</div>
-    </div>
-  );
+  const shell = (children: React.ReactNode) => <div style={styles.container}>{children}</div>;
 
   if (loading) {
     return shell(<div style={styles.loadingWrap}>Carregando…</div>);

@@ -67,7 +67,16 @@ const glass: CSSProperties = {
 
 export const styles: Record<string, CSSProperties> = {
   page: { minHeight: "100dvh", background: C.bgPage, display: "flex", justifyContent: "center", fontFamily: BODY },
-  container: { width: "100%", maxWidth: 440, minHeight: "100dvh", background: G.screen, backgroundAttachment: "fixed", color: C.white, position: "relative", overflow: "hidden", paddingBottom: 96 },
+  // The single top-level app frame (rendered once, in Hub.tsx) — fixed to the
+  // real screen height and never itself scrolls. Replaces `page` for every
+  // screen that lives behind the tab bar (everything except login/loading).
+  appShell: { height: "100dvh", width: "100%", maxWidth: 440, margin: "0 auto", display: "flex", flexDirection: "column", overflow: "hidden", background: G.screen, backgroundAttachment: "fixed", color: C.white, fontFamily: BODY },
+  // The one scrolling region inside appShell — whichever module is active
+  // lives in here. The tab bar sits below this as a normal flex sibling
+  // (not position:fixed), so it can't drift the way a fixed element can in
+  // a WKWebView with native safe-area insetting.
+  appShellScroll: { flex: 1, minHeight: 0, overflowY: "auto", WebkitOverflowScrolling: "touch", position: "relative" } as CSSProperties,
+  container: { width: "100%", position: "relative", color: C.white, minHeight: "100%", paddingBottom: 32 },
   accentBar: { height: 2, background: C.accent, boxShadow: "none" },
 
   // ── Home ────────────────────────────────────────────────
@@ -271,7 +280,7 @@ export const styles: Record<string, CSSProperties> = {
   hubModuleTitle: { fontFamily: DISPLAY, fontSize: 17, fontWeight: 600 }, // NOVO
   hubModuleSub: { fontSize: 12, color: C.midGray }, // NOVO
   hubModuleStat: { fontFamily: DISPLAY, fontSize: 13, fontWeight: 600, color: C.accent }, // NOVO
-  hubBottomNav: { position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 440, display: "flex", background: C.bgDark, borderTop: "none", padding: "10px 8px calc(10px + env(safe-area-inset-bottom))", zIndex: 50 }, // NOVO — barra fixa global do app (Hoje/Dieta/Treino/Insights/Config)
+  hubBottomNav: { flexShrink: 0, width: "100%", display: "flex", background: C.bgDark, padding: "10px 8px calc(10px + env(safe-area-inset-bottom))" }, // NOVO — barra global do app (Hoje/Dieta/Treino/Insights/Config), fluxo normal dentro do appShell (não fixed — evita o bug de deslocamento em WKWebView)
   hubNavBtn: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "transparent", border: "none", padding: "5px 0", cursor: "pointer", color: "#7C8A9A", fontSize: 10.5, fontWeight: 600 }, // NOVO
   hubNavBtnActive: { color: C.cream }, // NOVO
   hubNavIcon: { fontSize: 19, lineHeight: 1 }, // NOVO — mantido por compat; ícones reais agora vêm de Icons.tsx
