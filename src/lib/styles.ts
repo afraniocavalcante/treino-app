@@ -75,7 +75,10 @@ export const styles: Record<string, CSSProperties> = {
   // lives in here. The tab bar sits below this as a normal flex sibling
   // (not position:fixed), so it can't drift the way a fixed element can in
   // a WKWebView with native safe-area insetting.
-  appShellScroll: { flex: 1, minHeight: 0, overflowY: "auto", WebkitOverflowScrolling: "touch", position: "relative", paddingTop: "env(safe-area-inset-top, 0px)" } as CSSProperties,
+  // paddingTop uses max(): env(safe-area-inset-top) alone was resolving to 0
+  // in this WKWebView, same unreliability already seen with the bottom nav's
+  // env(safe-area-inset-bottom) — a floor guarantees clearance either way.
+  appShellScroll: { flex: 1, minHeight: 0, overflowY: "auto", WebkitOverflowScrolling: "touch", position: "relative", paddingTop: "max(59px, env(safe-area-inset-top, 59px))" } as CSSProperties,
   container: { width: "100%", position: "relative", color: C.white, minHeight: "100%", paddingBottom: 32 },
   accentBar: { height: 2, background: C.accent, boxShadow: "none" },
 
