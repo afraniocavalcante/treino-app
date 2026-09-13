@@ -13,10 +13,12 @@ export default function ConsistencyHeatmap({
   trainedDates,
   dietDates,
   weeks = 13,
+  onTitleClick,
 }: {
   trainedDates: Set<string>;
   dietDates: Set<string>;
   weeks?: number;
+  onTitleClick?: () => void;
 }) {
   const today = new Date();
   const gridEnd = new Date(today);
@@ -45,9 +47,12 @@ export default function ConsistencyHeatmap({
 
   return (
     <div style={styles.hubRetroCard}>
-      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12 }}>
+      <div
+        style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12, cursor: onTitleClick ? "pointer" : "default" }}
+        onClick={onTitleClick}
+      >
         <span style={styles.hubRetroTitle}>Consistência combinada</span>
-        <span style={{ fontSize: 10.5, color: C.faint }}>{weeks} semanas</span>
+        <span style={{ fontSize: 10.5, color: C.faint }}>{onTitleClick ? "ver mais ›" : `${weeks} semanas`}</span>
       </div>
       <div style={{ display: "flex", gap: 3, overflowX: "auto", paddingBottom: 2 }}>
         {columns.map((col, ci) => (
@@ -61,7 +66,7 @@ export default function ConsistencyHeatmap({
               padding: 3,
               borderRadius: 5,
               cursor: "pointer",
-              background: ci === selectedWeek ? "rgba(159,180,196,.16)" : "transparent",
+              background: ci === selectedWeek ? "rgba(13,27,42,.06)" : "transparent",
               flexShrink: 0,
             }}
           >
@@ -74,7 +79,7 @@ export default function ConsistencyHeatmap({
                   borderRadius: 2,
                   background: cell.future
                     ? "transparent"
-                    : `linear-gradient(135deg, ${cell.trained ? C.accent : "rgba(255,255,255,.07)"} 50%, ${cell.dieted ? C.honey : "rgba(255,255,255,.07)"} 50%)`,
+                    : `linear-gradient(135deg, ${cell.trained ? C.accent : "rgba(13,27,42,.08)"} 50%, ${cell.dieted ? C.honey : "rgba(13,27,42,.08)"} 50%)`,
                 }}
               />
             ))}

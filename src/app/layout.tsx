@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: "App de treino A/B com progressão de carga",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "default",
     title: "Treino A/B",
   },
 };
@@ -16,7 +16,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#08080A",
+  themeColor: "#F5EFE3",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

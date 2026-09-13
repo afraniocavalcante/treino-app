@@ -95,7 +95,6 @@ export default function ProgressChart({
             strokeLinejoin="round"
             pathLength={1}
             style={{
-              filter: "drop-shadow(0 0 8px rgba(232,255,71,.5))",
               strokeDasharray: 1,
               animation: "tabChartDraw 900ms cubic-bezier(.2,.8,.2,1) both",
             }}
@@ -105,7 +104,6 @@ export default function ProgressChart({
         {points.map((p, i) => {
           const isPR = i === prIdx;
           const isActive = i === activeIdx;
-          const isLast = i === points.length - 1;
           const r = isPR ? 5 : isActive ? 5 : 3.5;
           return (
             <g key={p.date + i}>
@@ -125,7 +123,6 @@ export default function ProgressChart({
                 fill={C.accent}
                 stroke={C.bgCard}
                 strokeWidth={isActive || isPR ? 2 : 1.5}
-                style={isLast ? { filter: "drop-shadow(0 0 10px rgba(232,255,71,.9))" } : undefined}
               />
             </g>
           );

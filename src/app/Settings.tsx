@@ -4,6 +4,8 @@ import { useState } from "react";
 import { isNativePlatform } from "@/lib/notifications";
 import { applyUpdate, checkForUpdate, getCurrentVersion, type UpdateManifest } from "@/lib/updater";
 import { C, DISPLAY, styles } from "@/lib/styles";
+import { signOut } from "@/lib/auth";
+import { DumbbellIcon, PlateIcon, RefreshIcon, SignOutIcon } from "./Icons";
 import TreinoSettings from "./TreinoSettings";
 import DietSettings from "./DietSettings";
 
@@ -69,7 +71,9 @@ export default function Settings({ onExit, initialTab }: { onExit: () => void; i
           ) : (
             <>
               {state === "idle" && (
-                <button style={styles.confirmBtn} onClick={handleCheck}>Verificar atualizações</button>
+                <button style={{ ...styles.confirmBtn, background: C.accent, color: C.cream, boxShadow: "none", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={handleCheck}>
+                  <RefreshIcon size={14} color={C.cream} />Verificar atualizações
+                </button>
               )}
               {state === "checking" && (
                 <div style={{ fontSize: 12.5, color: C.midGray, textAlign: "center", padding: "8px 0" }}>Verificando…</div>
@@ -82,8 +86,10 @@ export default function Settings({ onExit, initialTab }: { onExit: () => void; i
               )}
               {state === "available" && manifest && (
                 <>
-                  <div style={{ fontSize: 12.5, color: C.honey, marginBottom: 10 }}>Atualização disponível: {manifest.version}</div>
-                  <button style={styles.confirmBtn} onClick={handleApply}>Atualizar agora</button>
+                  <div style={{ fontSize: 12.5, color: C.honeyText, marginBottom: 10 }}>Atualização disponível: {manifest.version}</div>
+                  <button style={{ ...styles.confirmBtn, background: C.accent, color: C.cream, boxShadow: "none", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={handleApply}>
+                    <RefreshIcon size={14} color={C.cream} />Atualizar agora
+                  </button>
                 </>
               )}
               {state === "applying" && (
@@ -100,17 +106,24 @@ export default function Settings({ onExit, initialTab }: { onExit: () => void; i
         </div>
 
         <div style={{ ...styles.segRow, margin: "20px 0 0" }}>
-          <button style={{ ...styles.segBtn, ...(tab === "dieta" ? styles.segBtnActive : {}) }} onClick={() => setTab("dieta")}>
-            🍽️ Dieta
+          <button style={{ ...styles.segBtn, ...(tab === "dieta" ? styles.segBtnActive : {}), display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }} onClick={() => setTab("dieta")}>
+            <PlateIcon size={12} />Dieta
           </button>
-          <button style={{ ...styles.segBtn, ...(tab === "treino" ? styles.segBtnActive : {}) }} onClick={() => setTab("treino")}>
-            🏋️ Treino
+          <button style={{ ...styles.segBtn, ...(tab === "treino" ? styles.segBtnActive : {}), display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }} onClick={() => setTab("treino")}>
+            <DumbbellIcon size={12} />Treino
           </button>
         </div>
 
         {tab === "dieta" && <DietSettings />}
 
         {tab === "treino" && <TreinoSettings onExit={onExit} />}
+
+        <button
+          onClick={signOut}
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "calc(100% - 40px)", margin: "22px 20px 0", background: "transparent", border: `1px solid ${C.bgHeader}`, color: C.lightGray, borderRadius: 8, padding: "13px 14px", fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}
+        >
+          <SignOutIcon size={14} />Sair
+        </button>
       </div>
     </div>
   );

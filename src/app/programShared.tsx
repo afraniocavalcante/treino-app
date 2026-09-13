@@ -24,7 +24,7 @@ export function MuscleGroupPicker({ value, onChange }: { value: MuscleGroup | nu
             fontSize: 11,
             fontWeight: 600,
             background: g === value ? C.accentSoft : "transparent",
-            border: `1px solid ${g === value ? "rgba(232,255,71,.45)" : C.bgHeader}`,
+            border: `1px solid ${g === value ? "rgba(13,27,42,.35)" : C.bgHeader}`,
             color: g === value ? C.accent : C.lightGray,
             cursor: "pointer",
           }}

@@ -27,6 +27,7 @@ import { C, DISPLAY, styles } from "@/lib/styles";
 import { disableMealReminders, enableMealReminders, isNativePlatform } from "@/lib/notifications";
 import { guardOffline, loadWithCache, useOnline } from "@/lib/offline";
 import { MealCard } from "./dietShared";
+import { SupplementIcon } from "./Icons";
 
 type Tab = "hoje" | "progresso" | "compras" | "mais";
 
@@ -182,7 +183,7 @@ export default function DietApp({
           <>
             <div style={styles.dietKcalCard}>
               <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                <div style={{ ...styles.dietRingOuter, background: `conic-gradient(${C.accent} ${kcalPct}%, rgba(255,255,255,.08) 0)` }}>
+                <div style={{ ...styles.dietRingOuter, background: `conic-gradient(${C.honey} ${kcalPct}%, rgba(13,27,42,.08) 0)` }}>
                   <div style={styles.dietRingInner}>
                     <div style={styles.dietRingKcal}>{totals.kcal}</div>
                     <div style={styles.dietRingTarget}>de {plan.kcalTarget} kcal</div>
@@ -190,9 +191,9 @@ export default function DietApp({
                 </div>
                 <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 9 }}>
                   {[
-                    { label: "Proteína", value: totals.p, target: plan.proteinTarget, color: C.accent },
-                    { label: "Carbo", value: totals.c, target: plan.carbTarget, color: C.honey },
-                    { label: "Gordura", value: totals.g, target: plan.fatTarget, color: C.red },
+                    { label: "Proteína", value: totals.p, target: plan.proteinTarget, color: C.honey },
+                    { label: "Carbo", value: totals.c, target: plan.carbTarget, color: C.steel },
+                    { label: "Gordura", value: totals.g, target: plan.fatTarget, color: C.accent },
                   ].map((m) => (
                     <div key={m.label}>
                       <div style={{ ...styles.dietMacroRow, color: m.color }}>
@@ -222,7 +223,7 @@ export default function DietApp({
               ))}
 
               <div style={styles.dietSuppMini} onClick={() => setTab("mais")}>
-                <div style={styles.dietSuppIcon}>💊</div>
+                <div style={styles.dietSuppIcon}><SupplementIcon size={16} color={C.honeyText} markColor={C.honeySoft} /></div>
                 <div style={{ flex: 1 }}>
                   <div style={styles.dietMealName}>Suplementos de hoje</div>
                   <div style={styles.dietMealSummary}>{suppDone} de {plan.supplements.length} feitos</div>

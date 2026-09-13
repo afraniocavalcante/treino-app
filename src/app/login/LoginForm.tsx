@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { C, DISPLAY, G, styles } from "@/lib/styles";
+import { C, DISPLAY, styles } from "@/lib/styles";
 
 export default function LoginForm() {
   const [pending, setPending] = useState(false);
@@ -26,6 +26,8 @@ export default function LoginForm() {
 
   return (
     <div style={styles.loginWrap}>
+      <div style={{ position: "absolute", top: -90, right: -90, width: 220, height: 220, borderRadius: "50%", background: "rgba(201,123,74,.35)" }} />
+      <div style={{ position: "absolute", top: 40, right: 60, width: 40, height: 40, borderRadius: "50%", background: "rgba(207,168,95,.5)" }} />
       <div style={styles.loginMark}>A</div>
       <h1 style={styles.loginTitle}>
         Treino
@@ -70,17 +72,19 @@ export default function LoginForm() {
           style={{
             marginTop: 8,
             width: "100%",
-            padding: 19,
-            background: G.lime,
-            color: "#0A0A0B",
+            padding: 18,
+            background: "#C97B4A",
+            color: "#F5EFE3",
             border: "none",
-            borderRadius: 16,
+            borderRadius: 6,
             fontFamily: DISPLAY,
             fontSize: 15,
             fontWeight: 700,
+            letterSpacing: 0.4,
             cursor: pending ? "default" : "pointer",
             opacity: pending ? 0.7 : 1,
-            boxShadow: G.glowBtn,
+            position: "relative",
+            zIndex: 1,
           }}
         >
           {pending ? "ENTRANDO..." : "ENTRAR"}

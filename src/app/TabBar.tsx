@@ -1,30 +1,35 @@
 "use client";
 
 import { styles } from "@/lib/styles";
+import { BarChartIcon, DumbbellIcon, HomeIcon, PlateIcon, SlidersIcon } from "./Icons";
 
-export type AppTab = "hub" | "dieta" | "treino" | "settings";
+export type AppTab = "hub" | "dieta" | "treino" | "insights" | "settings";
 
-const TABS: { key: AppTab; label: string; icon: string }[] = [
-  { key: "hub", label: "Hoje", icon: "🏠" },
-  { key: "dieta", label: "Dieta", icon: "🍽️" },
-  { key: "treino", label: "Treino", icon: "🏋️" },
-  { key: "settings", label: "Config", icon: "⚙️" },
+const TABS: { key: AppTab; label: string; Icon: typeof HomeIcon }[] = [
+  { key: "hub", label: "Hoje", Icon: HomeIcon },
+  { key: "dieta", label: "Dieta", Icon: PlateIcon },
+  { key: "treino", label: "Treino", Icon: DumbbellIcon },
+  { key: "insights", label: "Insights", Icon: BarChartIcon },
+  { key: "settings", label: "Config", Icon: SlidersIcon },
 ];
 
 /** Persistent bottom navigation shown across the whole app, rendered once at the AppShell level. */
 export default function TabBar({ active, onChange }: { active: AppTab; onChange: (tab: AppTab) => void }) {
   return (
     <div style={styles.hubBottomNav}>
-      {TABS.map((t) => (
-        <button
-          key={t.key}
-          style={{ ...styles.hubNavBtn, ...(active === t.key ? styles.hubNavBtnActive : {}) }}
-          onClick={() => onChange(t.key)}
-        >
-          <span style={styles.hubNavIcon}>{t.icon}</span>
-          <span>{t.label}</span>
-        </button>
-      ))}
+      {TABS.map((t) => {
+        const on = active === t.key;
+        return (
+          <button
+            key={t.key}
+            style={{ ...styles.hubNavBtn, ...(on ? styles.hubNavBtnActive : {}) }}
+            onClick={() => onChange(t.key)}
+          >
+            <t.Icon size={18} color={on ? "#F5EFE3" : "#7C8A9A"} />
+            <span>{t.label}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }

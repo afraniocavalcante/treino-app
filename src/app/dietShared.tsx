@@ -3,10 +3,7 @@
 import { useState } from "react";
 import { isMealCustom, isMealDone, isMealSkipped, type AlmocoPicks, type DietDayPicks, type DietMeal, type MacroValues } from "@/lib/diet";
 import { C, styles } from "@/lib/styles";
-
-export const MEAL_ICON: Record<string, string> = {
-  cafe: "☕", almoco: "🍽️", lanche: "🍎", jantar: "🌙", sobremesa: "🍰",
-};
+import { CheckIcon, PlateIcon } from "./Icons";
 
 function truncate(s: string, n: number): string {
   return s.length > n ? s.slice(0, n) + "…" : s;
@@ -105,9 +102,9 @@ export function MealCard({
   }
 
   const badgeStyle = skipped
-    ? { background: "rgba(159,180,196,.16)", border: "1px solid rgba(159,180,196,.4)", color: C.steel }
+    ? { background: C.steelSoft, border: `1px solid ${C.steelEdge}`, color: C.steelLight }
     : done
-    ? { background: "rgba(240,180,41,.16)", border: "1px solid rgba(240,180,41,.4)", color: C.honey }
+    ? { background: C.honeySoft, border: `1px solid ${C.honeyEdge}`, color: C.honeyText }
     : { background: "transparent", border: "1px solid transparent", color: "transparent" };
 
   const currentCustom = customMacros(meal, picks);
@@ -115,12 +112,12 @@ export function MealCard({
   return (
     <div style={styles.dietMealCard} onClick={(e) => e.stopPropagation()}>
       <div style={styles.dietMealHead} onClick={onToggleOpen}>
-        <div style={styles.dietMealIcon}>{MEAL_ICON[meal.key] ?? "🍴"}</div>
+        <div style={styles.dietMealIcon}><PlateIcon size={16} color={C.honeyText} /></div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={styles.dietMealName}>{meal.label}</div>
           <div style={styles.dietMealSummary}>{mealSummary(meal, picks)}</div>
         </div>
-        {(done || skipped) && <div style={{ ...styles.dietMealBadge, ...badgeStyle }}>{skipped ? "–" : "✓"}</div>}
+        {(done || skipped) && <div style={{ ...styles.dietMealBadge, ...badgeStyle }}>{skipped ? "–" : <CheckIcon size={10} color={C.honeyText} />}</div>}
         <div style={{ ...styles.mealChevron, transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▾</div>
       </div>
 
@@ -185,7 +182,7 @@ export function MealCard({
                         style={{ ...styles.dietOptionRow, ...(selected ? styles.dietOptionRowSelected : {}) }}
                         onClick={() => (meal.key === "sobremesa" ? selectSobremesa(i) : selectSimple(meal.key as "cafe" | "lanche" | "jantar", i))}
                       >
-                        <div style={{ ...styles.dietRadio, ...(selected ? styles.dietRadioSelected : {}) }} />
+                        <div style={{ ...styles.dietRadio, ...(selected ? styles.dietRadioSelected : {}) }}>{selected && <CheckIcon size={9} />}</div>
                         <div style={{ flex: 1 }}>
                           <div style={styles.dietOptionLabel}>{opt.label}</div>
                           <div style={styles.dietOptionMacro}>P {opt.p}g · C {opt.c}g · G {opt.g}g</div>
@@ -199,7 +196,7 @@ export function MealCard({
                       style={{ ...styles.dietOptionRow, ...(picks.sobremesa === "none" ? styles.dietOptionRowSelected : {}) }}
                       onClick={() => selectSobremesa("none")}
                     >
-                      <div style={{ ...styles.dietRadio, ...(picks.sobremesa === "none" ? styles.dietRadioSelected : {}) }} />
+                      <div style={{ ...styles.dietRadio, ...(picks.sobremesa === "none" ? styles.dietRadioSelected : {}) }}>{picks.sobremesa === "none" && <CheckIcon size={9} />}</div>
                       <div style={styles.dietOptionLabel}>Não vou comer sobremesa hoje</div>
                     </div>
                   )}
@@ -236,7 +233,7 @@ export function MealCard({
                             style={{ ...styles.dietOptionRow, padding: "7px 10px", ...(selected ? styles.dietOptionRowSelected : {}) }}
                             onClick={() => selectAlmocoGroup(grp.key as keyof AlmocoPicks, i)}
                           >
-                            <div style={{ ...styles.dietRadio, ...(selected ? styles.dietRadioSelected : {}) }} />
+                            <div style={{ ...styles.dietRadio, ...(selected ? styles.dietRadioSelected : {}) }}>{selected && <CheckIcon size={9} />}</div>
                             <div style={styles.dietOptionLabel}>{label}</div>
                           </div>
                         );
@@ -247,9 +244,9 @@ export function MealCard({
                     <span style={{ fontSize: 12.5, fontWeight: 500 }}>{meal.groups.toggle.label}</span>
                     <div
                       onClick={toggleAlmocoFruta}
-                      style={{ ...styles.fruitSwitchTrack, background: picks.almoco.fruta ? "rgba(240,180,41,.28)" : "rgba(255,255,255,.08)" }}
+                      style={{ ...styles.fruitSwitchTrack, background: picks.almoco.fruta ? C.honeySoft : "rgba(13,27,42,.08)" }}
                     >
-                      <div style={{ ...styles.fruitSwitchThumb, left: picks.almoco.fruta ? 20 : 2, background: picks.almoco.fruta ? C.honey : C.midGray }} />
+                      <div style={{ ...styles.fruitSwitchThumb, left: picks.almoco.fruta ? 20 : 2, background: picks.almoco.fruta ? C.honey : "#FFFFFF" }} />
                     </div>
                   </div>
                 </>

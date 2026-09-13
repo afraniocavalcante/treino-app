@@ -234,6 +234,19 @@ export function isDayComplete(plan: DietPlan, picks: DietDayPicks): boolean {
   return plan.meals.filter((m) => m.key !== "sobremesa").every((m) => isMealDone(m, picks));
 }
 
+/**
+ * A day only counts as "diet complete" for the combined streak/heatmap if every
+ * meal AND every supplement was taken — deliberate combined rule from the app
+ * redesign handoff, not just meals alone.
+ */
+export function isDaySupplementsComplete(plan: DietPlan, supplementsTaken: Record<string, boolean>): boolean {
+  return plan.supplements.every((s) => supplementsTaken[s.key]);
+}
+
+export function isDayFullyComplete(plan: DietPlan, picks: DietDayPicks, supplementsTaken: Record<string, boolean>): boolean {
+  return isDayComplete(plan, picks) && isDaySupplementsComplete(plan, supplementsTaken);
+}
+
 export function formatDietDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }

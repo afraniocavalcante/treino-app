@@ -256,7 +256,7 @@ function ProgramFields({
                 <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <span style={styles.phaseName}>{p.name}</span>
                   {isActivePhase && (
-                    <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 0.5, background: C.accent, color: "#0A0A0B", padding: "2px 7px", borderRadius: 6 }}>ATIVA</span>
+                    <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 0.5, background: C.accent, color: C.cream, padding: "2px 7px", borderRadius: 6 }}>ATIVA</span>
                   )}
                 </span>
                 <button disabled={busy} onClick={() => run(() => deleteProgramPhase(supabase, p.id))} style={smallDangerBtn}>×</button>
@@ -385,7 +385,7 @@ function ReorderableExerciseList({
             }}
             style={{
               borderTop: `1px solid ${C.line}`,
-              background: isDragging ? "rgba(255,255,255,.05)" : "transparent",
+              background: isDragging ? "rgba(13,27,42,.05)" : "transparent",
               opacity: isDragging ? 0.7 : 1,
               touchAction: isDragging ? "none" : "auto",
             }}
@@ -490,8 +490,8 @@ function ExerciseEditFields({
 const numFieldStyle: React.CSSProperties = {
   flex: 1,
   padding: "9px 10px",
-  background: "rgba(255,255,255,.05)",
-  border: "1px solid rgba(255,255,255,.09)",
+  background: "rgba(13,27,42,.05)",
+  border: "1px solid rgba(13,27,42,.09)",
   borderRadius: 10,
   display: "flex",
   flexDirection: "column",
