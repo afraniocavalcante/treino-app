@@ -75,7 +75,7 @@ export const styles: Record<string, CSSProperties> = {
   // lives in here. The tab bar sits below this as a normal flex sibling
   // (not position:fixed), so it can't drift the way a fixed element can in
   // a WKWebView with native safe-area insetting.
-  appShellScroll: { flex: 1, minHeight: 0, overflowY: "auto", WebkitOverflowScrolling: "touch", position: "relative" } as CSSProperties,
+  appShellScroll: { flex: 1, minHeight: 0, overflowY: "auto", WebkitOverflowScrolling: "touch", position: "relative", paddingTop: "env(safe-area-inset-top, 0px)" } as CSSProperties,
   container: { width: "100%", position: "relative", color: C.white, minHeight: "100%", paddingBottom: 32 },
   accentBar: { height: 2, background: C.accent, boxShadow: "none" },
 
@@ -251,7 +251,7 @@ export const styles: Record<string, CSSProperties> = {
 
   // ── Login ───────────────────────────────────────────────
   // Login continua em navy fixo mesmo com o resto do app em paleta clara — cores literais, não vêm de C.*.
-  loginWrap: { minHeight: "100dvh", background: "#0D1B2A", display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "0 28px 56px", position: "relative", overflow: "hidden" }, // NOVO
+  loginWrap: { minHeight: "100dvh", background: "#0D1B2A", display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "0 28px max(56px, env(safe-area-inset-bottom, 56px))", position: "relative", overflow: "hidden" }, // NOVO
   loginMark: { width: 52, height: 52, borderRadius: 6, background: "#C97B4A", color: "#F5EFE3", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: DISPLAY, fontSize: 22, fontWeight: 700, position: "relative", zIndex: 1 }, // NOVO
   loginTitle: { fontFamily: DISPLAY, fontSize: 32, fontWeight: 600, letterSpacing: -0.5, lineHeight: 1.15, margin: "26px 0 0", color: "#F5EFE3", position: "relative", zIndex: 1 }, // NOVO
   loginSub: { fontSize: 13, color: "#9BA8B6", margin: "12px 0 0", lineHeight: 1.5, position: "relative", zIndex: 1 }, // NOVO
