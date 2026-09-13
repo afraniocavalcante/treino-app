@@ -21,7 +21,13 @@ const config: CapacitorConfig = {
   },
   plugins: {
     StatusBar: {
-      overlaysWebView: false,
+      // true (Capacitor's own default) — this was never set explicitly
+      // during the working, scroll-free version. Setting it to false made
+      // the status bar reserve its own space ON TOP OF contentInset's
+      // native safe-area inset, double-offsetting the WebView and bringing
+      // back the phantom scroll. overlay:true + contentInset:"always" is
+      // the combination that actually worked.
+      overlaysWebView: true,
     },
   },
 };
