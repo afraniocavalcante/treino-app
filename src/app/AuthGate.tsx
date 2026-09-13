@@ -6,7 +6,6 @@ import { OnlineProvider } from "@/lib/offline";
 import { configureStatusBar } from "@/lib/statusBar";
 import { styles } from "@/lib/styles";
 import { notifyAppReady } from "@/lib/updater";
-import { useViewportHeight } from "@/lib/viewport";
 import LoginForm from "./login/LoginForm";
 import Hub from "./Hub";
 
@@ -18,8 +17,6 @@ import Hub from "./Hub";
 export default function AuthGate() {
   const [loading, setLoading] = useState(true);
   const [authed, setAuthed] = useState(false);
-
-  useViewportHeight();
 
   useEffect(() => {
     notifyAppReady();
