@@ -61,6 +61,11 @@ export async function drainPendingSessions(): Promise<WatchCompletedSession[]> {
 }
 
 /** Assina o aviso de "chegou sessão nova" — só um sinal; o payload vem via drainPendingSessions. */
-export function onSessionReceived(callback: () => void): Promise<PluginListenerHandle> {
-  return WatchBridge.addListener("sessionReceived", () => callback());
+export async function onSessionReceived(callback: () => void): Promise<PluginListenerHandle> {
+  try {
+    return await WatchBridge.addListener("sessionReceived", () => callback());
+  } catch {
+    // Plugin não existe nessa plataforma (ex. navegador) — nada pra escutar.
+    return { remove: async () => {} };
+  }
 }
