@@ -15,6 +15,18 @@ type SettingsTab = "dieta" | "treino";
 
 export default function Settings({ onExit, initialTab }: { onExit: () => void; initialTab?: SettingsTab }) {
   const [tab, setTab] = useState<SettingsTab>(initialTab ?? "dieta");
+  // Settings stays permanently mounted (Hub never unmounts it), so
+  // initialTab only setting the state's first value isn't enough — an
+  // explicit deep link (e.g. "Programas" in Treino → goSettings("treino"))
+  // needs to actually switch the tab even on a later visit. React's
+  // documented pattern for this (adjusting state during render, guarded by
+  // a "previous prop" comparison) instead of an effect, which would cause
+  // an extra render.
+  const [prevInitialTab, setPrevInitialTab] = useState(initialTab);
+  if (initialTab !== prevInitialTab) {
+    setPrevInitialTab(initialTab);
+    if (initialTab) setTab(initialTab);
+  }
   const [state, setState] = useState<CheckState>("idle");
   const [manifest, setManifest] = useState<UpdateManifest | null>(null);
   const [errorMsg, setErrorMsg] = useState("");

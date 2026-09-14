@@ -166,7 +166,11 @@ export default function Hub() {
   }
 
   function goSettings(tab?: SettingsTab) {
-    setSettingsTab(tab ?? "dieta");
+    // Only overrides the sub-tab on an explicit deep link (e.g. "Programas"
+    // in Treino) — a bare tap on the Config tab bar button keeps whatever
+    // sub-tab Settings was last showing, since Settings stays mounted and
+    // its own initialTab prop can't "reset" it without this guard.
+    if (tab) setSettingsTab(tab);
     setRoute("settings");
   }
 
