@@ -112,7 +112,6 @@ export default function DietApp({
     return (
       <div style={styles.container} ref={backSwipeRef}>
         <div style={styles.dietHeader}>
-          <button style={styles.exitBtn} onClick={onExit}>← HUB</button>
           <div style={{ ...styles.dietSectionCard, margin: "20px 0 0" }}>
             <div style={{ fontFamily: DISPLAY, fontWeight: 600, fontSize: 16 }}>Ainda sem plano cadastrado</div>
             <div style={{ fontSize: 13, color: C.midGray, marginTop: 6, lineHeight: 1.5 }}>Nenhum plano alimentar foi importado ainda.</div>
@@ -151,8 +150,7 @@ export default function DietApp({
   return (
     <div style={styles.container} ref={backSwipeRef}>
         <div style={styles.dietHeader}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <button style={styles.exitBtn} onClick={onExit}>← HUB</button>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
             <div style={styles.dietStreakPill}>🔥 {streak} {streak === 1 ? "dia" : "dias"}</div>
           </div>
           <div style={{ fontFamily: DISPLAY, fontSize: 24, fontWeight: 600, marginTop: 14 }}>{plan.name}</div>

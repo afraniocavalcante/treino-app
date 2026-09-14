@@ -89,7 +89,6 @@ export const styles: Record<string, CSSProperties> = {
   logoTitle: { fontFamily: DISPLAY, fontSize: 30, fontWeight: 600, letterSpacing: -0.6, lineHeight: 1.14, color: C.white, margin: 0 },
   logoSub: { color: C.midGray, fontSize: 12.5, margin: "12px 0 0", letterSpacing: 0.2 },
   signOutBtn: { position: "absolute", top: 22, right: 22, background: "rgba(13,27,42,.05)", border: `1px solid ${C.bgHeader}`, color: C.midGray, borderRadius: 10, padding: "7px 13px", fontSize: 11, fontWeight: 500, cursor: "pointer" },
-  hubHomeBtn: { position: "absolute", top: 22, left: 22, background: "rgba(13,27,42,.05)", border: `1px solid ${C.bgHeader}`, color: C.midGray, borderRadius: 10, padding: "7px 13px", fontSize: 11, fontWeight: 500, cursor: "pointer" }, // NOVO
 
   weekCard: { ...glass, margin: "0 26px 16px", borderRadius: 20, padding: 16 },
   weekDotsRow: { display: "flex", gap: 6, alignItems: "flex-end", height: 34 },
