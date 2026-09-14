@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { addLibraryExercise, uploadExerciseGif } from "@/lib/data";
 import { MUSCLE_GROUPS, type ExerciseUnit, type LibraryExercise, type MuscleGroup } from "@/lib/program";
-import { C, styles } from "@/lib/styles";
+import { C, SCREEN_ANIM, styles } from "@/lib/styles";
 import { addBtnStyle, cancelBtn, chipBtn, confirmSmallBtn, inputStyle, libRowStyle, MuscleGroupPicker, UNIT_LABEL } from "./programShared";
 
 export default function ExerciseLibrary({
@@ -42,7 +42,7 @@ export default function ExerciseLibrary({
   const groupsInUse = MUSCLE_GROUPS.filter((g) => library.some((ex) => ex.muscleGroup === g));
 
   return (
-    <div style={{ animation: "tabScreenIn .45s cubic-bezier(.2,.8,.2,1) both" }}>
+    <div style={{ animation: SCREEN_ANIM }}>
       <div style={styles.topNav}>
         <button onClick={onBack} style={styles.backBtn}>← Programas</button>
       </div>

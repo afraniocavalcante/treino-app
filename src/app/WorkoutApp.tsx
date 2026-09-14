@@ -31,9 +31,10 @@ import {
   type ProgramWorkoutExercise,
   type SessionLog,
 } from "@/lib/program";
-import { C, DISPLAY, EASE, G, styles } from "@/lib/styles";
+import { C, DISPLAY, EASE, G, SCREEN_ANIM, styles } from "@/lib/styles";
 import { cancelRestTimerNotification, isNativePlatform, scheduleRecoveryMealNudge, scheduleRestTimerNotification } from "@/lib/notifications";
 import { guardOffline, loadWithCache, useOnline } from "@/lib/offline";
+import { useEdgeSwipeBack } from "@/lib/gestures";
 import { sendTodayWorkout } from "@/lib/watchBridge";
 import ProgressChart from "./ProgressChart";
 import Heatmap from "./Heatmap";
@@ -441,10 +442,21 @@ export default function WorkoutApp({
       .filter((ex) => ex.idx !== exerciseIndex);
   }
 
-  const screenAnim = `tabScreenIn .45s ${EASE} both`;
+  const screenAnim = SCREEN_ANIM;
   const stagger = (i: number, base = 0) => `tabFadeUp .5s ${EASE} ${(base + i * 0.06).toFixed(2)}s both`;
 
-  const shell = (children: React.ReactNode) => <div style={styles.container}>{children}</div>;
+  // Puxar da borda esquerda espelha o botão de voltar já visível na tela
+  // atual: "workout" pede confirmação (não descarta o treino sem avisar),
+  // "home" volta pro Hub, todo o resto volta pra "home" — igual os botões
+  // "← Início"/"Encerrar"/"Cancelar" já fazem em cada uma dessas telas.
+  const backSwipeRef = useEdgeSwipeBack(
+    screen === "home" ? onGoHub ?? null : screen === "workout" ? requestExit : () => goScreen("home")
+  );
+  const shell = (children: React.ReactNode) => (
+    <div style={styles.container} ref={backSwipeRef}>
+      {children}
+    </div>
+  );
 
   if (loading) {
     return shell(<div style={styles.loadingWrap}>Carregando…</div>);

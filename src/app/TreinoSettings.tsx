@@ -11,7 +11,7 @@ import {
   getScheduledProgram,
 } from "@/lib/data";
 import type { HistoryEntry, LibraryExercise, Program } from "@/lib/program";
-import { C, EASE, styles } from "@/lib/styles";
+import { C, SCREEN_ANIM, styles } from "@/lib/styles";
 import { loadWithCache, useOnline } from "@/lib/offline";
 import ProgramsOverview from "./ProgramsOverview";
 import ProgramEditor from "./ProgramEditor";
@@ -34,7 +34,14 @@ interface TreinoSettingsBundle {
  * exercícios, movidos para cá de dentro do módulo de treino (antes acessados por
  * um botão "Programas" na home do treino).
  */
-export default function TreinoSettings({ onExit }: { onExit: () => void }) {
+export default function TreinoSettings({
+  onExit,
+  onBackChange,
+}: {
+  onExit: () => void;
+  /** Reporta o "voltar" da tela atual pro Settings.tsx — null na raiz (cai pro onExit dele). */
+  onBackChange?: (fn: (() => void) | null) => void;
+}) {
   const supabase = createClient();
   const online = useOnline();
 
@@ -83,6 +90,10 @@ export default function TreinoSettings({ onExit }: { onExit: () => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    onBackChange?.(screen === "programs" ? null : () => setScreen("programs"));
+  }, [screen, onBackChange]);
+
   if (loading) return <div style={styles.loadingWrap}>Carregando…</div>;
 
   if (screen === "programEditor") {
@@ -106,7 +117,7 @@ export default function TreinoSettings({ onExit }: { onExit: () => void }) {
 
   if (screen === "completed") {
     return (
-      <div style={{ animation: `tabScreenIn .45s ${EASE} both` }}>
+      <div style={{ animation: SCREEN_ANIM }}>
         <div style={styles.topNav}>
           <button onClick={() => setScreen("programs")} style={styles.backBtn}>← Programas</button>
         </div>

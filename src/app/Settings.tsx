@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { isNativePlatform } from "@/lib/notifications";
 import { applyUpdate, checkForUpdate, getCurrentVersion, type UpdateManifest } from "@/lib/updater";
 import { C, DISPLAY, styles } from "@/lib/styles";
 import { signOut } from "@/lib/auth";
+import { useEdgeSwipeBack } from "@/lib/gestures";
 import { DumbbellIcon, PlateIcon, RefreshIcon, SignOutIcon } from "./Icons";
 import TreinoSettings from "./TreinoSettings";
 import DietSettings from "./DietSettings";
@@ -18,6 +19,14 @@ export default function Settings({ onExit, initialTab }: { onExit: () => void; i
   const [manifest, setManifest] = useState<UpdateManifest | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
   const native = isNativePlatform();
+
+  // Quando o TreinoSettings está numa sub-tela (editar programa, biblioteca),
+  // ele reporta seu próprio "voltar" aqui — senão o gesto pula a sub-tela e
+  // vai direto pro Hub. Na tela raiz do Treino, ele reporta null e caímos
+  // de volta pro onExit normal.
+  const [treinoBack, setTreinoBack] = useState<(() => void) | null>(null);
+  const handleTreinoBackChange = useCallback((fn: (() => void) | null) => setTreinoBack(() => fn), []);
+  const backSwipeRef = useEdgeSwipeBack(tab === "treino" && treinoBack ? treinoBack : onExit);
 
   async function handleCheck() {
     setState("checking");
@@ -49,7 +58,7 @@ export default function Settings({ onExit, initialTab }: { onExit: () => void; i
   }
 
   return (
-    <div style={styles.container}>
+    <div style={styles.container} ref={backSwipeRef}>
         <div style={styles.dietHeader}>
           <button style={styles.exitBtn} onClick={onExit}>← HUB</button>
           <div style={{ fontFamily: DISPLAY, fontSize: 24, fontWeight: 600, marginTop: 14 }}>Configurações</div>
@@ -115,7 +124,7 @@ export default function Settings({ onExit, initialTab }: { onExit: () => void; i
 
         {tab === "dieta" && <DietSettings />}
 
-        {tab === "treino" && <TreinoSettings onExit={onExit} />}
+        {tab === "treino" && <TreinoSettings onExit={onExit} onBackChange={handleTreinoBackChange} />}
 
         <button
           onClick={signOut}

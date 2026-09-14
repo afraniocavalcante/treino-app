@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { getCompletedDietPlans, getDietPlan, getDietPlanSequence, getScheduledDietPlan } from "@/lib/dietData";
 import type { DietPlan, DietPlanSummary } from "@/lib/diet";
-import { C, DISPLAY, G, styles } from "@/lib/styles";
+import { C, DISPLAY, G, SCREEN_ANIM, styles } from "@/lib/styles";
 import { loadWithCache, useOnline } from "@/lib/offline";
 import DietPlanEditor from "./DietPlanEditor";
 import { addBtnStyle } from "./programShared";
@@ -83,7 +83,7 @@ export default function DietSettings() {
 
   if (screen === "completed") {
     return (
-      <div style={{ animation: "tabScreenIn .45s cubic-bezier(.2,.8,.2,1) both" }}>
+      <div style={{ animation: SCREEN_ANIM }}>
         <div style={styles.topNav}>
           <button onClick={() => setScreen("overview")} style={styles.backBtn}>← Plano</button>
         </div>
@@ -107,7 +107,7 @@ export default function DietSettings() {
   }
 
   return (
-    <div style={{ animation: "tabScreenIn .45s cubic-bezier(.2,.8,.2,1) both" }}>
+    <div style={{ animation: SCREEN_ANIM }}>
       <div style={{ ...styles.histBody, paddingBottom: 40 }}>
         <h2 style={styles.histTitle}>Plano alimentar</h2>
 

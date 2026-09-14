@@ -17,7 +17,7 @@ import {
   type DietPlanFieldsInput,
 } from "@/lib/dietData";
 import type { DietMeal, DietMealOption, DietMealRadioGroup, DietPlan, DietShoppingCategory, DietSupplement, DietSupplementGroup } from "@/lib/diet";
-import { C, DISPLAY, styles } from "@/lib/styles";
+import { C, DISPLAY, SCREEN_ANIM, styles } from "@/lib/styles";
 import { addBtnStyle, cancelBtn, confirmSmallBtn, inputStyle, labelStyle, smallDangerBtn, NewDietPlanForm } from "./dietPlanShared";
 import { SectionHeader } from "./programShared";
 
@@ -61,7 +61,7 @@ export default function DietPlanEditor({
 
   if (!plan || showReplaceForm) {
     return (
-      <div style={{ animation: "tabScreenIn .45s cubic-bezier(.2,.8,.2,1) both" }}>
+      <div style={{ animation: SCREEN_ANIM }}>
         <div style={styles.topNav}>
           <button onClick={plan ? () => setShowReplaceForm(false) : onBack} style={styles.backBtn}>← Voltar</button>
         </div>
@@ -88,7 +88,7 @@ export default function DietPlanEditor({
   const seq = planSeq.get(plan.id) ?? 0;
 
   return (
-    <div style={{ animation: "tabScreenIn .45s cubic-bezier(.2,.8,.2,1) both" }}>
+    <div style={{ animation: SCREEN_ANIM }}>
       <div style={styles.topNav}>
         <button onClick={onBack} style={styles.backBtn}>← Plano</button>
       </div>

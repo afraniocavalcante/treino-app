@@ -46,6 +46,8 @@ export const C = {
 export const DISPLAY = "'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif";
 export const BODY = "'Sora', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 export const EASE = "cubic-bezier(.2,.8,.2,1)";
+/** A animação "leve" de entrada de tela — fade + leve subida. Usada em toda troca de tela/módulo. */
+export const SCREEN_ANIM = `tabScreenIn .45s ${EASE} both`;
 
 /** Gradientes e sombras reutilizáveis */ // NOVO
 export const G = {

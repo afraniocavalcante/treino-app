@@ -8,13 +8,14 @@ import { drainPendingSessions, onSessionReceived, type WatchCompletedSession } f
 import { getDietDayLogs, getDietMeasurements, getDietPlan, getTodayDietLog, saveTodayDietLog } from "@/lib/dietData";
 import { emptyDietDay, isDayFullyComplete, isMealDone, type DietDayLog, type DietDayPicks, type DietMeasurement, type DietPlan } from "@/lib/diet";
 import { getPerfectStreak, getTotalPerfectDays, getTrainingVolumeByDate, isDeloadPhase } from "@/lib/insights";
-import { C, styles } from "@/lib/styles";
+import { C, SCREEN_ANIM, styles } from "@/lib/styles";
 import { guardOffline, loadWithCache, useOnline } from "@/lib/offline";
 import WorkoutApp from "./WorkoutApp";
 import DietApp from "./DietApp";
 import Settings from "./Settings";
 import Insights from "./Insights";
-import TabBar, { type AppTab } from "./TabBar";
+import TabBar, { TABS, type AppTab } from "./TabBar";
+import { useHorizontalTabSwipe } from "@/lib/gestures";
 import ConsistencyHeatmap from "./ConsistencyHeatmap";
 import { MealCard, findNextMeal } from "./dietShared";
 import { CheckIcon, DumbbellIcon, PlateIcon, SupplementIcon, WarningIcon } from "./Icons";
@@ -193,6 +194,21 @@ export default function Hub() {
     else goSettings();
   }
 
+  // Deslizar sobre o conteúdo troca de módulo, na mesma ordem da TabBar —
+  // mesmo handleTabChange que um toque na aba já chama.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useHorizontalTabSwipe(
+    scrollRef,
+    () => {
+      const idx = TABS.findIndex((t) => t.key === activeTab);
+      if (idx >= 0 && idx < TABS.length - 1) handleTabChange(TABS[idx + 1].key);
+    },
+    () => {
+      const idx = TABS.findIndex((t) => t.key === activeTab);
+      if (idx > 0) handleTabChange(TABS[idx - 1].key);
+    }
+  );
+
   const todayStr = formatDate(new Date());
   const trainedToday = trainHistory.some((e) => e.date === todayStr);
   const trainedDates = new Set(trainHistory.map((e) => e.date));
@@ -223,10 +239,15 @@ export default function Hub() {
 
   const workoutPending = !!(program && !restToday && nextWorkout && !trainedToday);
 
+  // CSS reinicia a animação sozinho toda vez que o display volta de none pra
+  // block — não precisa de key/remount, e a mesma "leveza" que só existia ao
+  // abrir o Treino agora entra em qualquer troca de módulo.
+  const routeStyle = (r: Route) => (route === r ? { display: "block" as const, animation: SCREEN_ANIM } : { display: "none" as const });
+
   return (
     <div style={styles.appShell}>
-    <div style={styles.appShellScroll}>
-    <div style={{ display: route === "hub" ? "block" : "none" }}>
+    <div style={styles.appShellScroll} ref={scrollRef}>
+    <div style={routeStyle("hub")}>
     {loading ? (
       <div style={styles.loadingWrap}>Carregando…</div>
     ) : (
@@ -342,15 +363,15 @@ export default function Hub() {
     )}
     </div>
 
-    <div style={{ display: route === "dieta" ? "block" : "none" }}>
+    <div style={routeStyle("dieta")}>
       <DietApp onExit={() => setRoute("hub")} initialTab={dietEntry.tab} initialOpenMealKey={dietEntry.mealKey} />
     </div>
 
-    <div style={{ display: route === "treino" ? "block" : "none" }}>
+    <div style={routeStyle("treino")}>
       <WorkoutApp onGoHub={() => setRoute("hub")} onOpenProgramSettings={() => goSettings("treino")} autoStartWorkoutId={autoStartWorkoutId} />
     </div>
 
-    <div style={{ display: route === "insights" ? "block" : "none" }}>
+    <div style={routeStyle("insights")}>
       {loading ? (
         <div style={styles.loadingWrap}>Carregando…</div>
       ) : (
@@ -365,7 +386,7 @@ export default function Hub() {
       )}
     </div>
 
-    <div style={{ display: route === "settings" ? "block" : "none" }}>
+    <div style={routeStyle("settings")}>
       <Settings onExit={() => setRoute("hub")} initialTab={settingsTab} />
     </div>
     </div>

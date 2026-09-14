@@ -5,7 +5,7 @@ import { BarChartIcon, DumbbellIcon, HomeIcon, PlateIcon, SlidersIcon } from "./
 
 export type AppTab = "hub" | "dieta" | "treino" | "insights" | "settings";
 
-const TABS: { key: AppTab; label: string; Icon: typeof HomeIcon }[] = [
+export const TABS: { key: AppTab; label: string; Icon: typeof HomeIcon }[] = [
   { key: "hub", label: "Hoje", Icon: HomeIcon },
   { key: "dieta", label: "Dieta", Icon: PlateIcon },
   { key: "treino", label: "Treino", Icon: DumbbellIcon },

@@ -3,7 +3,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createProgram } from "@/lib/data";
 import { getCurrentWeek, type HistoryEntry, type LibraryExercise, type Program } from "@/lib/program";
-import { C, DISPLAY, G, styles } from "@/lib/styles";
+import { C, DISPLAY, G, SCREEN_ANIM, styles } from "@/lib/styles";
 import { addBtnStyle, NewProgramForm } from "./programShared";
 
 export default function ProgramsOverview({
@@ -34,7 +34,7 @@ export default function ProgramsOverview({
   onOpenLibrary: () => void;
 }) {
   return (
-    <div style={{ animation: "tabScreenIn .45s cubic-bezier(.2,.8,.2,1) both" }}>
+    <div style={{ animation: SCREEN_ANIM }}>
       <div style={styles.topNav}>
         <button onClick={onBack} style={styles.backBtn}>← Início</button>
       </div>

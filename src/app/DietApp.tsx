@@ -26,6 +26,7 @@ import {
 import { C, DISPLAY, styles } from "@/lib/styles";
 import { disableMealReminders, enableMealReminders, isNativePlatform } from "@/lib/notifications";
 import { guardOffline, loadWithCache, useOnline } from "@/lib/offline";
+import { useEdgeSwipeBack } from "@/lib/gestures";
 import { MealCard } from "./dietShared";
 import { SupplementIcon } from "./Icons";
 
@@ -103,12 +104,13 @@ export default function DietApp({
 
   const totals = useMemo(() => (plan ? dayTotals(plan, picks) : { kcal: 0, p: 0, c: 0, g: 0 }), [plan, picks]);
   const streak = useMemo(() => (plan ? getDietStreak(plan, picks, history) : 0), [plan, picks, history]);
+  const backSwipeRef = useEdgeSwipeBack(onExit);
 
   if (loading) return <div style={styles.loadingWrap}>Carregando…</div>;
 
   if (!plan) {
     return (
-      <div style={styles.container}>
+      <div style={styles.container} ref={backSwipeRef}>
         <div style={styles.dietHeader}>
           <button style={styles.exitBtn} onClick={onExit}>← HUB</button>
           <div style={{ ...styles.dietSectionCard, margin: "20px 0 0" }}>
@@ -147,7 +149,7 @@ export default function DietApp({
   const suppDone = plan.supplements.filter((s) => supplementsToday[s.key]).length;
 
   return (
-    <div style={styles.container}>
+    <div style={styles.container} ref={backSwipeRef}>
         <div style={styles.dietHeader}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <button style={styles.exitBtn} onClick={onExit}>← HUB</button>

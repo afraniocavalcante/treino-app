@@ -28,7 +28,7 @@ import {
   type Program,
   type ProgramWorkoutExercise,
 } from "@/lib/program";
-import { C, DISPLAY, styles } from "@/lib/styles";
+import { C, DISPLAY, SCREEN_ANIM, styles } from "@/lib/styles";
 import {
   addBtnStyle,
   cancelBtn,
@@ -85,7 +85,7 @@ export default function ProgramEditor({
   const title = isScheduled ? "Próximo Programa" : "Programa Atual";
 
   return (
-    <div style={{ animation: "tabScreenIn .45s cubic-bezier(.2,.8,.2,1) both" }}>
+    <div style={{ animation: SCREEN_ANIM }}>
       <div style={styles.topNav}>
         <button onClick={onBack} style={styles.backBtn}>← Programas</button>
       </div>
