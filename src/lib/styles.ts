@@ -266,7 +266,11 @@ export const styles: Record<string, CSSProperties> = {
   fieldInput: { fontSize: 14, color: "#D9DEE4", background: "transparent", border: "none", outline: "none", padding: 0, fontFamily: BODY }, // NOVO
 
   // ── Conflito de sessão ──────────────────────────────────
-  scrim: { position: "fixed", inset: 0, background: "rgba(0,0,0,.45)", backdropFilter: "blur(3px)", WebkitBackdropFilter: "blur(3px)", display: "flex", alignItems: "flex-end", zIndex: 40 }, // NOVO
+  // zIndex matches the other full-screen overlays in WorkoutApp.tsx
+  // (showExitConfirm/gifModalUrl, both 1000) — needs to clear the bottom tab
+  // bar, which sits in the same body-level stacking context (see the
+  // html/body position:fixed fix earlier this session).
+  scrim: { position: "fixed", inset: 0, background: "rgba(0,0,0,.45)", backdropFilter: "blur(3px)", WebkitBackdropFilter: "blur(3px)", display: "flex", alignItems: "flex-end", zIndex: 1000 }, // NOVO
   sheet: { margin: "0 14px 14px", padding: "30px 26px 26px", background: "rgba(255,255,255,.92)", border: "1px solid rgba(13,27,42,.1)", borderRadius: 30, backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", boxShadow: "0 30px 70px -30px rgba(0,0,0,.35)", animation: `tabFadeUp .4s ${EASE} both`, width: "100%" }, // NOVO
   sheetIcon: { width: 44, height: 44, borderRadius: 14, background: C.accentSoft, border: `1px solid rgba(13,27,42,.4)`, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 600 }, // NOVO
   sheetTitle: { fontFamily: DISPLAY, fontSize: 22, fontWeight: 600, letterSpacing: -0.3, lineHeight: 1.24, margin: "20px 0 0" }, // NOVO
