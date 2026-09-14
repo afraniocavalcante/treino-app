@@ -52,9 +52,14 @@ input::-webkit-inner-spin-button {
 }
 
 /* ── Transições de tela e fase ─────────────────────────── */
+/* margin-top, not transform: translateY — an animated `transform` makes the
+   element a new containing block for any position:fixed descendant (CSS
+   spec), which broke full-screen fixed modals nested inside anything using
+   this animation (e.g. WorkoutApp's "treino já feito" sheet collapsed to a
+   sliver instead of covering the viewport). margin-top has no such effect. */
 @keyframes tabScreenIn {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: none; }
+  from { opacity: 0; margin-top: 16px; }
+  to { opacity: 1; margin-top: 0; }
 }
 @keyframes tabPhaseIn {
   from { opacity: 0; transform: translateY(12px) scale(0.98); }
