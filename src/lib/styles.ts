@@ -271,7 +271,9 @@ export const styles: Record<string, CSSProperties> = {
   // bar, which sits in the same body-level stacking context (see the
   // html/body position:fixed fix earlier this session).
   scrim: { position: "fixed", inset: 0, background: "rgba(0,0,0,.45)", backdropFilter: "blur(3px)", WebkitBackdropFilter: "blur(3px)", display: "flex", alignItems: "flex-end", zIndex: 1000 }, // NOVO
-  sheet: { margin: "0 14px 14px", padding: "30px 26px 26px", background: "rgba(255,255,255,.92)", border: "1px solid rgba(13,27,42,.1)", borderRadius: 30, backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", boxShadow: "0 30px 70px -30px rgba(0,0,0,.35)", animation: `tabFadeUp .4s ${EASE} both`, width: "100%" }, // NOVO
+  // Bottom margin clears the tab bar (scrim covers full-screen behind it,
+  // but the sheet itself should float above it, not butt up against it).
+  sheet: { margin: "0 14px max(90px, calc(70px + env(safe-area-inset-bottom, 0px)))", padding: "30px 26px 26px", background: "rgba(255,255,255,.92)", border: "1px solid rgba(13,27,42,.1)", borderRadius: 30, backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", boxShadow: "0 30px 70px -30px rgba(0,0,0,.35)", animation: `tabFadeUp .4s ${EASE} both`, width: "100%" }, // NOVO
   sheetIcon: { width: 44, height: 44, borderRadius: 14, background: C.accentSoft, border: `1px solid rgba(13,27,42,.4)`, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 600 }, // NOVO
   sheetTitle: { fontFamily: DISPLAY, fontSize: 22, fontWeight: 600, letterSpacing: -0.3, lineHeight: 1.24, margin: "20px 0 0" }, // NOVO
   sheetBody: { fontSize: 13, color: C.midGray, margin: "10px 0 0", lineHeight: 1.55 }, // NOVO
