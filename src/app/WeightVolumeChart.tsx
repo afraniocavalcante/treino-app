@@ -57,11 +57,17 @@ export default function WeightVolumeChart({
   return (
     <div style={styles.hubRetroCard}>
       <div style={{ ...styles.hubRetroTitle, marginBottom: 4 }}>Peso × carga de treino</div>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6 }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
         <span style={{ fontFamily: DISPLAY, fontSize: 18, fontWeight: 700, color: C.steelMid }}>
           {active ? active.weight : points[points.length - 1].weight}
           <span style={{ fontSize: 10.5, color: C.faint, fontWeight: 600 }}> kg</span>
         </span>
+        {active && active.volume > 0 && (
+          <span style={{ fontFamily: DISPLAY, fontSize: 14, fontWeight: 700, color: C.steel }}>
+            {active.volume.toLocaleString("pt-BR")}
+            <span style={{ fontSize: 10.5, color: C.faint, fontWeight: 600 }}> kg carga</span>
+          </span>
+        )}
         <span style={{ fontSize: 10.5, color: C.faint }}>{active ? formatDateDisplay(active.date) : "peso mais recente"}</span>
       </div>
 
@@ -75,16 +81,27 @@ export default function WeightVolumeChart({
 
         {points.map((p, i) =>
           p.volume > 0 ? (
-            <rect
-              key={`bar-${p.date}`}
-              x={xAt(i) - barW / 2}
-              y={PAD_TOP + plotH - barH(p.volume)}
-              width={barW}
-              height={barH(p.volume)}
-              rx={2}
-              fill={C.steelSoft}
-              stroke={C.steelEdge}
-            />
+            <g key={`bar-${p.date}`}>
+              <rect
+                x={xAt(i) - Math.max(barW, 20) / 2}
+                y={0}
+                width={Math.max(barW, 20)}
+                height={H}
+                fill="transparent"
+                onClick={() => setActiveIdx(i === activeIdx ? null : i)}
+                style={{ cursor: "pointer" }}
+              />
+              <rect
+                x={xAt(i) - barW / 2}
+                y={PAD_TOP + plotH - barH(p.volume)}
+                width={barW}
+                height={barH(p.volume)}
+                rx={2}
+                fill={i === activeIdx ? C.steelEdge : C.steelSoft}
+                stroke={C.steelEdge}
+                style={{ pointerEvents: "none" }}
+              />
+            </g>
           ) : null
         )}
 
