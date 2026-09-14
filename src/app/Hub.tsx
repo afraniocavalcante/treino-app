@@ -55,6 +55,7 @@ export default function Hub() {
   const supabase = createClient();
   const [route, setRoute] = useState<Route>("hub");
   const [autoStartWorkoutId, setAutoStartWorkoutId] = useState<string | undefined>(undefined);
+  const [insightsSessionId, setInsightsSessionId] = useState<string | undefined>(undefined);
   const [dietEntry, setDietEntry] = useState<{ tab?: DietTab; mealKey?: string }>({});
   const [settingsTab, setSettingsTab] = useState<SettingsTab>("dieta");
   const [loading, setLoading] = useState(true);
@@ -163,6 +164,12 @@ export default function Hub() {
   function goDieta(tab?: DietTab, mealKey?: string) {
     setDietEntry({ tab, mealKey });
     setRoute("dieta");
+  }
+
+  /** Deep link do Treino (treino já feito hoje / "Ver treino feito hoje") pro detalhe dessa sessão em Insights. */
+  function goInsightsSession(entryId: string) {
+    setInsightsSessionId(entryId);
+    setRoute("insights");
   }
 
   function goSettings(tab?: SettingsTab) {
@@ -372,7 +379,12 @@ export default function Hub() {
     </div>
 
     <div style={routeStyle("treino")}>
-      <WorkoutApp onGoHub={() => setRoute("hub")} onOpenProgramSettings={() => goSettings("treino")} autoStartWorkoutId={autoStartWorkoutId} />
+      <WorkoutApp
+        onGoHub={() => setRoute("hub")}
+        onOpenProgramSettings={() => goSettings("treino")}
+        onViewSession={goInsightsSession}
+        autoStartWorkoutId={autoStartWorkoutId}
+      />
     </div>
 
     <div style={routeStyle("insights")}>
@@ -386,6 +398,8 @@ export default function Hub() {
           dietedDates={dietedDates}
           measurements={measurements}
           volumeByDate={getTrainingVolumeByDate(trainHistory)}
+          onStartWorkout={goTreino}
+          openSessionId={insightsSessionId}
         />
       )}
     </div>
