@@ -99,6 +99,7 @@ export default function WorkoutApp({
   const [sessionLabel, setSessionLabel] = useState("");
   const [holdTime, setHoldTime] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [gifModalUrl, setGifModalUrl] = useState<string | null>(null);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
 
@@ -199,11 +200,19 @@ export default function WorkoutApp({
       exercises: log,
     };
     setSaving(true);
+    setSaveError(null);
     try {
       const { id, lastWeights: newLastWeights } = await persistWorkoutSession(supabase, entry, lastWeights);
       setHistory((prev) => [...prev, { id, ...entry }]);
       setLastWeights(newLastWeights);
       scheduleRecoveryMealNudge();
+    } catch (err) {
+      // Every caller navigates to "done" right after calling this without
+      // awaiting it (the workout is physically finished either way) — this
+      // used to fail completely silently, showing "Treino Concluído" even
+      // when nothing was actually saved. The done screen below surfaces
+      // saveError with a retry button instead.
+      setSaveError(err instanceof Error ? err.message : "Falha ao salvar o treino.");
     } finally {
       setSaving(false);
     }
@@ -736,6 +745,21 @@ export default function WorkoutApp({
                 }}
               />
             ))}
+          </div>
+        )}
+        {saveError && (
+          <div style={{ margin: "0 26px 16px", padding: "12px 14px", borderRadius: 10, background: "rgba(192,57,43,.08)", border: `1px solid ${C.red}` }}>
+            <div style={{ fontSize: 12.5, color: C.red, fontWeight: 600, marginBottom: 8 }}>
+              ⚠️ Não foi possível salvar este treino: {saveError}
+            </div>
+            <button
+              className="tab-press"
+              onClick={() => currentWorkout && persistSession(sessionLog, currentWorkout)}
+              style={{ ...styles.ghostBtn, borderColor: C.red, color: C.red }}
+              disabled={saving}
+            >
+              {saving ? "Tentando…" : "Tentar salvar de novo"}
+            </button>
           </div>
         )}
         <button className="tab-press" onClick={() => goScreen("home")} style={styles.doneBtn} disabled={saving}>
