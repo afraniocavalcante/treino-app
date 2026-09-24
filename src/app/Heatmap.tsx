@@ -76,7 +76,7 @@ export default function Heatmap({
         <div style={{ display: "flex", flexDirection: "column", gap: GAP, marginRight: 4 }}>
           {DAY_LABELS.map((l, i) => (
             <span key={i} style={{ width: CELL, height: CELL, fontSize: 8.5, color: C.midGray, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              {i % 2 === 1 ? l : ""}
+              {l}
             </span>
           ))}
         </div>
