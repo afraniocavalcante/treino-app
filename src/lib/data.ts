@@ -85,6 +85,15 @@ export async function upsertLastWeights(
   if (error) throw error;
 }
 
+/** exercises' highest kg per set folded into lastWeights — same rule everywhere a session (new or edited) needs to update "last used weight". */
+export function mergeLastWeights(exercises: SessionLog, lastWeights: Record<string, number>): Record<string, number> {
+  const merged = { ...lastWeights };
+  Object.entries(exercises).forEach(([exId, sets]) => {
+    if (sets && sets.length > 0) merged[exId] = Math.max(...sets.map((s) => s.kg || 0));
+  });
+  return merged;
+}
+
 /**
  * Shared by WorkoutApp.tsx's own persistSession and the Apple Watch session
  * listener (Hub.tsx) — same save path regardless of where the session was
@@ -106,12 +115,28 @@ export async function persistWorkoutSession(
   lastWeights: Record<string, number>
 ): Promise<{ id: string; lastWeights: Record<string, number> }> {
   const id = await saveSession(supabase, entry);
-  const newLastWeights = { ...lastWeights };
-  Object.entries(entry.exercises).forEach(([exId, sets]) => {
-    if (sets && sets.length > 0) newLastWeights[exId] = Math.max(...sets.map((s) => s.kg || 0));
-  });
+  const newLastWeights = mergeLastWeights(entry.exercises, lastWeights);
   await upsertLastWeights(supabase, newLastWeights);
   return { id, lastWeights: newLastWeights };
+}
+
+/** Manual correction path — Insights' "Progressão de Carga" editor, for a session that failed to save or was never logged. */
+export async function updateWorkoutSession(
+  supabase: SupabaseClient,
+  id: string,
+  updates: { date: string; exercises: SessionLog }
+): Promise<void> {
+  const { error } = await supabase
+    .from("workout_sessions")
+    .update({ date: updates.date, exercises: updates.exercises })
+    .eq("id", id);
+  if (error) throw error;
+}
+
+/** Manual correction path — deletes a bad/duplicate session entry (e.g. a stub created just to unblock the next workout). */
+export async function deleteWorkoutSession(supabase: SupabaseClient, id: string): Promise<void> {
+  const { error } = await supabase.from("workout_sessions").delete().eq("id", id);
+  if (error) throw error;
 }
 
 export async function getExerciseLibrary(supabase: SupabaseClient): Promise<LibraryExercise[]> {
