@@ -100,7 +100,7 @@ export function Home({ onOpenLogSheet }: { onOpenLogSheet: () => void }) {
           alignItems: "flex-start",
           justifyContent: "space-between",
           gap: 16,
-          padding: "0 0 22px",
+          padding: "8px 0 22px",
         }}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 6, paddingTop: 2 }}>

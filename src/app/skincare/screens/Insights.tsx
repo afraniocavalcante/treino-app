@@ -49,14 +49,7 @@ export function InsightsScreen() {
   const activeWeek = weeks[activeIdx];
 
   return (
-    <div>
-      <div style={{ padding: "34px 0 20px", display: "flex", flexDirection: "column", gap: 6 }}>
-        <div style={{ fontSize: 11, letterSpacing: ".16em", textTransform: "uppercase", color: "#5C5245", fontWeight: 500 }}>
-          dados
-        </div>
-        <div style={{ fontSize: 25, fontWeight: 300, letterSpacing: "-.01em", color: "#191715" }}>Insights</div>
-      </div>
-
+    <div style={{ paddingTop: 14 }}>
       <div style={{ display: "flex", gap: 10, padding: "0 0 20px" }}>
         <StatTile label="streak atual" value={`${streak}`} sub="dias seguidos" />
         <StatTile label="melhor streak" value={`${bestStreak}`} sub="dias seguidos" />

@@ -87,14 +87,7 @@ export function RoutinesScreen({ onEdit }: { onEdit: (routineId: string) => void
   const archivedCount = archivedRoutines.length;
 
   return (
-    <div>
-      <div style={{ padding: "34px 0 18px", display: "flex", flexDirection: "column", gap: 6 }}>
-        <div style={{ fontSize: 11, letterSpacing: ".16em", textTransform: "uppercase", color: "#5C5245", fontWeight: 500 }}>
-          configuração
-        </div>
-        <div style={{ fontSize: 25, fontWeight: 300, letterSpacing: "-.01em", color: "#191715" }}>Rotinas</div>
-      </div>
-
+    <div style={{ paddingTop: 14 }}>
       {archivedCount > 0 && (
         <div style={{ position: "relative", display: "flex", gap: 22, padding: "0 0 16px", borderBottom: "1px solid #D3CABB", marginBottom: 16 }}>
           <button

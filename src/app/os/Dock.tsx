@@ -22,6 +22,11 @@ export default function Dock({ active, libraryOpen, onChange, onOpenLibrary }: {
   const dragStartY = useRef<number | null>(null);
   const draggedOpen = useRef(false);
 
+  // Um app aberto pela Biblioteca (fora da Dock fixa) aparece ali temporariamente
+  // enquanto estiver ativo — mesmo comportamento do Dock do macOS pra apps
+  // não fixados: some de novo assim que ele fecha (active volta pra "hoje").
+  const runningUnpinned = DOCK_ORDER.includes(active) ? null : active;
+
   return (
     <div
       onPointerDown={(e) => {
@@ -104,6 +109,36 @@ export default function Dock({ active, libraryOpen, onChange, onOpenLibrary }: {
             <span style={{ position: "absolute", bottom: -7, width: 4, height: 4, borderRadius: "50%", background: "#1C1C1E", opacity: active === id ? 1 : 0 }} />
           </button>
         ))}
+
+        {runningUnpinned && (
+          <>
+            <span style={{ width: 1, height: 40, background: "rgba(28,28,30,.16)", flex: "none" }} />
+            <button
+              key={runningUnpinned}
+              onClick={() => onChange(runningUnpinned)}
+              aria-label={OS_APPS[runningUnpinned].name}
+              className="tab-press"
+              style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", border: 0, padding: 0, background: "transparent", cursor: "pointer", animation: "tabFadeIn 220ms ease both" }}
+            >
+              <div
+                style={{
+                  width: 54,
+                  height: 54,
+                  borderRadius: 13,
+                  display: "grid",
+                  placeItems: "center",
+                  background: OS_APPS[runningUnpinned].bg,
+                  color: OS_APPS[runningUnpinned].fg,
+                  fontSize: 28,
+                  boxShadow: "inset 0 1px 0 rgba(255,255,255,.5), 0 0 0 .5px rgba(28,28,30,.12), 0 4px 10px -4px rgba(28,28,30,.4)",
+                }}
+              >
+                <i className={`ph-fill ${OS_APPS[runningUnpinned].icon}`} />
+              </div>
+              <span style={{ position: "absolute", bottom: -7, width: 4, height: 4, borderRadius: "50%", background: "#1C1C1E" }} />
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

@@ -71,12 +71,8 @@ export function SkinLogScreen({
   }
 
   return (
-    <div>
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12, padding: "34px 0 20px" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <div style={{ fontSize: 11, letterSpacing: ".16em", textTransform: "uppercase", color: "#5C5245", fontWeight: 500 }}>evolução</div>
-          <div style={{ fontSize: 25, fontWeight: 300, letterSpacing: "-.01em", color: "#191715" }}>Skin Log</div>
-        </div>
+    <div style={{ paddingTop: 14 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12, padding: "0 0 16px" }}>
         <button
           onClick={toggleCompareMode}
           style={{

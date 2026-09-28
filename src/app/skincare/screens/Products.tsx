@@ -49,11 +49,8 @@ export function ProductsScreen({
 
   return (
     <div>
-      <div style={{ padding: "34px 0 16px", display: "flex", flexDirection: "column", gap: 6 }}>
-        <div style={{ fontSize: 11, letterSpacing: ".16em", textTransform: "uppercase", color: "#5C5245", fontWeight: 500 }}>
-          produtos
-        </div>
-        <div style={{ fontSize: 25, fontWeight: 300, letterSpacing: "-.01em", color: "#191715" }}>
+      <div style={{ padding: "14px 0 14px" }}>
+        <div style={{ fontSize: 21, fontWeight: 300, letterSpacing: "-.01em", color: "#191715" }}>
           {isEstoque ? "Meu Estoque" : "Lista de Compras"}
         </div>
       </div>
