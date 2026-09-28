@@ -277,7 +277,7 @@ export default function Hub() {
         )}
       </FullScreenApp>
 
-      <FullScreenApp show={route === "skincare"} page={OS_APPS.skincare.page} name={OS_APPS.skincare.name} sub="Rotina, estoque e evolução da pele" onClose={() => setRoute("hub")}>
+      <FullScreenApp show={route === "skincare"} page={OS_APPS.skincare.page} name={OS_APPS.skincare.name} onClose={() => setRoute("hub")} bleed>
         <SkinCareApp />
       </FullScreenApp>
 

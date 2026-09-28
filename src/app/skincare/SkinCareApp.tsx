@@ -63,9 +63,15 @@ function SkinCareShell() {
     else if (tab === "rotinas") setSheet({ kind: "newRoutine" });
   }
 
+  // Skin Care abre "bleed" (src/app/os/FullScreenApp.tsx): a janela não dá
+  // mais padding nem cabeçalho, só o botão de fechar flutuando por cima — o
+  // padding horizontal (mesmo 16px que as outras janelas usavam) e o respiro
+  // no topo pra não ficar embaixo desse botão viram responsabilidade daqui.
+  const shellPadding = { padding: "calc(env(safe-area-inset-top, 0px) + 64px) 16px calc(env(safe-area-inset-bottom, 0px) + 32px)" };
+
   if (status === "loading") {
     return (
-      <div className="paper-grid" style={{ width: "100%", height: "100%" }}>
+      <div className="paper-grid" style={{ width: "100%", height: "100%", ...shellPadding }}>
         <LoadingSkeleton />
       </div>
     );
@@ -73,14 +79,14 @@ function SkinCareShell() {
 
   if (status === "error") {
     return (
-      <div className="paper-grid" style={{ width: "100%", height: "100%" }}>
+      <div className="paper-grid" style={{ width: "100%", height: "100%", ...shellPadding }}>
         <ErrorState onRetry={refetch} />
       </div>
     );
   }
 
   return (
-    <div className="paper-grid" style={{ width: "100%", height: "100%", position: "relative", overflowY: "auto" }}>
+    <div className="paper-grid" style={{ width: "100%", height: "100%", position: "relative", overflowY: "auto", ...shellPadding }}>
       <SkinCareTabs active={tab} onSelect={selectTab} />
 
       <div key={tab} className={enterDir === "right" ? "anim-enter-right" : "anim-enter-left"}>
