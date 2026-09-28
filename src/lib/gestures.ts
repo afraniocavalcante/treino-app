@@ -1,77 +1,8 @@
-import { useCallback, useEffect, useRef, type RefObject } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
-const SWIPE_MIN_DX = 60;
 const SWIPE_MAX_DY_RATIO = 1.5; // |dx| precisa ser pelo menos 1.5x |dy| pra contar como horizontal
 const EDGE_ZONE_PX = 24;
 const EDGE_SWIPE_MIN_DX = 40;
-
-/** Verdadeiro se o alvo (ou algum ancestral até `root`) tem scroll horizontal
- * próprio — protege listas horizontais (ex. seletor de semanas) do gesto global. */
-function hasOwnHorizontalScroll(target: EventTarget | null, root: HTMLElement): boolean {
-  let el = target instanceof Element ? target : null;
-  while (el && el !== root.parentElement) {
-    if (el instanceof HTMLElement && el.scrollWidth > el.clientWidth + 1) return true;
-    if (el === root) break;
-    el = el.parentElement;
-  }
-  return false;
-}
-
-/**
- * Deslizar pra esquerda/direita sobre o conteúdo troca de módulo — o gesto
- * apenas DISPARA a troca (não arrasta o conteúdo junto do dedo), pra não
- * precisar reestruturar o appShell numa faixa horizontal arriscando os
- * bugs de layout/scroll que esse shell já teve.
- */
-export function useHorizontalTabSwipe(
-  ref: RefObject<HTMLElement | null>,
-  onSwipeLeft: () => void,
-  onSwipeRight: () => void
-): void {
-  const stateRef = useRef<{ x: number; y: number; tracking: boolean } | null>(null);
-  const callbacksRef = useRef({ onSwipeLeft, onSwipeRight });
-  useEffect(() => {
-    callbacksRef.current = { onSwipeLeft, onSwipeRight };
-  });
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    function onPointerDown(e: PointerEvent) {
-      if (e.pointerType !== "touch" && e.pointerType !== "pen") return;
-      if (hasOwnHorizontalScroll(e.target, el!)) {
-        stateRef.current = null;
-        return;
-      }
-      stateRef.current = { x: e.clientX, y: e.clientY, tracking: true };
-    }
-
-    function onPointerUp(e: PointerEvent) {
-      const start = stateRef.current;
-      stateRef.current = null;
-      if (!start?.tracking) return;
-      const dx = e.clientX - start.x;
-      const dy = e.clientY - start.y;
-      if (Math.abs(dx) < SWIPE_MIN_DX || Math.abs(dx) < Math.abs(dy) * SWIPE_MAX_DY_RATIO) return;
-      if (dx < 0) callbacksRef.current.onSwipeLeft();
-      else callbacksRef.current.onSwipeRight();
-    }
-
-    function onPointerCancel() {
-      stateRef.current = null;
-    }
-
-    el.addEventListener("pointerdown", onPointerDown);
-    el.addEventListener("pointerup", onPointerUp);
-    el.addEventListener("pointercancel", onPointerCancel);
-    return () => {
-      el.removeEventListener("pointerdown", onPointerDown);
-      el.removeEventListener("pointerup", onPointerUp);
-      el.removeEventListener("pointercancel", onPointerCancel);
-    };
-  }, [ref]);
-}
 
 /**
  * Puxar da borda esquerda da tela pra voltar — espelha o gesto nativo de

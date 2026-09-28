@@ -43,12 +43,12 @@ async function loadPlanChildren(supabase: SupabaseClient, planId: string) {
   const [mealRows, suppRows, suppGroupRows, shopRows] = await Promise.all([
     supabase
       .from("diet_meals")
-      .select("id, key, label, kind, order_index, allow_portion, has_none_option, options, groups")
+      .select("id, key, label, kind, order_index, allow_portion, has_none_option, scheduled_time, options, groups")
       .eq("plan_id", planId)
       .order("order_index", { ascending: true }),
     supabase
       .from("diet_supplements")
-      .select("id, key, label, timing, order_index")
+      .select("id, key, label, timing, scheduled_time, order_index")
       .eq("plan_id", planId)
       .order("order_index", { ascending: true }),
     supabase
@@ -75,6 +75,7 @@ async function loadPlanChildren(supabase: SupabaseClient, planId: string) {
     orderIndex: m.order_index,
     allowPortion: m.allow_portion,
     hasNoneOption: m.has_none_option,
+    scheduledTime: m.scheduled_time ? m.scheduled_time.slice(0, 5) : null,
     options: m.options,
     groups: m.groups,
   }));
@@ -84,6 +85,7 @@ async function loadPlanChildren(supabase: SupabaseClient, planId: string) {
     key: s.key,
     label: s.label,
     timing: s.timing,
+    scheduledTime: s.scheduled_time ? s.scheduled_time.slice(0, 5) : null,
     orderIndex: s.order_index,
   }));
 
@@ -313,6 +315,7 @@ export interface DietMealInput {
   kind: "list" | "builder";
   allowPortion: boolean;
   hasNoneOption: boolean;
+  scheduledTime: string | null;
   options: DietMeal["options"];
   groups: DietMeal["groups"];
   orderIndex: number;
@@ -327,6 +330,7 @@ export async function addDietMeal(supabase: SupabaseClient, planId: string, inpu
     order_index: input.orderIndex,
     allow_portion: input.allowPortion,
     has_none_option: input.hasNoneOption,
+    scheduled_time: input.scheduledTime,
     options: input.options,
     groups: input.groups,
   });
@@ -342,6 +346,7 @@ export async function updateDietMeal(supabase: SupabaseClient, id: string, input
       kind: input.kind,
       allow_portion: input.allowPortion,
       has_none_option: input.hasNoneOption,
+      scheduled_time: input.scheduledTime,
       options: input.options,
       groups: input.groups,
     })
@@ -361,7 +366,7 @@ export async function deleteDietMeal(supabase: SupabaseClient, id: string): Prom
  */
 export async function seedDefaultDietMeals(supabase: SupabaseClient, planId: string): Promise<void> {
   const { error } = await supabase.from("diet_meals").insert([
-    { plan_id: planId, key: "cafe", label: "Café da manhã", kind: "list", order_index: 0, allow_portion: false, has_none_option: false, options: [] },
+    { plan_id: planId, key: "cafe", label: "Café da manhã", kind: "list", order_index: 0, allow_portion: false, has_none_option: false, scheduled_time: "07:30", options: [] },
     {
       plan_id: planId,
       key: "almoco",
@@ -370,11 +375,12 @@ export async function seedDefaultDietMeals(supabase: SupabaseClient, planId: str
       order_index: 1,
       allow_portion: false,
       has_none_option: false,
+      scheduled_time: "12:30",
       groups: { radioGroups: [], toggle: { key: "fruta", label: "Fruta", kcal: 0, p: 0, c: 0, g: 0 } },
     },
-    { plan_id: planId, key: "lanche", label: "Lanche", kind: "list", order_index: 2, allow_portion: false, has_none_option: false, options: [] },
-    { plan_id: planId, key: "jantar", label: "Jantar", kind: "list", order_index: 3, allow_portion: false, has_none_option: false, options: [] },
-    { plan_id: planId, key: "sobremesa", label: "Sobremesa", kind: "list", order_index: 4, allow_portion: false, has_none_option: true, options: [] },
+    { plan_id: planId, key: "lanche", label: "Lanche", kind: "list", order_index: 2, allow_portion: false, has_none_option: false, scheduled_time: "16:00", options: [] },
+    { plan_id: planId, key: "jantar", label: "Jantar", kind: "list", order_index: 3, allow_portion: false, has_none_option: false, scheduled_time: "20:30", options: [] },
+    { plan_id: planId, key: "sobremesa", label: "Sobremesa", kind: "list", order_index: 4, allow_portion: false, has_none_option: true, scheduled_time: "21:00", options: [] },
   ]);
   if (error) throw error;
 }
@@ -383,20 +389,21 @@ export interface DietSupplementInput {
   key: string;
   label: string;
   timing: string | null;
+  scheduledTime: string | null;
   orderIndex: number;
 }
 
 export async function addDietSupplement(supabase: SupabaseClient, planId: string, input: DietSupplementInput): Promise<void> {
   const { error } = await supabase
     .from("diet_supplements")
-    .insert({ plan_id: planId, key: input.key, label: input.label, timing: input.timing, order_index: input.orderIndex });
+    .insert({ plan_id: planId, key: input.key, label: input.label, timing: input.timing, scheduled_time: input.scheduledTime, order_index: input.orderIndex });
   if (error) throw error;
 }
 
 export async function updateDietSupplement(supabase: SupabaseClient, id: string, input: DietSupplementInput): Promise<void> {
   const { error } = await supabase
     .from("diet_supplements")
-    .update({ key: input.key, label: input.label, timing: input.timing })
+    .update({ key: input.key, label: input.label, timing: input.timing, scheduled_time: input.scheduledTime })
     .eq("id", id);
   if (error) throw error;
 }

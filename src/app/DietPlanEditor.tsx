@@ -264,6 +264,7 @@ function MealEditorCard({
 }) {
   const [editing, setEditing] = useState(false);
   const [label, setLabel] = useState(meal.label);
+  const [scheduledTime, setScheduledTime] = useState(meal.scheduledTime ?? "");
   const [allowPortion, setAllowPortion] = useState(meal.allowPortion);
   const [hasNoneOption, setHasNoneOption] = useState(meal.hasNoneOption);
   const [options, setOptions] = useState<DietMealOption[]>(meal.options ?? []);
@@ -279,6 +280,7 @@ function MealEditorCard({
         kind: meal.kind,
         allowPortion,
         hasNoneOption,
+        scheduledTime: scheduledTime || null,
         options: meal.kind === "list" ? options : null,
         groups: meal.kind === "builder" ? { radioGroups, toggle: { ...toggleMacro, key: "fruta", label: toggleLabel } } : null,
         orderIndex: meal.orderIndex,
@@ -306,6 +308,9 @@ function MealEditorCard({
     <div style={{ ...styles.dietSectionCard, margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
       <label style={labelStyle}>Nome da refeição
         <input value={label} onChange={(e) => setLabel(e.target.value)} style={inputStyle} />
+      </label>
+      <label style={labelStyle}>Horário (usado na linha do tempo de Hoje)
+        <input type="time" value={scheduledTime} onChange={(e) => setScheduledTime(e.target.value)} style={inputStyle} />
       </label>
       <div style={{ display: "flex", gap: 16, fontSize: 12, color: C.lightGray }}>
         <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -434,6 +439,7 @@ function SupplementsSection({
   const [adding, setAdding] = useState(false);
   const [label, setLabel] = useState("");
   const [timing, setTiming] = useState("");
+  const [scheduledTime, setScheduledTime] = useState("");
 
   function slug(s: string) {
     return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
@@ -461,16 +467,20 @@ function SupplementsSection({
         {adding ? (
           <div style={{ ...styles.dietSectionCard, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
             <input placeholder="Nome" value={label} onChange={(e) => setLabel(e.target.value)} style={inputStyle} />
-            <input placeholder="Horário (opcional)" value={timing} onChange={(e) => setTiming(e.target.value)} style={inputStyle} />
+            <label style={labelStyle}>Horário (usado na linha do tempo de Hoje)
+              <input type="time" value={scheduledTime} onChange={(e) => setScheduledTime(e.target.value)} style={inputStyle} />
+            </label>
+            <input placeholder="Nota (opcional, ex: antes do treino)" value={timing} onChange={(e) => setTiming(e.target.value)} style={inputStyle} />
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={() => setAdding(false)} style={cancelBtn}>Cancelar</button>
               <button
                 disabled={busy || !label.trim()}
                 onClick={() =>
                   run(async () => {
-                    await addDietSupplement(supabase, plan.id, { key: slug(label), label: label.trim(), timing: timing.trim() || null, orderIndex: plan.supplements.length });
+                    await addDietSupplement(supabase, plan.id, { key: slug(label), label: label.trim(), timing: timing.trim() || null, scheduledTime: scheduledTime || null, orderIndex: plan.supplements.length });
                     setLabel("");
                     setTiming("");
+                    setScheduledTime("");
                     setAdding(false);
                   })
                 }

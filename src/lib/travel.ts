@@ -203,3 +203,12 @@ export function deriveFlightState(flight: Flight, now: Date): FlightCardState {
 export function tripDaysAway(trip: Trip, now: Date): number {
   return Math.max(0, Math.ceil((new Date(trip.startDate).getTime() - now.getTime()) / DAY));
 }
+
+/** O voo que a Home do app Viagens (e a tela Hoje) mostram: o mais próximo cujo estado ainda está "ativo". */
+export function pickActiveFlight(flights: Flight[], now: Date): { flight: Flight; state: FlightCardState } | null {
+  const withState = flights
+    .map((f) => ({ flight: f, state: deriveFlightState(f, now) }))
+    .filter((x) => x.state.active);
+  withState.sort((a, b) => new Date(a.flight.departureAt).getTime() - new Date(b.flight.departureAt).getTime());
+  return withState[0] ?? null;
+}

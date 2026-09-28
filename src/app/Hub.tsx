@@ -6,20 +6,18 @@ import { getActiveProgram, getHistory, getLastWeights, persistWorkoutSession } f
 import { getCurrentWeek, getNextWorkoutIndex, getPhaseInfo, isRestDay, formatDate, type Program, type HistoryEntry } from "@/lib/program";
 import { drainPendingSessions, onSessionReceived, type WatchCompletedSession } from "@/lib/watchBridge";
 import { getDietDayLogs, getDietMeasurements, getDietPlan, getTodayDietLog, saveTodayDietLog } from "@/lib/dietData";
-import { emptyDietDay, isDayFullyComplete, isMealDone, type DietDayLog, type DietDayPicks, type DietMeasurement, type DietPlan } from "@/lib/diet";
+import { emptyDietDay, isDayFullyComplete, type DietDayLog, type DietDayPicks, type DietMeasurement, type DietPlan } from "@/lib/diet";
 import { getPerfectStreak, getTotalPerfectDays, getTrainingVolumeByDate, isDeloadPhase } from "@/lib/insights";
-import { C, SCREEN_ANIM, styles } from "@/lib/styles";
 import { guardOffline, loadWithCache, useOnline } from "@/lib/offline";
 import WorkoutApp from "./WorkoutApp";
 import DietApp from "./DietApp";
 import Settings from "./Settings";
 import Insights from "./Insights";
 import TravelApp from "./travel/TravelApp";
-import TabBar, { TABS, type AppTab } from "./TabBar";
-import { useHorizontalTabSwipe } from "@/lib/gestures";
-import ConsistencyHeatmap from "./ConsistencyHeatmap";
-import { MealCard, findNextMeal } from "./dietShared";
-import { CheckIcon, DumbbellIcon, PlateIcon, SupplementIcon, WarningIcon } from "./Icons";
+import MenuBar from "./os/MenuBar";
+import Dock, { OS_APPS, type OSApp } from "./os/Dock";
+import Window from "./os/Window";
+import Today from "./os/Today";
 
 type Route = "hub" | "treino" | "dieta" | "viagens" | "settings" | "insights";
 type DietTab = "hoje" | "progresso" | "compras" | "mais";
@@ -34,23 +32,10 @@ interface HubBundle {
   ms: DietMeasurement[];
 }
 
-function capitalizeFirst(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
+const ROUTE_TO_APP: Record<Route, OSApp> = { hub: "hoje", dieta: "dieta", treino: "treino", viagens: "viagens", insights: "insights", settings: "ajustes" };
+const APP_TO_ROUTE: Record<OSApp, Route> = { hoje: "hub", dieta: "dieta", treino: "treino", viagens: "viagens", insights: "insights", ajustes: "settings" };
 
-function Ring({ frac, total, color, label }: { frac: number; total: number; color: string; label: string }) {
-  const deg = total > 0 ? Math.round((frac / total) * 360) : 0;
-  return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-      <div style={{ width: 46, height: 46, borderRadius: "50%", background: `conic-gradient(${color} ${deg}deg, rgba(var(--ink-rgb),.08) 0)`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ width: 37, height: 37, borderRadius: "50%", background: C.bgCard, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10.5, fontWeight: 700, color: C.white }}>
-          {frac}/{total}
-        </div>
-      </div>
-      <span style={{ fontSize: 9.5, fontWeight: 700, color: C.lightGray }}>{label}</span>
-    </div>
-  );
-}
+const PHOSPHOR_FILL_CSS = "https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css";
 
 export default function Hub() {
   const supabase = createClient();
@@ -68,8 +53,6 @@ export default function Hub() {
   const [todaySupplements, setTodaySupplements] = useState<Record<string, boolean>>({});
   const [dietHistory, setDietHistory] = useState<DietDayLog[]>([]);
   const [measurements, setMeasurements] = useState<DietMeasurement[]>([]);
-  const [mealExpanded, setMealExpanded] = useState(false);
-  const [suppExpanded, setSuppExpanded] = useState(false);
   const [usingCache, setUsingCache] = useState(false);
   const online = useOnline();
 
@@ -175,17 +158,11 @@ export default function Hub() {
 
   function goSettings(tab?: SettingsTab) {
     // Only overrides the sub-tab on an explicit deep link (e.g. "Programas"
-    // in Treino) — a bare tap on the Config tab bar button keeps whatever
+    // in Treino) — a bare tap on the Ajustes dock icon keeps whatever
     // sub-tab Settings was last showing, since Settings stays mounted and
     // its own initialTab prop can't "reset" it without this guard.
     if (tab) setSettingsTab(tab);
     setRoute("settings");
-  }
-
-  function persistTodayPicks(next: DietDayPicks) {
-    if (guardOffline(online)) return;
-    setTodayPicks(next);
-    saveTodayDietLog(supabase, next, todaySupplements).catch((err) => console.error("Falha ao salvar dieta:", err));
   }
 
   function toggleTodaySupplement(key: string) {
@@ -195,38 +172,20 @@ export default function Hub() {
     saveTodayDietLog(supabase, todayPicks, next).catch((err) => console.error("Falha ao salvar suplementos:", err));
   }
 
-  const activeTab: AppTab =
-    route === "hub" ? "hub" : route === "dieta" ? "dieta" : route === "treino" ? "treino" : route === "viagens" ? "viagens" : route === "insights" ? "insights" : "settings";
-
-  function handleTabChange(tab: AppTab) {
-    if (tab === "hub") setRoute("hub");
-    else if (tab === "dieta") goDieta();
-    else if (tab === "treino") goTreino();
-    else if (tab === "viagens") setRoute("viagens");
-    else if (tab === "insights") setRoute("insights");
-    else goSettings();
+  const activeApp = ROUTE_TO_APP[route];
+  function handleDockChange(app: OSApp) {
+    if (app === "dieta") goDieta();
+    else if (app === "treino") goTreino();
+    else if (app === "ajustes") goSettings();
+    else setRoute(APP_TO_ROUTE[app]);
   }
-
-  // Deslizar sobre o conteúdo troca de módulo, na mesma ordem da TabBar —
-  // mesmo handleTabChange que um toque na aba já chama.
-  const scrollRef = useRef<HTMLDivElement>(null);
-  useHorizontalTabSwipe(
-    scrollRef,
-    () => {
-      const idx = TABS.findIndex((t) => t.key === activeTab);
-      if (idx >= 0 && idx < TABS.length - 1) handleTabChange(TABS[idx + 1].key);
-    },
-    () => {
-      const idx = TABS.findIndex((t) => t.key === activeTab);
-      if (idx > 0) handleTabChange(TABS[idx - 1].key);
-    }
-  );
 
   const todayStr = formatDate(new Date());
   const trainedToday = trainHistory.some((e) => e.date === todayStr);
   const trainedDates = new Set(trainHistory.map((e) => e.date));
   const dietedDates = new Set(dietHistory.filter((h) => dietPlan && isDayFullyComplete(dietPlan, h.picks, h.supplements)).map((h) => h.date));
-  if (dietPlan && isDayFullyComplete(dietPlan, todayPicks, todaySupplements)) dietedDates.add(todayStr);
+  const todayFullyDone = !!dietPlan && isDayFullyComplete(dietPlan, todayPicks, todaySupplements);
+  if (todayFullyDone) dietedDates.add(todayStr);
 
   let restToday = false;
   let nextWorkout: Program["workouts"][number] | null = null;
@@ -239,183 +198,101 @@ export default function Hub() {
     restToday = isRestDay(program, trainHistory, todayStr);
     deload = isDeloadPhase(getPhaseInfo(program, week).name);
   }
+  void week;
 
-  const nextMeal = dietPlan ? findNextMeal(dietPlan.meals, todayPicks) : null;
   const perfectStreak = getPerfectStreak(trainedDates, dietedDates);
   const totalPerfectDays = getTotalPerfectDays(trainedDates, dietedDates);
 
-  const requiredMeals = dietPlan ? dietPlan.meals.filter((m) => m.key !== "sobremesa") : [];
-  const mealsDone = requiredMeals.filter((m) => isMealDone(m, todayPicks)).length;
-  const suppTotal = dietPlan ? dietPlan.supplements.length : 0;
-  const suppDone = dietPlan ? dietPlan.supplements.filter((s) => todaySupplements[s.key]).length : 0;
-  const treinoDone = restToday || trainedToday ? 1 : 0;
-
-  const workoutPending = !!(program && !restToday && nextWorkout && !trainedToday);
-
-  // CSS reinicia a animação sozinho toda vez que o display volta de none pra
-  // block — não precisa de key/remount, e a mesma "leveza" que só existia ao
-  // abrir o Treino agora entra em qualquer troca de módulo.
-  const routeStyle = (r: Route) => (route === r ? { display: "block" as const, animation: SCREEN_ANIM } : { display: "none" as const });
-
   return (
-    <div style={styles.appShell}>
-    <div style={styles.appShellScroll} ref={scrollRef}>
-    <div style={routeStyle("hub")}>
-    {loading ? (
-      <div style={styles.loadingWrap}>Carregando…</div>
-    ) : (
-    <div style={styles.container}>
-        <div style={{ padding: "26px 22px 2px" }}>
-          <h1 style={{ ...styles.hubGreeting, fontSize: 20 }}>{capitalizeFirst(new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" }))}</h1>
-        </div>
-
-        {(!online || usingCache) && (
-          <div style={styles.offlineBanner}>📡 Sem conexão — modo de visualização, mudanças não serão salvas agora.</div>
-        )}
-
-        {deload && (
-          <div style={{ margin: "8px 20px 0", padding: "7px 13px", borderRadius: 7, background: C.bgCard, border: `1px solid ${C.bgHeader}`, borderLeft: `3px solid ${C.steel}`, display: "flex", gap: 8, alignItems: "center" }}>
-            <WarningIcon size={13} color={C.steel} />
-            <span style={{ fontSize: 11, color: C.lightGray, lineHeight: 1.35 }}>Semana de deload no treino — pode valer manter ou subir levemente as kcal essa semana.</span>
-          </div>
-        )}
-
-        {program && dietPlan && (
-          <div style={{ borderRadius: 10, padding: 12, margin: "8px 20px 0", background: C.bgCard, border: `1px solid ${C.bgHeader}`, display: "flex", justifyContent: "space-around" }}>
-            <Ring frac={treinoDone} total={1} color={C.accent} label="Treino" />
-            <Ring frac={mealsDone} total={requiredMeals.length} color={C.honey} label="Refeições" />
-            <Ring frac={suppDone} total={suppTotal} color={C.steel} label="Suplementos" />
-          </div>
-        )}
-
-        {dietPlan && (
-          <div style={{ borderRadius: 10, margin: "8px 20px 0", background: C.bgCard, border: `1px solid ${C.bgHeader}`, borderLeft: `4px solid ${C.honey}`, overflow: "hidden" }}>
-            <div style={{ padding: "10px 15px" }}>
-              <div onClick={() => setMealExpanded((v) => !v)} style={{ display: "flex", alignItems: "center", gap: 11, cursor: "pointer" }}>
-                <div style={{ width: 36, height: 36, borderRadius: 7, background: C.honey, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <PlateIcon size={17} color={C.cream} />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: 0.5, color: C.midGray, textTransform: "uppercase" }}>Próxima refeição</div>
-                  <div style={{ fontSize: 14.5, fontWeight: 600 }}>{nextMeal ? nextMeal.label : "Tudo escolhido hoje"}</div>
-                </div>
-                <a
-                  href="#"
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); goDieta(); }}
-                  style={{ fontSize: 10.5, fontWeight: 600, color: C.lightGray, marginRight: 2 }}
-                >
-                  Ver dieta →
-                </a>
-              </div>
-              {nextMeal && (
-                <div style={{ marginTop: 12 }}>
-                  <MealCard
-                    meal={nextMeal}
-                    picks={todayPicks}
-                    isOpen={mealExpanded}
-                    onToggleOpen={() => setMealExpanded((v) => !v)}
-                    onChange={persistTodayPicks}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {dietPlan && dietPlan.supplements.length > 0 && (
-          <div style={{ borderRadius: 10, margin: "8px 20px 0", background: C.bgCard, border: `1px solid ${C.bgHeader}`, borderLeft: `4px solid ${C.steel}`, overflow: "hidden" }}>
-            <div style={{ padding: "10px 15px" }}>
-              <div onClick={() => setSuppExpanded((v) => !v)} style={{ display: "flex", alignItems: "center", gap: 11, cursor: "pointer" }}>
-                <div style={{ width: 36, height: 36, borderRadius: 7, background: C.steel, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <SupplementIcon size={16} color={C.cream} markColor={C.steel} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: 0.5, color: C.midGray, textTransform: "uppercase" }}>Suplementos</div>
-                  <div style={{ fontSize: 14.5, fontWeight: 600 }}>{suppDone} de {suppTotal} hoje</div>
-                </div>
-              </div>
-              <div style={{ display: "grid", gridTemplateRows: suppExpanded ? "1fr" : "0fr", transition: "grid-template-rows .28s ease" }}>
-                <div style={{ overflow: "hidden", minHeight: 0 }}>
-                  <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${C.line}`, display: "flex", flexDirection: "column", gap: 6 }}>
-                    {dietPlan.supplements.map((s) => {
-                      const checked = !!todaySupplements[s.key];
-                      return (
-                        <div key={s.key} onClick={() => toggleTodaySupplement(s.key)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", borderRadius: 6, cursor: "pointer" }}>
-                          <div style={{ ...styles.dietRadio, ...(checked ? { border: "none", background: C.steel } : {}) }}>{checked && <CheckIcon size={9} />}</div>
-                          <span style={{ flex: 1, fontSize: 13, fontWeight: 500 }}>{s.label}</span>
-                          {s.timing && <span style={{ fontSize: 11, fontWeight: 700, color: C.lightGray }}>{s.timing}</span>}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {program && (
-          <div
-            onClick={workoutPending ? () => goTreino(nextWorkout!.id) : undefined}
-            style={{ borderRadius: 10, padding: "10px 15px", margin: "8px 20px 0", background: C.bgCard, border: `1px solid ${C.bgHeader}`, borderLeft: `4px solid ${workoutPending ? C.accent : "rgba(var(--ink-rgb),.12)"}`, display: "flex", alignItems: "center", gap: 11, cursor: workoutPending ? "pointer" : "default" }}
-          >
-            <div style={{ width: 36, height: 36, borderRadius: 7, background: C.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <DumbbellIcon size={16} color={C.cream} />
-            </div>
-            <span style={{ fontSize: 14, fontWeight: 600 }}>{restToday ? "Dia de descanso" : nextWorkout ? nextWorkout.name : "—"}</span>
-            <span style={{ display: "flex", alignItems: "center", gap: 5, marginLeft: "auto", color: restToday ? C.midGray : trainedToday ? C.midGray : C.honey, fontSize: 12, fontWeight: 700 }}>
-              {restToday ? "Descanso" : trainedToday ? "✓ Feito" : "Treinar ›"}
-            </span>
-          </div>
-        )}
-
-        {program && dietPlan && (
-          <ConsistencyHeatmap trainedDates={trainedDates} dietDates={dietedDates} weeks={12} onTitleClick={() => setRoute("insights")} />
-        )}
-    </div>
-    )}
-    </div>
-
-    <div style={routeStyle("dieta")}>
-      <DietApp onExit={() => setRoute("hub")} initialTab={dietEntry.tab} initialOpenMealKey={dietEntry.mealKey} />
-    </div>
-
-    <div style={routeStyle("treino")}>
-      <WorkoutApp
-        onGoHub={() => setRoute("hub")}
-        onOpenProgramSettings={() => goSettings("treino")}
-        onViewSession={goInsightsSession}
-        autoStartWorkoutId={autoStartWorkoutId}
+    <div style={{ position: "relative", height: "100%", width: "100%", maxWidth: 440, margin: "0 auto", overflow: "hidden", background: "#E4D9C6", fontFamily: "'Sora',-apple-system,sans-serif" }}>
+      <link rel="stylesheet" href={PHOSPHOR_FILL_CSS} />
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "radial-gradient(120% 60% at 10% 0%, #F5EFE3 0%, transparent 60%), radial-gradient(90% 55% at 100% 35%, rgba(207,168,95,.55) 0%, transparent 70%), radial-gradient(110% 60% at 0% 100%, rgba(201,123,74,.45) 0%, transparent 70%), #E4D9C6",
+        }}
       />
-    </div>
 
-    <div style={routeStyle("viagens")}>
-      <TravelApp />
-    </div>
+      <MenuBar active={activeApp} />
 
-    <div style={routeStyle("insights")}>
       {loading ? (
-        <div style={styles.loadingWrap}>Carregando…</div>
+        <div
+          style={{
+            position: "absolute",
+            top: "calc(46px + env(safe-area-inset-top, 0px))",
+            left: 0,
+            right: 0,
+            bottom: "calc(96px + env(safe-area-inset-bottom, 0px))",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#8B93A0",
+            fontSize: 13,
+          }}
+        >
+          Carregando…
+        </div>
       ) : (
-        <Insights
+        <Today
+          supabase={supabase}
+          program={program}
+          dietPlan={dietPlan}
+          todayPicks={todayPicks}
+          todaySupplements={todaySupplements}
+          restToday={restToday}
+          trainedToday={trainedToday}
           perfectStreak={perfectStreak}
-          totalPerfectDays={totalPerfectDays}
-          trainedDates={trainedDates}
-          dietedDates={dietedDates}
-          measurements={measurements}
-          volumeByDate={getTrainingVolumeByDate(trainHistory)}
-          onStartWorkout={goTreino}
-          openSessionId={insightsSessionId}
+          todayFullyDone={todayFullyDone}
+          offline={!online || usingCache}
+          deload={deload}
+          onOpenApp={(app) => (app === "dieta" ? goDieta() : app === "treino" ? goTreino() : app === "ajustes" ? goSettings() : setRoute(APP_TO_ROUTE[app]))}
+          onOpenDietaMeal={(mealKey) => goDieta("hoje", mealKey)}
+          onOpenTreino={() => goTreino(nextWorkout?.id)}
+          onToggleSupplement={toggleTodaySupplement}
         />
       )}
-    </div>
 
-    <div style={routeStyle("settings")}>
-      <Settings onExit={() => setRoute("hub")} initialTab={settingsTab} />
-    </div>
-    </div>
+      <Window show={route === "dieta"} name={OS_APPS.dieta.name} bg={OS_APPS.dieta.winBg} bar={OS_APPS.dieta.winBar} onClose={() => setRoute("hub")}>
+        <DietApp onExit={() => setRoute("hub")} initialTab={dietEntry.tab} initialOpenMealKey={dietEntry.mealKey} />
+      </Window>
 
-    <TabBar active={activeTab} onChange={handleTabChange} />
+      <Window show={route === "treino"} name={OS_APPS.treino.name} bg={OS_APPS.treino.winBg} bar={OS_APPS.treino.winBar} onClose={() => setRoute("hub")}>
+        <WorkoutApp
+          onGoHub={() => setRoute("hub")}
+          onOpenProgramSettings={() => goSettings("treino")}
+          onViewSession={goInsightsSession}
+          autoStartWorkoutId={autoStartWorkoutId}
+        />
+      </Window>
+
+      <Window show={route === "viagens"} name={OS_APPS.viagens.name} bg={OS_APPS.viagens.winBg} bar={OS_APPS.viagens.winBar} onClose={() => setRoute("hub")}>
+        <TravelApp />
+      </Window>
+
+      <Window show={route === "insights"} name={OS_APPS.insights.name} bg={OS_APPS.insights.winBg} bar={OS_APPS.insights.winBar} onClose={() => setRoute("hub")}>
+        {loading ? (
+          <div style={{ padding: 40, textAlign: "center", color: "#8B93A0", fontSize: 13 }}>Carregando…</div>
+        ) : (
+          <Insights
+            perfectStreak={perfectStreak}
+            totalPerfectDays={totalPerfectDays}
+            trainedDates={trainedDates}
+            dietedDates={dietedDates}
+            measurements={measurements}
+            volumeByDate={getTrainingVolumeByDate(trainHistory)}
+            onStartWorkout={goTreino}
+            openSessionId={insightsSessionId}
+          />
+        )}
+      </Window>
+
+      <Window show={route === "settings"} name={OS_APPS.ajustes.name} bg={OS_APPS.ajustes.winBg} bar={OS_APPS.ajustes.winBar} onClose={() => setRoute("hub")}>
+        <Settings onExit={() => setRoute("hub")} initialTab={settingsTab} />
+      </Window>
+
+      <Dock active={activeApp} onChange={handleDockChange} />
     </div>
   );
 }

@@ -28,6 +28,8 @@ export interface DietMeal {
   orderIndex: number;
   allowPortion: boolean;
   hasNoneOption: boolean;
+  /** Horário do dia ("07:30") usado pra ordenar a linha do tempo de Hoje. */
+  scheduledTime: string | null;
   options: DietMealOption[] | null;
   groups: DietMealGroups | null;
 }
@@ -37,6 +39,8 @@ export interface DietSupplement {
   key: string;
   label: string;
   timing: string | null;
+  /** Horário do dia ("08:00") usado pra ordenar a linha do tempo de Hoje — separado de `timing` (nota livre). */
+  scheduledTime: string | null;
   orderIndex: number;
 }
 
