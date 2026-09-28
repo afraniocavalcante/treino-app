@@ -1,4 +1,4 @@
-export type ThemeId = "classico" | "meia-noite" | "aurora" | "ember";
+export type ThemeId = "classico" | "neve" | "salvia" | "coral" | "meia-noite" | "aurora" | "ember";
 
 export interface ThemeOption {
   id: ThemeId;
@@ -8,6 +8,9 @@ export interface ThemeOption {
 
 export const THEMES: ThemeOption[] = [
   { id: "classico", label: "Clássico", preview: { bg: "#E4D9C6", accent: "#0D1B2A", honey: "#C97B4A" } },
+  { id: "neve", label: "Neve", preview: { bg: "#EEF0F3", accent: "#4F46E5", honey: "#FF6B5B" } },
+  { id: "salvia", label: "Sálvia", preview: { bg: "#EEF2EC", accent: "#1F7A5C", honey: "#E0794F" } },
+  { id: "coral", label: "Coral", preview: { bg: "#FBEEEA", accent: "#C23E6B", honey: "#FF8A4C" } },
   { id: "meia-noite", label: "Meia-noite", preview: { bg: "#0A0E14", accent: "#6C63FF", honey: "#FF6B5B" } },
   { id: "aurora", label: "Aurora", preview: { bg: "#0B1B1E", accent: "#3DDC97", honey: "#FF8674" } },
   { id: "ember", label: "Ember", preview: { bg: "#141110", accent: "#FF7A3D", honey: "#FF5A5F" } },
