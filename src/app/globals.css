@@ -403,9 +403,9 @@ input::-webkit-inner-spin-button {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-/* Abertura de janela do shell do Personal OS (src/app/os/Window.tsx) — sobe do Dock. */
-@keyframes winOpen {
-  from { transform: translateY(40px) scale(.86); opacity: 0; }
+/* Abertura de um app em tela cheia do Personal OS (src/app/os/FullScreenApp.tsx) — zoom a partir do Dock. */
+@keyframes appIn {
+  from { transform: translateY(24px) scale(.94); opacity: 0; }
   to { transform: none; opacity: 1; }
 }
 /* impacto ao confirmar série */

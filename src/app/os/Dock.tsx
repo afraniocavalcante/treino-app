@@ -1,63 +1,107 @@
 "use client";
 
-import { Fragment } from "react";
+import { useRef } from "react";
 
 export type OSApp = "hoje" | "dieta" | "treino" | "viagens" | "insights" | "ajustes";
 
-export const OS_APPS: Record<OSApp, { name: string; icon: string; bg: string; fg: string; winBg: string; winBar: string }> = {
-  hoje: { name: "Hoje", icon: "ph-sun-horizon", bg: "linear-gradient(160deg,#FBF6EC,#E4D9C6)", fg: "#C97B4A", winBg: "", winBar: "" },
-  dieta: { name: "Dieta", icon: "ph-bowl-food", bg: "linear-gradient(160deg,#DE9565,#B8683A)", fg: "#FBF6EC", winBg: "#E4D9C6", winBar: "#EDE4D4" },
-  treino: { name: "Treino", icon: "ph-barbell", bg: "linear-gradient(160deg,#243A55,#0D1B2A)", fg: "#F5EFE3", winBg: "#E4D9C6", winBar: "#EDE4D4" },
-  viagens: { name: "Viagens", icon: "ph-airplane-tilt", bg: "linear-gradient(160deg,#FFFFFF,#E3E0E0)", fg: "#0088b0", winBg: "#f3f2f2", winBar: "#eae9e9" },
-  insights: { name: "Insights", icon: "ph-chart-bar", bg: "linear-gradient(160deg,#E2C07E,#B8914A)", fg: "#0D1B2A", winBg: "#E4D9C6", winBar: "#EDE4D4" },
-  ajustes: { name: "Ajustes", icon: "ph-gear-six", bg: "linear-gradient(160deg,#A3AAB4,#6B727C)", fg: "#FFFFFF", winBg: "#EFEFF2", winBar: "#E4E4E8" },
+export const OS_APPS: Record<OSApp, { name: string; icon: string; bg: string; fg: string; page: string }> = {
+  hoje: { name: "Hoje", icon: "ph-sun-horizon", bg: "linear-gradient(160deg,#FFF8EC,#EBDCC4)", fg: "#C97B4A", page: "" },
+  dieta: { name: "Dieta", icon: "ph-bowl-food", bg: "linear-gradient(160deg,#E8A070,#B8683A)", fg: "#FFF8EC", page: "#F4EFE8" },
+  treino: { name: "Treino", icon: "ph-barbell", bg: "linear-gradient(160deg,#34496A,#16233A)", fg: "#FFF8EC", page: "#F1EFEC" },
+  viagens: { name: "Viagens", icon: "ph-airplane-tilt", bg: "linear-gradient(160deg,#FFFFFF,#E3E0E0)", fg: "#0088b0", page: "#f3f2f2" },
+  insights: { name: "Insights", icon: "ph-chart-bar", bg: "linear-gradient(160deg,#EAC985,#B8914A)", fg: "#1C1C1E", page: "#F4F0E8" },
+  ajustes: { name: "Ajustes", icon: "ph-gear-six", bg: "linear-gradient(160deg,#B3B8BF,#6B727C)", fg: "#FFFFFF", page: "#F2F2F4" },
 };
 
-export const DOCK_ORDER: OSApp[] = ["hoje", "dieta", "treino", "viagens", "insights", "ajustes"];
+export const DOCK_ORDER: OSApp[] = ["hoje", "dieta", "treino", "viagens", "insights"];
 
-export default function Dock({ active, onChange }: { active: OSApp; onChange: (app: OSApp) => void }) {
+const DRAG_OPEN_THRESHOLD = 36;
+
+export default function Dock({ active, libraryOpen, onChange, onOpenLibrary }: { active: OSApp; libraryOpen: boolean; onChange: (app: OSApp) => void; onOpenLibrary: () => void }) {
+  const dragStartY = useRef<number | null>(null);
+  const draggedOpen = useRef(false);
+
   return (
-    <div style={{ position: "absolute", left: 12, right: 12, bottom: "calc(22px + env(safe-area-inset-bottom, 0px))", zIndex: 6, display: "flex", justifyContent: "center" }}>
+    <div
+      onPointerDown={(e) => {
+        dragStartY.current = e.clientY;
+        draggedOpen.current = false;
+      }}
+      onPointerMove={(e) => {
+        if (dragStartY.current != null && dragStartY.current - e.clientY > DRAG_OPEN_THRESHOLD && !libraryOpen) {
+          draggedOpen.current = true;
+          dragStartY.current = null;
+          onOpenLibrary();
+        }
+      }}
+      onPointerUp={() => {
+        dragStartY.current = null;
+      }}
+      style={{
+        position: "absolute",
+        left: 0,
+        right: 0,
+        bottom: 0,
+        height: 140,
+        zIndex: 9,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "flex-end",
+        gap: 8,
+        paddingBottom: "calc(26px + env(safe-area-inset-bottom, 0px))",
+        touchAction: "none",
+        transform: libraryOpen ? "translateY(40px)" : "none",
+        opacity: libraryOpen ? 0 : 1,
+        transition: "transform 320ms cubic-bezier(.2,.9,.25,1), opacity 220ms ease",
+        pointerEvents: libraryOpen ? "none" : "auto",
+      }}
+    >
+      <button
+        onClick={onOpenLibrary}
+        aria-label="Abrir biblioteca de apps"
+        style={{ width: 64, height: 22, border: 0, background: "transparent", display: "grid", placeItems: "center", cursor: "pointer", padding: 0 }}
+      >
+        <span style={{ width: 40, height: 5, borderRadius: 3, background: "rgba(28,28,30,.35)" }} />
+      </button>
       <div
         style={{
           display: "flex",
-          alignItems: "flex-end",
-          gap: 10,
-          padding: "8px 10px",
-          borderRadius: 24,
-          background: "rgba(245,239,227,.5)",
-          backdropFilter: "blur(24px) saturate(1.5)",
-          WebkitBackdropFilter: "blur(24px) saturate(1.5)",
-          boxShadow: "0 0 0 .5px rgba(255,255,255,.6) inset, 0 10px 30px -10px rgba(13,27,42,.4)",
+          alignItems: "center",
+          gap: 14,
+          padding: "10px 12px",
+          borderRadius: 34,
+          background: "rgba(255,255,255,.26)",
+          backdropFilter: "blur(16px) saturate(1.9)",
+          WebkitBackdropFilter: "blur(16px) saturate(1.9)",
+          boxShadow: "inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 1px rgba(255,255,255,.35), 0 0 0 .5px rgba(255,255,255,.5), 0 14px 34px -12px rgba(60,35,15,.45)",
         }}
       >
         {DOCK_ORDER.map((id) => (
-          <Fragment key={id}>
-            {id === "ajustes" && <div style={{ width: 1, height: 40, alignSelf: "center", background: "rgba(13,27,42,.2)" }} />}
-            <button
-              onClick={() => onChange(id)}
-              aria-label={OS_APPS[id].name}
-              className="tab-press"
-              style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", gap: 3, border: 0, padding: 0, background: "transparent", cursor: "pointer" }}
+          <button
+            key={id}
+            onClick={() => onChange(id)}
+            aria-label={OS_APPS[id].name}
+            className="tab-press"
+            style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", border: 0, padding: 0, background: "transparent", cursor: "pointer" }}
+          >
+            <div
+              style={{
+                width: 54,
+                height: 54,
+                borderRadius: 13,
+                display: "grid",
+                placeItems: "center",
+                background: OS_APPS[id].bg,
+                color: OS_APPS[id].fg,
+                fontSize: 28,
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,.5), 0 0 0 .5px rgba(28,28,30,.12), 0 4px 10px -4px rgba(28,28,30,.4)",
+              }}
             >
-              <div
-                style={{
-                  width: 46,
-                  height: 46,
-                  borderRadius: 12,
-                  display: "grid",
-                  placeItems: "center",
-                  background: OS_APPS[id].bg,
-                  color: OS_APPS[id].fg,
-                  fontSize: 25,
-                  boxShadow: "0 0 0 .5px rgba(13,27,42,.15), 0 3px 8px -2px rgba(13,27,42,.35)",
-                }}
-              >
-                <i className={`ph-fill ${OS_APPS[id].icon}`} />
-              </div>
-              <span style={{ width: 4, height: 4, borderRadius: "50%", background: "#0D1B2A", opacity: active === id ? 1 : 0 }} />
-            </button>
-          </Fragment>
+              <i className={`ph-fill ${OS_APPS[id].icon}`} />
+            </div>
+            <span style={{ position: "absolute", bottom: -7, width: 4, height: 4, borderRadius: "50%", background: "#1C1C1E", opacity: active === id ? 1 : 0 }} />
+          </button>
         ))}
       </div>
     </div>

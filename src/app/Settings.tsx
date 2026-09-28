@@ -7,6 +7,7 @@ import { C, DISPLAY, EASE, styles } from "@/lib/styles";
 import { signOut } from "@/lib/auth";
 import { useEdgeSwipeBack } from "@/lib/gestures";
 import { applyTheme, getStoredTheme, setStoredTheme, THEMES, type ThemeId } from "@/lib/theme";
+import { getStoredWallpaper, setStoredWallpaper, WALLPAPERS, type WallpaperId } from "@/lib/wallpaper";
 import { CheckIcon, DumbbellIcon, PlateIcon, RefreshIcon, SignOutIcon } from "./Icons";
 import TreinoSettings from "./TreinoSettings";
 import DietSettings from "./DietSettings";
@@ -14,7 +15,15 @@ import DietSettings from "./DietSettings";
 type CheckState = "idle" | "checking" | "upToDate" | "available" | "applying" | "error";
 type SettingsTab = "dieta" | "treino";
 
-export default function Settings({ onExit, initialTab }: { onExit: () => void; initialTab?: SettingsTab }) {
+export default function Settings({
+  onExit,
+  initialTab,
+  onWallpaperChange,
+}: {
+  onExit: () => void;
+  initialTab?: SettingsTab;
+  onWallpaperChange?: (id: WallpaperId) => void;
+}) {
   const [tab, setTab] = useState<SettingsTab>(initialTab ?? "dieta");
   // Settings stays permanently mounted (Hub never unmounts it), so
   // initialTab only setting the state's first value isn't enough — an
@@ -38,6 +47,13 @@ export default function Settings({ onExit, initialTab }: { onExit: () => void; i
     setTheme(id);
     setStoredTheme(id);
     applyTheme(id);
+  }
+
+  const [wallpaper, setWallpaper] = useState<WallpaperId>(() => getStoredWallpaper());
+  function handleWallpaperChange(id: WallpaperId) {
+    setWallpaper(id);
+    setStoredWallpaper(id);
+    onWallpaperChange?.(id);
   }
 
   // Quando o TreinoSettings está numa sub-tela (editar programa, biblioteca),
@@ -180,6 +196,36 @@ export default function Settings({ onExit, initialTab }: { onExit: () => void; i
                     )}
                   </div>
                   <span style={{ fontSize: 10.5, fontWeight: 600, color: active ? C.accent : C.midGray }}>{t.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div style={{ ...styles.dietSectionCard, margin: "16px 20px 0" }}>
+          <div style={styles.dietSectionTitle}>Papel de parede</div>
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+            {WALLPAPERS.map((w) => {
+              const active = w.id === wallpaper;
+              return (
+                <button
+                  key={w.id}
+                  className="tab-press"
+                  onClick={() => handleWallpaperChange(w.id)}
+                  style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 7, background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
+                >
+                  <div
+                    style={{
+                      width: 48,
+                      height: 72,
+                      borderRadius: 12,
+                      background: w.background,
+                      border: active ? `2px solid ${C.accent}` : `1px solid ${C.bgHeader}`,
+                      boxShadow: active ? `0 0 0 3px ${C.accentSoft}` : "none",
+                      transition: `border-color .2s ${EASE}, box-shadow .2s ${EASE}`,
+                    }}
+                  />
+                  <span style={{ fontSize: 10.5, fontWeight: 600, color: active ? C.accent : C.midGray }}>{w.label}</span>
                 </button>
               );
             })}

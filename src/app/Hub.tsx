@@ -9,14 +9,15 @@ import { getDietDayLogs, getDietMeasurements, getDietPlan, getTodayDietLog, save
 import { emptyDietDay, isDayFullyComplete, type DietDayLog, type DietDayPicks, type DietMeasurement, type DietPlan } from "@/lib/diet";
 import { getPerfectStreak, getTotalPerfectDays, getTrainingVolumeByDate, isDeloadPhase } from "@/lib/insights";
 import { guardOffline, loadWithCache, useOnline } from "@/lib/offline";
+import { getStoredWallpaper, wallpaperBackground, type WallpaperId } from "@/lib/wallpaper";
 import WorkoutApp from "./WorkoutApp";
 import DietApp from "./DietApp";
 import Settings from "./Settings";
 import Insights from "./Insights";
 import TravelApp from "./travel/TravelApp";
-import MenuBar from "./os/MenuBar";
 import Dock, { OS_APPS, type OSApp } from "./os/Dock";
-import Window from "./os/Window";
+import Library from "./os/Library";
+import FullScreenApp from "./os/FullScreenApp";
 import Today from "./os/Today";
 
 type Route = "hub" | "treino" | "dieta" | "viagens" | "settings" | "insights";
@@ -40,6 +41,8 @@ const PHOSPHOR_FILL_CSS = "https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/
 export default function Hub() {
   const supabase = createClient();
   const [route, setRoute] = useState<Route>("hub");
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [wallpaper, setWallpaper] = useState<WallpaperId>(() => getStoredWallpaper());
   const [autoStartWorkoutId, setAutoStartWorkoutId] = useState<string | undefined>(undefined);
   const [insightsSessionId, setInsightsSessionId] = useState<string | undefined>(undefined);
   const [dietEntry, setDietEntry] = useState<{ tab?: DietTab; mealKey?: string }>({});
@@ -158,11 +161,20 @@ export default function Hub() {
 
   function goSettings(tab?: SettingsTab) {
     // Only overrides the sub-tab on an explicit deep link (e.g. "Programas"
-    // in Treino) — a bare tap on the Ajustes dock icon keeps whatever
-    // sub-tab Settings was last showing, since Settings stays mounted and
-    // its own initialTab prop can't "reset" it without this guard.
+    // in Treino) — abrir Ajustes pela Biblioteca mantém a sub-aba que
+    // Settings já estava mostrando, já que ele fica sempre montado e seu
+    // próprio initialTab não "reseta" sozinho sem essa guarda.
     if (tab) setSettingsTab(tab);
     setRoute("settings");
+  }
+
+  /** Um único ponto de entrada pra abrir qualquer app — usado pelo Dock, pela Biblioteca e por Hoje. */
+  function openApp(app: OSApp) {
+    setLibraryOpen(false);
+    if (app === "dieta") goDieta();
+    else if (app === "treino") goTreino();
+    else if (app === "ajustes") goSettings();
+    else setRoute(APP_TO_ROUTE[app]);
   }
 
   function toggleTodaySupplement(key: string) {
@@ -179,12 +191,6 @@ export default function Hub() {
   }
 
   const activeApp = ROUTE_TO_APP[route];
-  function handleDockChange(app: OSApp) {
-    if (app === "dieta") goDieta();
-    else if (app === "treino") goTreino();
-    else if (app === "ajustes") goSettings();
-    else setRoute(APP_TO_ROUTE[app]);
-  }
 
   const todayStr = formatDate(new Date());
   const trainedToday = trainHistory.some((e) => e.date === todayStr);
@@ -210,36 +216,12 @@ export default function Hub() {
   const totalPerfectDays = getTotalPerfectDays(trainedDates, dietedDates);
 
   return (
-    <div style={{ position: "relative", height: "100%", width: "100%", maxWidth: 440, margin: "0 auto", overflow: "hidden", background: "#E4D9C6", fontFamily: "'Sora',-apple-system,sans-serif" }}>
+    <div style={{ position: "relative", height: "100%", width: "100%", maxWidth: 440, margin: "0 auto", overflow: "hidden", background: "#EAD7BE", fontFamily: "'Sora',-apple-system,sans-serif" }}>
       <link rel="stylesheet" href={PHOSPHOR_FILL_CSS} />
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "radial-gradient(120% 60% at 10% 0%, #F5EFE3 0%, transparent 60%), radial-gradient(90% 55% at 100% 35%, rgba(207,168,95,.55) 0%, transparent 70%), radial-gradient(110% 60% at 0% 100%, rgba(201,123,74,.45) 0%, transparent 70%), #E4D9C6",
-        }}
-      />
-
-      <MenuBar active={activeApp} />
+      <div style={{ position: "absolute", inset: 0, background: wallpaperBackground(wallpaper) }} />
 
       {loading ? (
-        <div
-          style={{
-            position: "absolute",
-            top: "calc(46px + env(safe-area-inset-top, 0px))",
-            left: 0,
-            right: 0,
-            bottom: "calc(96px + env(safe-area-inset-bottom, 0px))",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#8B93A0",
-            fontSize: 13,
-          }}
-        >
-          Carregando…
-        </div>
+        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#78716C", fontSize: 13 }}>Carregando…</div>
       ) : (
         <Today
           supabase={supabase}
@@ -253,33 +235,33 @@ export default function Hub() {
           todayFullyDone={todayFullyDone}
           offline={!online || usingCache}
           deload={deload}
-          onOpenApp={(app) => (app === "dieta" ? goDieta() : app === "treino" ? goTreino() : app === "ajustes" ? goSettings() : setRoute(APP_TO_ROUTE[app]))}
+          onOpenApp={openApp}
           onOpenTreino={() => goTreino(nextWorkout?.id)}
           onToggleSupplement={toggleTodaySupplement}
           onPersistPicks={persistTodayPicks}
         />
       )}
 
-      <Window show={route === "dieta"} name={OS_APPS.dieta.name} bg={OS_APPS.dieta.winBg} bar={OS_APPS.dieta.winBar} onClose={() => setRoute("hub")}>
+      <FullScreenApp show={route === "dieta"} page={OS_APPS.dieta.page} name={OS_APPS.dieta.name} sub="Refeições e suplementos do dia" action="Registrar" onClose={() => setRoute("hub")}>
         <DietApp onExit={() => setRoute("hub")} initialTab={dietEntry.tab} initialOpenMealKey={dietEntry.mealKey} />
-      </Window>
+      </FullScreenApp>
 
-      <Window show={route === "treino"} name={OS_APPS.treino.name} bg={OS_APPS.treino.winBg} bar={OS_APPS.treino.winBar} onClose={() => setRoute("hub")}>
+      <FullScreenApp show={route === "treino"} page={OS_APPS.treino.page} name={OS_APPS.treino.name} sub={program ? `Programa · ${program.name}` : "Programa de treino"} onClose={() => setRoute("hub")}>
         <WorkoutApp
           onGoHub={() => setRoute("hub")}
           onOpenProgramSettings={() => goSettings("treino")}
           onViewSession={goInsightsSession}
           autoStartWorkoutId={autoStartWorkoutId}
         />
-      </Window>
+      </FullScreenApp>
 
-      <Window show={route === "viagens"} name={OS_APPS.viagens.name} bg={OS_APPS.viagens.winBg} bar={OS_APPS.viagens.winBar} onClose={() => setRoute("hub")}>
+      <FullScreenApp show={route === "viagens"} page={OS_APPS.viagens.page} name={OS_APPS.viagens.name} sub="Próxima viagem" onClose={() => setRoute("hub")}>
         <TravelApp />
-      </Window>
+      </FullScreenApp>
 
-      <Window show={route === "insights"} name={OS_APPS.insights.name} bg={OS_APPS.insights.winBg} bar={OS_APPS.insights.winBar} onClose={() => setRoute("hub")}>
+      <FullScreenApp show={route === "insights"} page={OS_APPS.insights.page} name={OS_APPS.insights.name} sub="Dieta e treino, histórico" onClose={() => setRoute("hub")}>
         {loading ? (
-          <div style={{ padding: 40, textAlign: "center", color: "#8B93A0", fontSize: 13 }}>Carregando…</div>
+          <div style={{ padding: 40, textAlign: "center", color: "#8A857F", fontSize: 13 }}>Carregando…</div>
         ) : (
           <Insights
             perfectStreak={perfectStreak}
@@ -292,13 +274,15 @@ export default function Hub() {
             openSessionId={insightsSessionId}
           />
         )}
-      </Window>
+      </FullScreenApp>
 
-      <Window show={route === "settings"} name={OS_APPS.ajustes.name} bg={OS_APPS.ajustes.winBg} bar={OS_APPS.ajustes.winBar} onClose={() => setRoute("hub")}>
-        <Settings onExit={() => setRoute("hub")} initialTab={settingsTab} />
-      </Window>
+      <FullScreenApp show={route === "settings"} page={OS_APPS.ajustes.page} name={OS_APPS.ajustes.name} sub="Personal OS" onClose={() => setRoute("hub")}>
+        <Settings onExit={() => setRoute("hub")} initialTab={settingsTab} onWallpaperChange={setWallpaper} />
+      </FullScreenApp>
 
-      <Dock active={activeApp} onChange={handleDockChange} />
+      <Library open={libraryOpen} onClose={() => setLibraryOpen(false)} onOpenApp={openApp} />
+
+      <Dock active={activeApp} libraryOpen={libraryOpen} onChange={openApp} onOpenLibrary={() => setLibraryOpen(true)} />
     </div>
   );
 }

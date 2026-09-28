@@ -106,7 +106,7 @@ export default function Today({
   const treinoDoneFrac = restToday || trainedToday ? 1 : 0;
 
   const rings: { name: string; color: string; frac: number; total: number; onOpen: () => void }[] = [
-    { name: "Treino", color: "#0D1B2A", frac: treinoDoneFrac, total: 1, onOpen: () => onOpenApp("treino") },
+    { name: "Treino", color: "#1C1C1E", frac: treinoDoneFrac, total: 1, onOpen: () => onOpenApp("treino") },
     { name: "Refeições", color: "#C97B4A", frac: mealsDone, total: Math.max(1, requiredMeals.length), onOpen: () => onOpenApp("dieta") },
     { name: "Suplementos", color: "#CFA85F", frac: suppDone, total: Math.max(1, suppTotal), onOpen: () => onOpenApp("dieta") },
   ];
@@ -183,31 +183,28 @@ export default function Today({
     <div
       style={{
         position: "absolute",
-        top: "calc(46px + env(safe-area-inset-top, 0px))",
-        left: 0,
-        right: 0,
-        bottom: "calc(96px + env(safe-area-inset-bottom, 0px))",
+        inset: 0,
         overflowY: "auto",
         overflowX: "hidden",
-        padding: "18px 16px 24px",
+        padding: "calc(20px + env(safe-area-inset-top, 0px)) 16px calc(150px + env(safe-area-inset-bottom, 0px))",
         display: "flex",
         flexDirection: "column",
         gap: 14,
       }}
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: 2, padding: "0 4px" }}>
-        <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase", color: "#4A5866" }}>{dayLabel}</span>
-        <span style={{ fontSize: 30, fontWeight: 700, letterSpacing: "-.02em" }}>Bom dia, Afrânio</span>
+      <div style={{ display: "flex", flexDirection: "column", gap: 0, padding: "6px 6px 4px" }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: "#57534E" }}>{dayLabel}</span>
+        <span style={{ fontSize: 34, fontWeight: 700, letterSpacing: "-.025em", lineHeight: 1.15 }}>Bom dia, Afrânio</span>
       </div>
 
       {offline && (
-        <div style={{ padding: "10px 14px", borderRadius: 14, background: "rgba(159,180,196,.35)", border: "1px solid rgba(159,180,196,.5)", fontSize: 12, color: "#4A5866", lineHeight: 1.5 }}>
+        <div style={{ padding: "10px 14px", borderRadius: 16, background: "rgba(255,255,255,.4)", border: "1px solid rgba(255,255,255,.5)", fontSize: 12, color: "#57534E", lineHeight: 1.5 }}>
           📡 Sem conexão — modo de visualização, mudanças não serão salvas agora.
         </div>
       )}
 
       {deload && (
-        <div style={{ padding: "9px 13px", borderRadius: 12, background: "rgba(255,255,255,.55)", border: "1px solid rgba(207,168,95,.5)", borderLeft: "3px solid #CFA85F", fontSize: 11.5, color: "#4A5866", lineHeight: 1.4 }}>
+        <div style={{ padding: "9px 13px", borderRadius: 14, background: "rgba(255,255,255,.4)", border: "1px solid rgba(207,168,95,.5)", borderLeft: "3px solid #CFA85F", fontSize: 11.5, color: "#57534E", lineHeight: 1.4 }}>
           Semana de deload no treino — pode valer manter ou subir levemente as kcal essa semana.
         </div>
       )}
@@ -217,12 +214,12 @@ export default function Today({
           display: "grid",
           gridTemplateColumns: "repeat(3,1fr)",
           gap: 8,
-          padding: "14px 10px",
-          borderRadius: 18,
-          background: "rgba(255,255,255,.55)",
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
-          boxShadow: "0 1px 0 rgba(255,255,255,.7) inset, 0 8px 24px -12px rgba(13,27,42,.25)",
+          padding: "16px 10px",
+          borderRadius: 26,
+          background: "rgba(255,255,255,.3)",
+          backdropFilter: "blur(14px) saturate(1.8)",
+          WebkitBackdropFilter: "blur(14px) saturate(1.8)",
+          boxShadow: "inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 1px rgba(255,255,255,.35), 0 0 0 .5px rgba(255,255,255,.5), 0 12px 30px -14px rgba(80,45,20,.35)",
         }}
       >
         {rings.map((r) => {
@@ -233,12 +230,12 @@ export default function Today({
               onClick={r.onOpen}
               style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, border: 0, background: "transparent", cursor: "pointer", font: "inherit", color: "inherit" }}
             >
-              <div style={{ width: 52, height: 52, borderRadius: "50%", background: `conic-gradient(${r.color} ${deg}deg, rgba(13,27,42,.1) 0)`, display: "grid", placeItems: "center", transition: "background .3s" }}>
-                <div style={{ width: 42, height: 42, borderRadius: "50%", background: "#FBF8F2", display: "grid", placeItems: "center", fontFamily: "'Space Grotesk',sans-serif", fontSize: 12, fontWeight: 700 }}>
+              <div style={{ width: 56, height: 56, borderRadius: "50%", background: `conic-gradient(${r.color} ${deg}deg, rgba(28,28,30,.1) 0)`, display: "grid", placeItems: "center", transition: "background .3s" }}>
+                <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(255,250,244,.92)", display: "grid", placeItems: "center", fontSize: 13, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
                   {r.frac}/{r.total}
                 </div>
               </div>
-              <span style={{ fontSize: 11, fontWeight: 600, color: "#4A5866" }}>{r.name}</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "#44403C" }}>{r.name}</span>
             </button>
           );
         })}
@@ -251,43 +248,43 @@ export default function Today({
             display: "flex",
             alignItems: "center",
             gap: 12,
-            padding: "12px 14px",
+            padding: "14px 16px",
             border: 0,
-            borderRadius: 16,
-            background: "rgba(255,255,255,.55)",
-            backdropFilter: "blur(24px)",
-            WebkitBackdropFilter: "blur(24px)",
-            boxShadow: "0 1px 0 rgba(255,255,255,.7) inset, 0 8px 24px -12px rgba(13,27,42,.25)",
+            borderRadius: 24,
+            background: "rgba(255,255,255,.3)",
+            backdropFilter: "blur(14px) saturate(1.8)",
+            WebkitBackdropFilter: "blur(14px) saturate(1.8)",
+            boxShadow: "inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 1px rgba(255,255,255,.35), 0 0 0 .5px rgba(255,255,255,.5), 0 12px 30px -14px rgba(80,45,20,.35)",
             font: "inherit",
             color: "inherit",
             textAlign: "left",
             cursor: "pointer",
           }}
         >
-          <div style={{ width: 34, height: 34, flexShrink: 0, borderRadius: 9, display: "grid", placeItems: "center", background: "linear-gradient(160deg,#FFFFFF,#E3E0E0)", boxShadow: "0 1px 2px rgba(13,27,42,.2)", color: "#0088b0", fontSize: 19 }}>
+          <div style={{ width: 40, height: 40, flexShrink: 0, borderRadius: 11, display: "grid", placeItems: "center", background: "linear-gradient(160deg,#FFFFFF,#E3E0E0)", boxShadow: "0 1px 3px rgba(28,28,30,.2)", color: "#0088b0", fontSize: 22 }}>
             <i className="ph-fill ph-airplane-tilt" />
           </div>
           <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 1 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: ".04em", textTransform: "uppercase", color: "#4A5866" }}>Dia todo · Viagens</span>
-            <span style={{ fontSize: 15, fontWeight: 600 }}>{activeTrip.city} em {tripDaysAway(activeTrip, now)} dias</span>
-            <span style={{ fontSize: 12, color: "#4A5866" }}>{activeFlight.flight.carrier} · {activeFlight.flight.flightNumber}</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: "#57534E" }}>Dia todo · Viagens</span>
+            <span style={{ fontSize: 17, fontWeight: 600 }}>{activeTrip.city} em {tripDaysAway(activeTrip, now)} dias</span>
+            <span style={{ fontSize: 13, color: "#57534E" }}>{activeFlight.flight.carrier} · {activeFlight.flight.flightNumber}</span>
           </div>
-          <i className="ph-duotone ph-caret-right" style={{ fontSize: 16, color: "#8B93A0" }} />
+          <i className="ph-duotone ph-caret-right" style={{ fontSize: 16, color: "#78716C" }} />
         </button>
       )}
 
       <div style={{ display: "flex", flexDirection: "column" }}>
         {timeline.map((e, i) =>
           e.isNow ? (
-            <div key={`now-${i}`} style={{ display: "grid", gridTemplateColumns: "48px minmax(0,1fr)", alignItems: "center", gap: 8, padding: "4px 0" }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: "#C0392B", textAlign: "right" }}>{clock}</span>
-              <div style={{ position: "relative", height: 2, background: "#C0392B", borderRadius: 1 }}>
-                <div style={{ position: "absolute", left: -5, top: -4, width: 10, height: 10, borderRadius: "50%", background: "#C0392B" }} />
+            <div key={`now-${i}`} style={{ display: "grid", gridTemplateColumns: "46px minmax(0,1fr)", alignItems: "center", gap: 8, padding: "4px 0" }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#D63A2F", textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{clock}</span>
+              <div style={{ position: "relative", height: 2, background: "#D63A2F", borderRadius: 1 }}>
+                <div style={{ position: "absolute", left: -5, top: -4, width: 10, height: 10, borderRadius: "50%", background: "#D63A2F" }} />
               </div>
             </div>
           ) : e.kind === "meal" ? (
-            <div key={`meal-${e.meal.key}`} style={{ display: "grid", gridTemplateColumns: "48px minmax(0,1fr)", gap: 8, padding: "4px 0" }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: "#4A5866", textAlign: "right", paddingTop: 14, fontVariantNumeric: "tabular-nums" }}>{e.time}</span>
+            <div key={`meal-${e.meal.key}`} style={{ display: "grid", gridTemplateColumns: "46px minmax(0,1fr)", gap: 8, padding: "4px 0" }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#57534E", textAlign: "right", paddingTop: 16, fontVariantNumeric: "tabular-nums" }}>{e.time}</span>
               <div style={{ minWidth: 0, overflow: "hidden" }}>
                 <MealCard
                   meal={e.meal}
@@ -299,39 +296,39 @@ export default function Today({
               </div>
             </div>
           ) : (
-            <div key={`${e.title}-${e.time}`} style={{ display: "grid", gridTemplateColumns: "48px minmax(0,1fr)", gap: 8, padding: "4px 0" }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: "#4A5866", textAlign: "right", paddingTop: 14, fontVariantNumeric: "tabular-nums" }}>{e.time}</span>
+            <div key={`${e.title}-${e.time}`} style={{ display: "grid", gridTemplateColumns: "46px minmax(0,1fr)", gap: 8, padding: "4px 0" }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#57534E", textAlign: "right", paddingTop: 16, fontVariantNumeric: "tabular-nums" }}>{e.time}</span>
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: 10,
                   padding: "10px 12px",
-                  borderRadius: 14,
-                  background: `rgba(255,255,255,${e.done ? ".35" : toMin(e.time) < nowMin ? ".5" : ".72"})`,
-                  backdropFilter: "blur(24px)",
-                  WebkitBackdropFilter: "blur(24px)",
-                  boxShadow: "0 1px 0 rgba(255,255,255,.6) inset, 0 6px 18px -12px rgba(13,27,42,.3)",
+                  borderRadius: 20,
+                  background: `rgba(255,255,255,${e.done ? ".22" : toMin(e.time) < nowMin ? ".4" : ".55"})`,
+                  backdropFilter: "blur(14px) saturate(1.8)",
+                  WebkitBackdropFilter: "blur(14px) saturate(1.8)",
+                  boxShadow: "inset 0 1px 0 rgba(255,255,255,.85), 0 0 0 .5px rgba(255,255,255,.45), 0 8px 20px -14px rgba(80,45,20,.4)",
                 }}
               >
                 <button onClick={e.onOpen} style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 10, border: 0, padding: 0, background: "transparent", font: "inherit", color: "inherit", textAlign: "left", cursor: "pointer" }}>
-                  <div style={{ width: 30, height: 30, flexShrink: 0, borderRadius: 8, display: "grid", placeItems: "center", background: e.bg, color: e.fg, fontSize: 16, boxShadow: "0 1px 2px rgba(13,27,42,.2)" }}>
+                  <div style={{ width: 32, height: 32, flexShrink: 0, borderRadius: 9, display: "grid", placeItems: "center", background: e.bg, color: e.fg, fontSize: 17, boxShadow: "0 1px 2px rgba(28,28,30,.2)" }}>
                     <i className={`ph-fill ${e.icon}`} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
-                    <span style={{ fontSize: 15, fontWeight: 600, color: e.done ? "#4A5866" : "#0D1B2A", textDecoration: e.done ? "line-through" : "none" }}>{e.title}</span>
-                    <span style={{ fontSize: 12, color: "#4A5866", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{e.sub}</span>
+                    <span style={{ fontSize: 16, fontWeight: 600, color: e.done ? "#57534E" : "#1C1C1E", textDecoration: e.done ? "line-through" : "none" }}>{e.title}</span>
+                    <span style={{ fontSize: 13, color: "#57534E", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{e.sub}</span>
                   </div>
                 </button>
                 {e.checkable && (
                   <button onClick={e.onToggle} aria-label="Marcar" style={{ width: 44, height: 44, margin: "-8px -8px -8px 0", flexShrink: 0, display: "grid", placeItems: "center", border: 0, background: "transparent", cursor: "pointer" }}>
-                    <span style={{ width: 24, height: 24, borderRadius: "50%", display: "grid", placeItems: "center", background: e.done ? "#C97B4A" : "transparent", boxShadow: e.done ? "none" : "inset 0 0 0 1.5px rgba(13,27,42,.25)", color: "#F5EFE3", fontSize: 14 }}>
+                    <span style={{ width: 26, height: 26, borderRadius: "50%", display: "grid", placeItems: "center", background: e.done ? "#C97B4A" : "transparent", boxShadow: e.done ? "none" : "inset 0 0 0 1.5px rgba(28,28,30,.28)", color: "#fff", fontSize: 15 }}>
                       {e.done && <i className="ph-fill ph-check" />}
                     </span>
                   </button>
                 )}
                 {e.cta && (
-                  <button onClick={e.onOpen} style={{ flexShrink: 0, padding: "6px 12px", border: 0, borderRadius: 999, background: "#0D1B2A", color: "#F5EFE3", font: "inherit", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                  <button onClick={e.onOpen} style={{ flexShrink: 0, minHeight: 34, padding: "0 16px", border: 0, borderRadius: 999, background: "#1C1C1E", color: "#fff", font: "inherit", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
                     {e.cta}
                   </button>
                 )}
@@ -343,16 +340,31 @@ export default function Today({
 
       <button
         onClick={() => onOpenApp("insights")}
-        style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", border: 0, borderRadius: 16, background: "rgba(13,27,42,.86)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", color: "#F5EFE3", font: "inherit", textAlign: "left", cursor: "pointer" }}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          padding: "14px 16px",
+          border: 0,
+          borderRadius: 24,
+          background: "rgba(28,28,30,.55)",
+          backdropFilter: "blur(14px) saturate(1.6)",
+          WebkitBackdropFilter: "blur(14px) saturate(1.6)",
+          boxShadow: "inset 0 1px 0 rgba(255,255,255,.25), 0 0 0 .5px rgba(255,255,255,.15), 0 12px 30px -14px rgba(28,28,30,.5)",
+          color: "#fff",
+          font: "inherit",
+          textAlign: "left",
+          cursor: "pointer",
+        }}
       >
-        <div style={{ width: 34, height: 34, flexShrink: 0, borderRadius: 9, display: "grid", placeItems: "center", background: "linear-gradient(160deg,#DDB872,#B8914A)", color: "#0D1B2A", fontSize: 18 }}>
+        <div style={{ width: 40, height: 40, flexShrink: 0, borderRadius: 11, display: "grid", placeItems: "center", background: "linear-gradient(160deg,#E2C07E,#B8914A)", color: "#1C1C1E", fontSize: 20 }}>
           <i className="ph-fill ph-chart-bar" />
         </div>
         <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 1 }}>
-          <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: ".04em", textTransform: "uppercase", color: "#CFA85F" }}>Insights</span>
-          <span style={{ fontSize: 15, fontWeight: 600 }}>{streakLine}</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: "#E2C07E" }}>Insights</span>
+          <span style={{ fontSize: 16, fontWeight: 600 }}>{streakLine}</span>
         </div>
-        <i className="ph-duotone ph-caret-right" style={{ fontSize: 16, color: "#8B93A0" }} />
+        <i className="ph-duotone ph-caret-right" style={{ fontSize: 16, color: "rgba(255,255,255,.6)" }} />
       </button>
     </div>
   );
