@@ -194,7 +194,7 @@ export default function Today({
     >
       <div style={{ display: "flex", flexDirection: "column", gap: 0, padding: "6px 6px 4px" }}>
         <span style={{ fontSize: 13, fontWeight: 600, color: "#57534E" }}>{dayLabel}</span>
-        <span style={{ fontSize: 34, fontWeight: 700, letterSpacing: "-.025em", lineHeight: 1.15 }}>Bom dia, Afrânio</span>
+        <span style={{ fontSize: 34, fontWeight: 700, letterSpacing: "-.025em", lineHeight: 1.15, color: "#1C1C1E" }}>Bom dia, Afrânio</span>
       </div>
 
       {offline && (
@@ -231,7 +231,7 @@ export default function Today({
               style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, border: 0, background: "transparent", cursor: "pointer", font: "inherit", color: "inherit" }}
             >
               <div style={{ width: 56, height: 56, borderRadius: "50%", background: `conic-gradient(${r.color} ${deg}deg, rgba(28,28,30,.1) 0)`, display: "grid", placeItems: "center", transition: "background .3s" }}>
-                <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(255,250,244,.92)", display: "grid", placeItems: "center", fontSize: 13, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
+                <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(255,250,244,.92)", display: "grid", placeItems: "center", fontSize: 13, fontWeight: 700, fontVariantNumeric: "tabular-nums", color: "#1C1C1E" }}>
                   {r.frac}/{r.total}
                 </div>
               </div>
@@ -266,7 +266,7 @@ export default function Today({
           </div>
           <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 1 }}>
             <span style={{ fontSize: 12, fontWeight: 600, color: "#57534E" }}>Dia todo · Viagens</span>
-            <span style={{ fontSize: 17, fontWeight: 600 }}>{activeTrip.city} em {tripDaysAway(activeTrip, now)} dias</span>
+            <span style={{ fontSize: 17, fontWeight: 600, color: "#1C1C1E" }}>{activeTrip.city} em {tripDaysAway(activeTrip, now)} dias</span>
             <span style={{ fontSize: 13, color: "#57534E" }}>{activeFlight.flight.carrier} · {activeFlight.flight.flightNumber}</span>
           </div>
           <i className="ph-duotone ph-caret-right" style={{ fontSize: 16, color: "#78716C" }} />
