@@ -62,7 +62,7 @@ export default function Insights({
             <FlagTriangleIcon size={11} color={C.honeyText} />
             {perfectStreak} {perfectStreak === 1 ? "dia perfeito" : "dias perfeitos"}
           </span>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(13,27,42,.05)", border: `1px solid ${C.bgHeader}`, borderRadius: 6, padding: "6px 11px", fontSize: 11.5, fontWeight: 600, color: C.lightGray }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(var(--ink-rgb),.05)", border: `1px solid ${C.bgHeader}`, borderRadius: 6, padding: "6px 11px", fontSize: 11.5, fontWeight: 600, color: C.lightGray }}>
             <DiamondIcon size={10} color={C.lightGray} />
             {totalPerfectDays} dias completos
           </span>

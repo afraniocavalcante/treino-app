@@ -586,7 +586,7 @@ export default function ProgressionHistory({
                             height: `${Math.max(4, (v / max) * 100)}%`,
                             borderRadius: 4,
                             transformOrigin: "bottom",
-                            background: i === buckets.length - 1 ? G.limeBar : "rgba(13,27,42,.1)",
+                            background: i === buckets.length - 1 ? G.limeBar : "rgba(var(--ink-rgb),.1)",
                             boxShadow: "none",
                             animation: `tabBarGrow 500ms ${EASE} ${(i * 0.05).toFixed(2)}s both`,
                           }}

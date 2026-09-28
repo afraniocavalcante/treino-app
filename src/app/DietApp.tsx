@@ -180,7 +180,7 @@ export default function DietApp({
           <>
             <div style={styles.dietKcalCard}>
               <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                <div style={{ ...styles.dietRingOuter, background: `conic-gradient(${C.honey} ${kcalPct}%, rgba(13,27,42,.08) 0)` }}>
+                <div style={{ ...styles.dietRingOuter, background: `conic-gradient(${C.honey} ${kcalPct}%, rgba(var(--ink-rgb),.08) 0)` }}>
                   <div style={styles.dietRingInner}>
                     <div style={styles.dietRingKcal}>{totals.kcal}</div>
                     <div style={styles.dietRingTarget}>de {plan.kcalTarget} kcal</div>
@@ -207,7 +207,7 @@ export default function DietApp({
               {overLimit && <div style={styles.dietWarningBanner}>Você passou da meta de {plan.kcalTarget} kcal hoje.</div>}
             </div>
 
-            <div style={styles.dietMealList}>
+            <div style={styles.dietMealList} className="stagger-fade">
               {plan.meals.map((meal) => (
                 <MealCard
                   key={meal.id}
@@ -345,7 +345,7 @@ function ProgressTab({
             </div>
           ))}
         </div>
-        <button style={styles.confirmBtn} onClick={onSave}>Salvar registro de hoje</button>
+        <button className="tab-press" style={styles.confirmBtn} onClick={onSave}>Salvar registro de hoje</button>
         {measurements.length > 0 && (
           <div style={{ marginTop: 16 }}>
             <div style={styles.sectionLabel}>HISTÓRICO ({measurements.length})</div>

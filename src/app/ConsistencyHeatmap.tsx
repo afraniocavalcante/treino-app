@@ -66,7 +66,7 @@ export default function ConsistencyHeatmap({
               padding: 3,
               borderRadius: 5,
               cursor: "pointer",
-              background: ci === selectedWeek ? "rgba(13,27,42,.06)" : "transparent",
+              background: ci === selectedWeek ? "rgba(var(--ink-rgb),.06)" : "transparent",
               flexShrink: 0,
             }}
           >
@@ -79,7 +79,7 @@ export default function ConsistencyHeatmap({
                   borderRadius: 2,
                   background: cell.future
                     ? "transparent"
-                    : `linear-gradient(135deg, ${cell.trained ? C.accent : "rgba(13,27,42,.08)"} 50%, ${cell.dieted ? C.honey : "rgba(13,27,42,.08)"} 50%)`,
+                    : `linear-gradient(135deg, ${cell.trained ? C.accent : "rgba(var(--ink-rgb),.08)"} 50%, ${cell.dieted ? C.honey : "rgba(var(--ink-rgb),.08)"} 50%)`,
                 }}
               />
             ))}

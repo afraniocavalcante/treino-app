@@ -73,7 +73,7 @@ export function SlidersIcon({ size = 18, color }: IconProps) {
   );
 }
 
-export function WarningIcon({ size = 13, color, markColor = "#F5EFE3" }: IconProps & { markColor?: string }) {
+export function WarningIcon({ size = 13, color, markColor = "var(--c-cream)" }: IconProps & { markColor?: string }) {
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} style={{ flexShrink: 0 }}>
       <path d="M12 3 22 20H2Z" fill={color ?? "currentColor"} />
@@ -97,7 +97,7 @@ export function ChevronDownIcon({ size = 12, color, open = false }: IconProps & 
   );
 }
 
-export function CheckIcon({ size = 10, color = "#F5EFE3" }: IconProps) {
+export function CheckIcon({ size = 10, color = "var(--c-cream)" }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke={color} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
       <path d="M4 12l5 5L20 6" />
@@ -109,7 +109,7 @@ export function SupplementIcon({ size = 16, color, markColor }: IconProps & { ma
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} style={{ flexShrink: 0 }} fill={color ?? "currentColor"}>
       <rect x="2" y="9" width="20" height="6" rx="3" />
-      <rect x="11" y="9" width="2" height="6" fill={markColor ?? "#F5EFE3"} />
+      <rect x="11" y="9" width="2" height="6" fill={markColor ?? "var(--c-cream)"} />
     </svg>
   );
 }

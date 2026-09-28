@@ -4,6 +4,172 @@
   box-sizing: border-box;
 }
 
+/* ── Perfis de cor ──────────────────────────────────────
+   :root carrega o perfil "Clássico" (default, idêntico à paleta original).
+   Cada outro perfil sobrescreve o mesmo conjunto de variáveis via
+   [data-theme] no <html> — ver src/lib/theme.ts. Nenhum componente
+   referencia essas variáveis diretamente; todos passam por C/G em
+   src/lib/styles.ts. */
+:root {
+  --c-bg-page: #e4d9c6;
+  --c-bg-dark: #0d1b2a;
+  --c-bg-card: #ffffff;
+  --c-bg-header: rgba(13, 27, 42, 0.08);
+  --c-accent: #0d1b2a;
+  --c-accent-dim: #0d1b2a;
+  --c-accent-soft: rgba(13, 27, 42, 0.05);
+  --c-accent-edge: rgba(13, 27, 42, 0.16);
+  --c-white: #0d1b2a;
+  --c-light-gray: #4a5866;
+  --c-mid-gray: #8b93a0;
+  --c-faint: #8b93a0;
+  --c-line: rgba(13, 27, 42, 0.08);
+  --c-red: #c0392b;
+  --c-green: #0d1b2a;
+  --c-cream: #f5efe3;
+  --c-honey: #c97b4a;
+  --c-honey-text: #a85d2e;
+  --c-honey-soft: rgba(201, 123, 74, 0.1);
+  --c-honey-edge: rgba(201, 123, 74, 0.35);
+  --c-steel: #cfa85f;
+  --c-steel-light: #a9782e;
+  --c-steel-mid: #a9782e;
+  --c-steel-soft: rgba(207, 168, 95, 0.16);
+  --c-steel-edge: rgba(207, 168, 95, 0.4);
+  --ink-rgb: 13, 27, 42;
+  --honey-rgb: 201, 123, 74;
+  --steel-rgb: 207, 168, 95;
+  --g-screen: linear-gradient(180deg, #f5efe3 0%, #efe7da 45%);
+  --g-screen-center: linear-gradient(180deg, #f5efe3 0%, #efe7da 45%);
+  --g-screen-done: linear-gradient(180deg, #f5efe3 0%, #efe7da 45%);
+  --g-lime: #c97b4a;
+  --g-lime-bar: #c97b4a;
+  --g-glass-active: rgba(201, 123, 74, 0.06);
+  --g-glow-btn: none;
+  --g-glow-chip: none;
+  --g-card: none;
+}
+
+:root[data-theme="meia-noite"] {
+  --c-bg-page: #0a0e14;
+  --c-bg-dark: #000000;
+  --c-bg-card: #151a24;
+  --c-bg-header: rgba(255, 255, 255, 0.08);
+  --c-accent: #6c63ff;
+  --c-accent-dim: #6c63ff;
+  --c-accent-soft: rgba(108, 99, 255, 0.14);
+  --c-accent-edge: rgba(108, 99, 255, 0.4);
+  --c-white: #f0f1f5;
+  --c-light-gray: #b7bdc9;
+  --c-mid-gray: #7c8494;
+  --c-faint: #7c8494;
+  --c-line: rgba(255, 255, 255, 0.08);
+  --c-red: #ff5c5c;
+  --c-green: #6c63ff;
+  --c-cream: #f0f1f5;
+  --c-honey: #ff6b5b;
+  --c-honey-text: #ff8a7d;
+  --c-honey-soft: rgba(255, 107, 91, 0.14);
+  --c-honey-edge: rgba(255, 107, 91, 0.4);
+  --c-steel: #e8b94e;
+  --c-steel-light: #f0cd7a;
+  --c-steel-mid: #e8b94e;
+  --c-steel-soft: rgba(232, 185, 78, 0.16);
+  --c-steel-edge: rgba(232, 185, 78, 0.4);
+  --ink-rgb: 240, 241, 245;
+  --honey-rgb: 255, 107, 91;
+  --steel-rgb: 232, 185, 78;
+  --g-screen: linear-gradient(180deg, #151a24 0%, #0a0e14 60%);
+  --g-screen-center: linear-gradient(180deg, #151a24 0%, #0a0e14 60%);
+  --g-screen-done: linear-gradient(180deg, #151a24 0%, #0a0e14 60%);
+  --g-lime: #6c63ff;
+  --g-lime-bar: #6c63ff;
+  --g-glass-active: rgba(108, 99, 255, 0.1);
+  --g-glow-btn: 0 8px 24px -8px rgba(108, 99, 255, 0.55);
+  --g-glow-chip: 0 0 0 4px rgba(108, 99, 255, 0.18);
+  --g-card: 0 20px 50px -30px rgba(0, 0, 0, 0.6);
+}
+
+:root[data-theme="aurora"] {
+  --c-bg-page: #0b1b1e;
+  --c-bg-dark: #040d0f;
+  --c-bg-card: #122428;
+  --c-bg-header: rgba(255, 255, 255, 0.07);
+  --c-accent: #3ddc97;
+  --c-accent-dim: #3ddc97;
+  --c-accent-soft: rgba(61, 220, 151, 0.14);
+  --c-accent-edge: rgba(61, 220, 151, 0.4);
+  --c-white: #eaf6f2;
+  --c-light-gray: #afc7c0;
+  --c-mid-gray: #7e9a93;
+  --c-faint: #7e9a93;
+  --c-line: rgba(255, 255, 255, 0.07);
+  --c-red: #ff6b6b;
+  --c-green: #3ddc97;
+  --c-cream: #eaf6f2;
+  --c-honey: #ff8674;
+  --c-honey-text: #ffa391;
+  --c-honey-soft: rgba(255, 134, 116, 0.14);
+  --c-honey-edge: rgba(255, 134, 116, 0.4);
+  --c-steel: #d4b15e;
+  --c-steel-light: #e6c879;
+  --c-steel-mid: #d4b15e;
+  --c-steel-soft: rgba(212, 177, 94, 0.16);
+  --c-steel-edge: rgba(212, 177, 94, 0.4);
+  --ink-rgb: 234, 246, 242;
+  --honey-rgb: 255, 134, 116;
+  --steel-rgb: 212, 177, 94;
+  --g-screen: linear-gradient(180deg, #122428 0%, #0b1b1e 60%);
+  --g-screen-center: linear-gradient(180deg, #122428 0%, #0b1b1e 60%);
+  --g-screen-done: linear-gradient(180deg, #122428 0%, #0b1b1e 60%);
+  --g-lime: #3ddc97;
+  --g-lime-bar: #3ddc97;
+  --g-glass-active: rgba(61, 220, 151, 0.1);
+  --g-glow-btn: 0 8px 24px -8px rgba(61, 220, 151, 0.5);
+  --g-glow-chip: 0 0 0 4px rgba(61, 220, 151, 0.18);
+  --g-card: 0 20px 50px -30px rgba(0, 0, 0, 0.6);
+}
+
+:root[data-theme="ember"] {
+  --c-bg-page: #141110;
+  --c-bg-dark: #050403;
+  --c-bg-card: #1d1917;
+  --c-bg-header: rgba(255, 255, 255, 0.08);
+  --c-accent: #ff7a3d;
+  --c-accent-dim: #ff7a3d;
+  --c-accent-soft: rgba(255, 122, 61, 0.14);
+  --c-accent-edge: rgba(255, 122, 61, 0.4);
+  --c-white: #f5efe8;
+  --c-light-gray: #c9bfb4;
+  --c-mid-gray: #948a7e;
+  --c-faint: #948a7e;
+  --c-line: rgba(255, 255, 255, 0.08);
+  --c-red: #e8433d;
+  --c-green: #ff7a3d;
+  --c-cream: #f5efe8;
+  --c-honey: #ff5a5f;
+  --c-honey-text: #ff8388;
+  --c-honey-soft: rgba(255, 90, 95, 0.14);
+  --c-honey-edge: rgba(255, 90, 95, 0.4);
+  --c-steel: #d9c15a;
+  --c-steel-light: #e8d67f;
+  --c-steel-mid: #d9c15a;
+  --c-steel-soft: rgba(217, 193, 90, 0.16);
+  --c-steel-edge: rgba(217, 193, 90, 0.4);
+  --ink-rgb: 245, 239, 232;
+  --honey-rgb: 255, 90, 95;
+  --steel-rgb: 217, 193, 90;
+  --g-screen: linear-gradient(180deg, #1d1917 0%, #141110 60%);
+  --g-screen-center: linear-gradient(180deg, #1d1917 0%, #141110 60%);
+  --g-screen-done: linear-gradient(180deg, #1d1917 0%, #141110 60%);
+  --g-lime: #ff7a3d;
+  --g-lime-bar: #ff7a3d;
+  --g-glass-active: rgba(255, 122, 61, 0.1);
+  --g-glow-btn: 0 8px 24px -8px rgba(255, 122, 61, 0.5);
+  --g-glow-chip: 0 0 0 4px rgba(255, 122, 61, 0.18);
+  --g-card: 0 20px 50px -30px rgba(0, 0, 0, 0.6);
+}
+
 html,
 body {
   margin: 0;
@@ -14,17 +180,18 @@ body {
   inset: 0;
   width: 100%;
   font-family: "Sora", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #e4d9c6;
-  color: #0d1b2a;
+  background: var(--c-bg-page);
+  color: var(--c-white);
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 a {
-  color: #c97b4a;
+  color: var(--c-honey);
   text-decoration: none;
 }
 a:hover {
-  color: #0d1b2a;
+  color: var(--c-white);
 }
 
 button {
@@ -48,7 +215,7 @@ input::-webkit-inner-spin-button {
 }
 
 ::selection {
-  background: rgba(201, 123, 74, 0.25);
+  background: rgba(var(--honey-rgb), 0.25);
 }
 
 /* ── Transições de tela e fase ─────────────────────────── */
@@ -137,6 +304,24 @@ input::-webkit-inner-spin-button {
 .tab-impact {
   animation: tabImpact 0.34s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
+
+/* Ícones (barra de abas, botões) cruzam de cor suavemente em vez de trocar
+   de golpe — mesma sensação "moderna" da troca de tema. */
+svg {
+  transition: fill 0.25s ease, stroke 0.25s ease;
+}
+
+/* Entrada leve e escalonada para listas de cards (treino do dia, refeições) —
+   reaproveita tabFadeUp já usado no resto do app. */
+.stagger-fade > * {
+  animation: tabFadeUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.stagger-fade > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-fade > *:nth-child(2) { animation-delay: 40ms; }
+.stagger-fade > *:nth-child(3) { animation-delay: 80ms; }
+.stagger-fade > *:nth-child(4) { animation-delay: 120ms; }
+.stagger-fade > *:nth-child(5) { animation-delay: 160ms; }
+.stagger-fade > *:nth-child(n + 6) { animation-delay: 200ms; }
 
 @media (prefers-reduced-motion: reduce) {
   *,

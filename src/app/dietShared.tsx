@@ -244,9 +244,9 @@ export function MealCard({
                     <span style={{ fontSize: 12.5, fontWeight: 500 }}>{meal.groups.toggle.label}</span>
                     <div
                       onClick={toggleAlmocoFruta}
-                      style={{ ...styles.fruitSwitchTrack, background: picks.almoco.fruta ? C.honeySoft : "rgba(13,27,42,.08)" }}
+                      style={{ ...styles.fruitSwitchTrack, background: picks.almoco.fruta ? C.honeySoft : "rgba(var(--ink-rgb),.08)" }}
                     >
-                      <div style={{ ...styles.fruitSwitchThumb, left: picks.almoco.fruta ? 20 : 2, background: picks.almoco.fruta ? C.honey : "#FFFFFF" }} />
+                      <div style={{ ...styles.fruitSwitchThumb, left: picks.almoco.fruta ? 20 : 2, background: picks.almoco.fruta ? C.honey : C.bgCard }} />
                     </div>
                   </div>
                 </>

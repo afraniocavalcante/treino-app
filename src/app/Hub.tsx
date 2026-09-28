@@ -41,8 +41,8 @@ function Ring({ frac, total, color, label }: { frac: number; total: number; colo
   const deg = total > 0 ? Math.round((frac / total) * 360) : 0;
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-      <div style={{ width: 46, height: 46, borderRadius: "50%", background: `conic-gradient(${color} ${deg}deg, rgba(13,27,42,.08) 0)`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ width: 37, height: 37, borderRadius: "50%", background: "#FFFFFF", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10.5, fontWeight: 700, color: C.white }}>
+      <div style={{ width: 46, height: 46, borderRadius: "50%", background: `conic-gradient(${color} ${deg}deg, rgba(var(--ink-rgb),.08) 0)`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: 37, height: 37, borderRadius: "50%", background: C.bgCard, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10.5, fontWeight: 700, color: C.white }}>
           {frac}/{total}
         </div>
       </div>
@@ -355,7 +355,7 @@ export default function Hub() {
         {program && (
           <div
             onClick={workoutPending ? () => goTreino(nextWorkout!.id) : undefined}
-            style={{ borderRadius: 10, padding: "10px 15px", margin: "8px 20px 0", background: C.bgCard, border: `1px solid ${C.bgHeader}`, borderLeft: `4px solid ${workoutPending ? C.accent : "rgba(13,27,42,.12)"}`, display: "flex", alignItems: "center", gap: 11, cursor: workoutPending ? "pointer" : "default" }}
+            style={{ borderRadius: 10, padding: "10px 15px", margin: "8px 20px 0", background: C.bgCard, border: `1px solid ${C.bgHeader}`, borderLeft: `4px solid ${workoutPending ? C.accent : "rgba(var(--ink-rgb),.12)"}`, display: "flex", alignItems: "center", gap: 11, cursor: workoutPending ? "pointer" : "default" }}
           >
             <div style={{ width: 36, height: 36, borderRadius: 7, background: C.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <DumbbellIcon size={16} color={C.cream} />

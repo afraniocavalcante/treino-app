@@ -635,7 +635,7 @@ export default function WorkoutApp({
             </button>
           </div>
         )}
-        <div style={styles.homeCards}>
+        <div style={styles.homeCards} className="stagger-fade">
           {program.workouts.length === 0 && (
             <div style={{ ...styles.emptyState, padding: "20px 0" }}>
               Nenhum treino cadastrado ainda.
@@ -905,7 +905,7 @@ export default function WorkoutApp({
               <div style={styles.ringWrap}>
                 <div style={styles.ringGlow} />
                 <svg width="216" height="216" viewBox="0 0 100 100" style={{ transform: "rotate(-90deg)" }}>
-                  <circle cx="50" cy="50" r={RING_R} fill="none" stroke="rgba(13,27,42,.08)" strokeWidth="4" />
+                  <circle cx="50" cy="50" r={RING_R} fill="none" stroke="rgba(var(--ink-rgb),.08)" strokeWidth="4" />
                   <circle cx="50" cy="50" r={RING_R} fill="none" stroke={C.accent} strokeWidth="4" strokeLinecap="round" strokeDasharray={RING_CIRC} strokeDashoffset={RING_CIRC * (1 - holdTime / (exercise.holdSeconds || 40))} style={{ transition: "stroke-dashoffset 1s linear" }} />
                 </svg>
                 <div style={styles.ringCenter}>
@@ -926,7 +926,7 @@ export default function WorkoutApp({
                 <input type="number" inputMode="numeric" value={repsInput} onChange={(e) => setRepsInput(e.target.value)} onFocus={(e) => e.target.select()} style={{ ...styles.kgInput, width: 64, fontSize: 28, color: C.accent }} placeholder="0" />
                 <span style={styles.kgUnit}>reps</span>
               </div>
-              <div style={{ height: 1, background: "rgba(13,27,42,.08)", margin: "0 0 10px" }} />
+              <div style={{ height: 1, background: "rgba(var(--ink-rgb),.08)", margin: "0 0 10px" }} />
               <div style={styles.kgAdjRow}>
                 <button className="tab-press" onClick={() => setKgInput(String(Math.max(0, (parseFloat(kgInput) || 0) - 2.5)))} style={styles.kgAdjBtn}>− 2,5</button>
                 <button className="tab-press" onClick={() => setKgInput(String((parseFloat(kgInput) || 0) + 2.5))} style={styles.kgAdjBtn}>+ 2,5</button>
@@ -941,7 +941,7 @@ export default function WorkoutApp({
               <div style={styles.ringWrap}>
                 <div style={styles.ringGlow} />
                 <svg width="216" height="216" viewBox="0 0 100 100" style={{ transform: "rotate(-90deg)" }}>
-                  <circle cx="50" cy="50" r={RING_R} fill="none" stroke="rgba(13,27,42,.08)" strokeWidth="4" />
+                  <circle cx="50" cy="50" r={RING_R} fill="none" stroke="rgba(var(--ink-rgb),.08)" strokeWidth="4" />
                   <circle cx="50" cy="50" r={RING_R} fill="none" stroke={C.accent} strokeWidth="4" strokeLinecap="round" strokeDasharray={RING_CIRC} strokeDashoffset={RING_CIRC * (1 - restTime / (restTotal || program.restSeconds))} style={{ transition: "stroke-dashoffset 1s linear" }} />
                 </svg>
                 <div style={styles.ringCenter}>

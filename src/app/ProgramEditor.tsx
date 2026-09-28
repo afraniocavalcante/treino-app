@@ -290,7 +290,7 @@ function ProgramFields({
       <button
         disabled={busy}
         onClick={isScheduled ? onDeleteScheduled : onStartNewProgram}
-        style={{ display: "block", width: "100%", marginTop: 30, background: "transparent", border: `1px solid #4A2233`, color: C.red, borderRadius: 12, padding: "13px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+        style={{ display: "block", width: "100%", marginTop: 30, background: "transparent", border: `1px solid ${C.red}`, color: C.red, borderRadius: 12, padding: "13px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
       >
         {isScheduled ? "Remover programa agendado" : "Concluir este programa e criar um novo"}
       </button>
@@ -385,7 +385,7 @@ function ReorderableExerciseList({
             }}
             style={{
               borderTop: `1px solid ${C.line}`,
-              background: isDragging ? "rgba(13,27,42,.05)" : "transparent",
+              background: isDragging ? "rgba(var(--ink-rgb),.05)" : "transparent",
               opacity: isDragging ? 0.7 : 1,
               touchAction: isDragging ? "none" : "auto",
             }}
@@ -402,7 +402,7 @@ function ReorderableExerciseList({
                     startDrag(id);
                   }}
                   onClick={(e) => e.stopPropagation()}
-                  style={{ fontSize: 14, color: "#4E4E48", cursor: "grab", touchAction: "none", padding: "4px 2px" }}
+                  style={{ fontSize: 14, color: C.lightGray, cursor: "grab", touchAction: "none", padding: "4px 2px" }}
                 >
                   ⠿
                 </span>
@@ -490,15 +490,15 @@ function ExerciseEditFields({
 const numFieldStyle: React.CSSProperties = {
   flex: 1,
   padding: "9px 10px",
-  background: "rgba(13,27,42,.05)",
-  border: "1px solid rgba(13,27,42,.09)",
+  background: "rgba(var(--ink-rgb),.05)",
+  border: "1px solid rgba(var(--ink-rgb),.09)",
   borderRadius: 10,
   display: "flex",
   flexDirection: "column",
   gap: 2,
 };
-const numFieldLabelStyle: React.CSSProperties = { fontSize: 8.5, letterSpacing: 1, color: "#8A8A82" };
-const numFieldValueStyle: React.CSSProperties = { fontSize: 13, fontWeight: 600, background: "transparent", border: "none", color: "#F2F2EE", outline: "none", width: "100%", padding: 0 };
+const numFieldLabelStyle: React.CSSProperties = { fontSize: 8.5, letterSpacing: 1, color: C.midGray };
+const numFieldValueStyle: React.CSSProperties = { fontSize: 13, fontWeight: 600, background: "transparent", border: "none", color: C.white, outline: "none", width: "100%", padding: 0 };
 
 function AddExerciseForm({
   supabase,
