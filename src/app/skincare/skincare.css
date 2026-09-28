@@ -1,0 +1,159 @@
+/* SkinLog — design próprio (clínica coreana minimalista), portado de
+   /Users/afranio/Documents/SkinAPP/skinlog/src/index.css. Não usa nenhuma
+   classe utilitária do Tailwind de verdade (só o mecanismo @theme pra
+   tokens no original) — então aqui é só CSS puro, escopado sob .skincare
+   pelo mesmo motivo do Broadsheet em src/app/travel/broadsheet.css: não
+   pode vazar pra paleta Niemeyer do resto do app. */
+@import url("https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500&display=swap");
+
+.skincare {
+  --color-bg: #ede7dd;
+  --color-grid: #cdc4b6;
+  --color-surface: #ffffff;
+  --color-surface-inset: #f5f0e8;
+  --color-disc: #f0eae0;
+  --color-disc-off: #ede7dd;
+  --color-border: #d3cabb;
+  --color-border-soft: #e6dfd3;
+  --color-border-ring: #ded6c9;
+  --color-border-strong: #bdb2a1;
+  --color-rule: #d9d1c3;
+  --color-ink: #191715;
+  --color-ink-2: #4a423a;
+  --color-ink-3: #5c5245;
+  --color-olive: #5c6540;
+  --color-olive-dark: #454c2e;
+  --color-green: #4f6440;
+  --color-green-bg: #e7ebdd;
+  --color-green-border: #cbd3b7;
+  --color-green-ink: #39441f;
+  --color-green-ink-2: #4f5a38;
+  --color-terracotta: #8e3d1e;
+  --color-terracotta-bg: #f7e7de;
+  --color-terracotta-border: #e0bca9;
+  --color-neutral-chip: #e2ddcb;
+  --color-neutral-chip-border: #b9ae99;
+  --color-stripe: #e4dbcc;
+
+  font-family: "Hanken Grotesk", Helvetica, Arial, sans-serif;
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.skincare * {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+.skincare button {
+  font: inherit;
+  color: inherit;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+.skincare textarea,
+.skincare input {
+  font: inherit;
+  color: inherit;
+}
+.skincare .no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.skincare .no-scrollbar {
+  scrollbar-width: none;
+}
+
+.skincare .paper-grid {
+  background-color: var(--color-bg);
+  background-image: linear-gradient(var(--color-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
+  background-size: 26px 26px;
+  background-position: -1px -1px;
+}
+
+.skincare .photo-stripe {
+  background-color: var(--color-disc);
+  background-image: repeating-linear-gradient(135deg, var(--color-stripe) 0 1px, transparent 1px 9px);
+}
+
+@keyframes skRingPulse {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.09); }
+  100% { transform: scale(1); }
+}
+@keyframes skFadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes skSlideInRight {
+  from { opacity: 0; transform: translateX(14px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes skSlideInLeft {
+  from { opacity: 0; transform: translateX(-14px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes skSheetUp {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+@keyframes skSheetDown {
+  from { transform: none; }
+  to { transform: translateY(100%); }
+}
+@keyframes skVeilIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes skVeilOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes skFlap {
+  0% { transform: translateY(-45%) scaleY(0.55); opacity: 0; }
+  60% { opacity: 1; }
+  100% { transform: none; opacity: 1; }
+}
+@keyframes skWipeIn {
+  from { transform: scale(0.15); opacity: 0.3; }
+  to { transform: scale(1); opacity: 1; }
+}
+@keyframes skBreathe {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+.skincare .anim-pulse { animation: skRingPulse 620ms cubic-bezier(0.32, 0.72, 0.3, 1); }
+.skincare .anim-appear { animation: skFadeUp 420ms cubic-bezier(0.32, 0.72, 0.3, 1) both; }
+.skincare .anim-enter-right { animation: skSlideInRight 260ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.skincare .anim-enter-left { animation: skSlideInLeft 260ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.skincare .anim-sheet-up { animation: skSheetUp 300ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.skincare .anim-sheet-down { animation: skSheetDown 260ms cubic-bezier(0.4, 0.02, 0.9, 0.4) both; }
+.skincare .anim-veil-in { animation: skVeilIn 260ms ease both; }
+.skincare .anim-veil-out { animation: skVeilOut 240ms ease both; }
+.skincare .anim-flap { display: inline-block; animation: skFlap 300ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+.skincare .anim-wipe-in { animation: skWipeIn 280ms cubic-bezier(0.2, 0.7, 0.2, 1); transform-box: fill-box; transform-origin: center; }
+.skincare .anim-breathe { animation: skBreathe 1800ms ease-in-out infinite; }
+
+.skincare .stagger > * { animation: skFadeUp 280ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.skincare .stagger > *:nth-child(1) { animation-delay: 120ms; }
+.skincare .stagger > *:nth-child(2) { animation-delay: 160ms; }
+.skincare .stagger > *:nth-child(3) { animation-delay: 200ms; }
+.skincare .stagger > *:nth-child(4) { animation-delay: 240ms; }
+.skincare .stagger > *:nth-child(5) { animation-delay: 280ms; }
+.skincare .stagger > *:nth-child(6) { animation-delay: 320ms; }
+
+.skincare .cascade > * { animation: skFadeUp 320ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.skincare .cascade > *:nth-child(2) { animation-delay: 60ms; }
+.skincare .cascade > *:nth-child(3) { animation-delay: 120ms; }
+.skincare .cascade > *:nth-child(4) { animation-delay: 180ms; }
+.skincare .cascade > *:nth-child(5) { animation-delay: 240ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .skincare *, .skincare *::before, .skincare *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

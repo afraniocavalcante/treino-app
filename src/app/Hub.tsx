@@ -15,12 +15,13 @@ import DietApp from "./DietApp";
 import Settings from "./Settings";
 import Insights from "./Insights";
 import TravelApp from "./travel/TravelApp";
+import { SkinCareApp } from "./skincare/SkinCareApp";
 import Dock, { OS_APPS, type OSApp } from "./os/Dock";
 import Library from "./os/Library";
 import FullScreenApp from "./os/FullScreenApp";
 import Today from "./os/Today";
 
-type Route = "hub" | "treino" | "dieta" | "viagens" | "settings" | "insights";
+type Route = "hub" | "treino" | "dieta" | "viagens" | "settings" | "insights" | "skincare";
 type DietTab = "hoje" | "progresso" | "compras" | "mais";
 type SettingsTab = "dieta" | "treino";
 
@@ -33,8 +34,8 @@ interface HubBundle {
   ms: DietMeasurement[];
 }
 
-const ROUTE_TO_APP: Record<Route, OSApp> = { hub: "hoje", dieta: "dieta", treino: "treino", viagens: "viagens", insights: "insights", settings: "ajustes" };
-const APP_TO_ROUTE: Record<OSApp, Route> = { hoje: "hub", dieta: "dieta", treino: "treino", viagens: "viagens", insights: "insights", ajustes: "settings" };
+const ROUTE_TO_APP: Record<Route, OSApp> = { hub: "hoje", dieta: "dieta", treino: "treino", viagens: "viagens", insights: "insights", skincare: "skincare", settings: "ajustes" };
+const APP_TO_ROUTE: Record<OSApp, Route> = { hoje: "hub", dieta: "dieta", treino: "treino", viagens: "viagens", insights: "insights", skincare: "skincare", ajustes: "settings" };
 
 const PHOSPHOR_FILL_CSS = "https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css";
 
@@ -274,6 +275,10 @@ export default function Hub() {
             openSessionId={insightsSessionId}
           />
         )}
+      </FullScreenApp>
+
+      <FullScreenApp show={route === "skincare"} page={OS_APPS.skincare.page} name={OS_APPS.skincare.name} sub="Rotina, estoque e evolução da pele" onClose={() => setRoute("hub")}>
+        <SkinCareApp />
       </FullScreenApp>
 
       <FullScreenApp show={route === "settings"} page={OS_APPS.ajustes.page} name={OS_APPS.ajustes.name} sub="Personal OS" onClose={() => setRoute("hub")}>

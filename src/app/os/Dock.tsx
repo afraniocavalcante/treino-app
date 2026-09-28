@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 
-export type OSApp = "hoje" | "dieta" | "treino" | "viagens" | "insights" | "ajustes";
+export type OSApp = "hoje" | "dieta" | "treino" | "viagens" | "insights" | "skincare" | "ajustes";
 
 export const OS_APPS: Record<OSApp, { name: string; icon: string; bg: string; fg: string; page: string }> = {
   hoje: { name: "Hoje", icon: "ph-sun-horizon", bg: "linear-gradient(160deg,#FFF8EC,#EBDCC4)", fg: "#C97B4A", page: "" },
@@ -10,6 +10,7 @@ export const OS_APPS: Record<OSApp, { name: string; icon: string; bg: string; fg
   treino: { name: "Treino", icon: "ph-barbell", bg: "linear-gradient(160deg,#34496A,#16233A)", fg: "#FFF8EC", page: "#F1EFEC" },
   viagens: { name: "Viagens", icon: "ph-airplane-tilt", bg: "linear-gradient(160deg,#FFFFFF,#E3E0E0)", fg: "#0088b0", page: "#f3f2f2" },
   insights: { name: "Insights", icon: "ph-chart-bar", bg: "linear-gradient(160deg,#EAC985,#B8914A)", fg: "#1C1C1E", page: "#F4F0E8" },
+  skincare: { name: "Skin Care", icon: "ph-drop-half", bg: "linear-gradient(160deg,#F6D3CF,#E39A9A)", fg: "#FFFFFF", page: "#F7EFEE" },
   ajustes: { name: "Ajustes", icon: "ph-gear-six", bg: "linear-gradient(160deg,#B3B8BF,#6B727C)", fg: "#FFFFFF", page: "#F2F2F4" },
 };
 

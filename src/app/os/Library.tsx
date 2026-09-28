@@ -4,19 +4,14 @@ import { useMemo, useState } from "react";
 import { useSwipeDown } from "@/lib/gestures";
 import { OS_APPS, type OSApp } from "./Dock";
 
-const LIBRARY_ORDER: OSApp[] = ["hoje", "dieta", "treino", "viagens", "insights", "ajustes"];
-const SKINCARE = { name: "Skin Care", icon: "ph-drop-half", bg: "linear-gradient(160deg,#F6D3CF,#E39A9A)", fg: "#FFFFFF" };
+const LIBRARY_ORDER: OSApp[] = ["hoje", "dieta", "treino", "viagens", "insights", "skincare", "ajustes"];
 
 export default function Library({ open, onClose, onOpenApp }: { open: boolean; onClose: () => void; onOpenApp: (app: OSApp) => void }) {
   const [query, setQuery] = useState("");
   const swipeDownRef = useSwipeDown(open ? onClose : null);
 
   const entries = useMemo(() => {
-    const all: { key: string; name: string; icon: string; bg: string; fg: string; onOpen: (() => void) | null }[] = [
-      ...LIBRARY_ORDER.map((id) => ({ key: id, name: OS_APPS[id].name, icon: OS_APPS[id].icon, bg: OS_APPS[id].bg, fg: OS_APPS[id].fg, onOpen: () => onOpenApp(id) })),
-    ];
-    // Skin Care entra na ordem certa (antes de Ajustes), sem ação — ainda não existe.
-    all.splice(5, 0, { key: "skincare", name: SKINCARE.name, icon: SKINCARE.icon, bg: SKINCARE.bg, fg: SKINCARE.fg, onOpen: null });
+    const all = LIBRARY_ORDER.map((id) => ({ key: id, name: OS_APPS[id].name, icon: OS_APPS[id].icon, bg: OS_APPS[id].bg, fg: OS_APPS[id].fg, onOpen: () => onOpenApp(id) }));
     const q = query.trim().toLowerCase();
     return q ? all.filter((a) => a.name.toLowerCase().includes(q)) : all;
   }, [query, onOpenApp]);
@@ -79,11 +74,10 @@ export default function Library({ open, onClose, onOpenApp }: { open: boolean; o
           {entries.map((a) => (
             <button
               key={a.key}
-              onClick={() => a.onOpen?.()}
+              onClick={a.onOpen}
               aria-label={a.name}
               className="tab-press"
-              disabled={!a.onOpen}
-              style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 7, border: 0, padding: 0, background: "transparent", cursor: a.onOpen ? "pointer" : "default", font: "inherit", color: "#1C1C1E" }}
+              style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 7, border: 0, padding: 0, background: "transparent", cursor: "pointer", font: "inherit", color: "#1C1C1E" }}
             >
               <div
                 style={{
@@ -97,7 +91,6 @@ export default function Library({ open, onClose, onOpenApp }: { open: boolean; o
                   color: a.fg,
                   fontSize: 32,
                   boxShadow: "inset 0 1px 0 rgba(255,255,255,.5), 0 0 0 .5px rgba(28,28,30,.12), 0 6px 14px -6px rgba(28,28,30,.4)",
-                  opacity: a.onOpen ? 1 : 0.6,
                 }}
               >
                 <i className={`ph-fill ${a.icon}`} />
