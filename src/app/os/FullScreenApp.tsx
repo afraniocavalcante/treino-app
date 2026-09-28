@@ -89,7 +89,7 @@ export default function FullScreenApp({
         </div>
         <div style={{ display: "flex", flexDirection: "column", padding: "8px 4px 18px" }}>
           <span style={{ fontSize: 34, fontWeight: 700, letterSpacing: "-.025em" }}>{name}</span>
-          {sub && <span style={{ fontSize: 15, color: "#6E6A66" }}>{sub}</span>}
+          {sub && <span style={{ fontSize: 15, color: "#57534E" }}>{sub}</span>}
         </div>
         {children}
       </div>

@@ -222,7 +222,7 @@ export default function Hub() {
       <div style={{ position: "absolute", inset: 0, background: wallpaperBackground(wallpaper) }} />
 
       {loading ? (
-        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#78716C", fontSize: 13 }}>Carregando…</div>
+        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#57534E", fontSize: 13 }}>Carregando…</div>
       ) : (
         <Today
           supabase={supabase}
@@ -262,7 +262,7 @@ export default function Hub() {
 
       <FullScreenApp show={route === "insights"} page={OS_APPS.insights.page} name={OS_APPS.insights.name} sub="Dieta e treino, histórico" onClose={() => setRoute("hub")}>
         {loading ? (
-          <div style={{ padding: 40, textAlign: "center", color: "#8A857F", fontSize: 13 }}>Carregando…</div>
+          <div style={{ padding: 40, textAlign: "center", color: "#57534E", fontSize: 13 }}>Carregando…</div>
         ) : (
           <Insights
             perfectStreak={perfectStreak}
