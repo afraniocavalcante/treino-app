@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAllFlights, getTrips } from "@/lib/travelData";
 import { pickActiveFlight, tripDaysAway, type Flight, type Trip } from "@/lib/travel";
-import { isMealDone, type DietDayPicks, type DietPlan } from "@/lib/diet";
+import { isMealDone, type DietDayPicks, type DietMeal, type DietPlan } from "@/lib/diet";
 import type { Program } from "@/lib/program";
+import { MealCard } from "../dietShared";
 import { OS_APPS, type OSApp } from "./Dock";
 
 // Não existe (ainda) um horário configurável pro treino do dia — placeholder
@@ -17,19 +18,22 @@ function toMin(hhmm: string): number {
   return h * 60 + m;
 }
 
-interface TimelineEntry {
-  time: string;
-  title: string;
-  sub: string;
-  icon: string;
-  bg: string;
-  fg: string;
-  done: boolean;
-  checkable: boolean;
-  cta: string | null;
-  onOpen: () => void;
-  onToggle?: () => void;
-}
+type TimelineRow =
+  | { kind: "meal"; time: string; done: boolean; meal: DietMeal }
+  | {
+      kind: "generic";
+      time: string;
+      title: string;
+      sub: string;
+      icon: string;
+      bg: string;
+      fg: string;
+      done: boolean;
+      checkable: boolean;
+      cta: string | null;
+      onOpen: () => void;
+      onToggle?: () => void;
+    };
 
 export default function Today({
   supabase,
@@ -44,9 +48,9 @@ export default function Today({
   offline,
   deload,
   onOpenApp,
-  onOpenDietaMeal,
   onOpenTreino,
   onToggleSupplement,
+  onPersistPicks,
 }: {
   supabase: SupabaseClient;
   program: Program | null;
@@ -60,11 +64,12 @@ export default function Today({
   offline: boolean;
   deload: boolean;
   onOpenApp: (app: OSApp) => void;
-  onOpenDietaMeal: (mealKey: string) => void;
   onOpenTreino: () => void;
   onToggleSupplement: (key: string) => void;
+  onPersistPicks: (next: DietDayPicks) => void;
 }) {
   const [now, setNow] = useState(() => new Date());
+  const [expandedMeal, setExpandedMeal] = useState<string | null>(null);
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 15000);
     return () => clearInterval(t);
@@ -106,28 +111,17 @@ export default function Today({
     { name: "Suplementos", color: "#CFA85F", frac: suppDone, total: Math.max(1, suppTotal), onOpen: () => onOpenApp("dieta") },
   ];
 
-  const events: TimelineEntry[] = [];
+  const events: TimelineRow[] = [];
   if (dietPlan) {
     for (const meal of dietPlan.meals) {
       if (!meal.scheduledTime) continue;
-      const done = isMealDone(meal, todayPicks);
-      events.push({
-        time: meal.scheduledTime,
-        title: meal.label,
-        sub: done ? "Concluído" : "Toque pra escolher",
-        icon: "ph-bowl-food",
-        bg: OS_APPS.dieta.bg,
-        fg: OS_APPS.dieta.fg,
-        done,
-        checkable: false,
-        cta: null,
-        onOpen: () => onOpenDietaMeal(meal.key),
-      });
+      events.push({ kind: "meal", time: meal.scheduledTime, done: isMealDone(meal, todayPicks), meal });
     }
     for (const supp of dietPlan.supplements) {
       if (!supp.scheduledTime) continue;
       const done = !!todaySupplements[supp.key];
       events.push({
+        kind: "generic",
         time: supp.scheduledTime,
         title: supp.label,
         sub: supp.timing ?? "Suplemento",
@@ -145,6 +139,7 @@ export default function Today({
   if (program && !restToday) {
     const done = trainedToday;
     events.push({
+      kind: "generic",
       time: TREINO_TIME,
       title: program.workouts.length > 0 ? `Treino · ${program.workouts[0].name}` : "Treino",
       sub: done ? "Concluído" : "Toque pra treinar",
@@ -157,14 +152,19 @@ export default function Today({
       onOpen: onOpenTreino,
     });
   }
-  events.sort((a, b) => toMin(a.time) - toMin(b.time));
+
+  // Concluídos descem pro fim da lista, fora da ordem cronológica — só o
+  // que ainda falta faz sentido posicionar em relação ao "agora".
+  const byTime = (a: TimelineRow, b: TimelineRow) => toMin(a.time) - toMin(b.time);
+  const pending = events.filter((e) => !e.done).sort(byTime);
+  const completed = events.filter((e) => e.done).sort(byTime);
 
   const nowMin = now.getHours() * 60 + now.getMinutes();
   const pad = (n: number) => String(n).padStart(2, "0");
   const clock = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
   let nowInserted = false;
-  const timeline: ({ isNow: true } | ({ isNow: false } & TimelineEntry))[] = [];
-  for (const e of events) {
+  const timeline: ({ isNow: true } | ({ isNow: false } & TimelineRow))[] = [];
+  for (const e of pending) {
     if (!nowInserted && toMin(e.time) > nowMin) {
       timeline.push({ isNow: true });
       nowInserted = true;
@@ -172,6 +172,7 @@ export default function Today({
     timeline.push({ isNow: false, ...e });
   }
   if (!nowInserted) timeline.push({ isNow: true });
+  for (const e of completed) timeline.push({ isNow: false, ...e });
 
   const streakLine = todayFullyDone ? `${perfectStreak + 1} dias perfeitos seguidos` : `${perfectStreak} dias perfeitos · feche hoje para ${perfectStreak + 1}`;
 
@@ -282,6 +283,17 @@ export default function Today({
               <div style={{ position: "relative", height: 2, background: "#C0392B", borderRadius: 1 }}>
                 <div style={{ position: "absolute", left: -5, top: -4, width: 10, height: 10, borderRadius: "50%", background: "#C0392B" }} />
               </div>
+            </div>
+          ) : e.kind === "meal" ? (
+            <div key={`meal-${e.meal.key}`} style={{ display: "grid", gridTemplateColumns: "48px 1fr", gap: 8, padding: "4px 0" }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "#4A5866", textAlign: "right", paddingTop: 14, fontVariantNumeric: "tabular-nums" }}>{e.time}</span>
+              <MealCard
+                meal={e.meal}
+                picks={todayPicks}
+                isOpen={expandedMeal === e.meal.key}
+                onToggleOpen={() => setExpandedMeal((k) => (k === e.meal.key ? null : e.meal.key))}
+                onChange={onPersistPicks}
+              />
             </div>
           ) : (
             <div key={`${e.title}-${e.time}`} style={{ display: "grid", gridTemplateColumns: "48px 1fr", gap: 8, padding: "4px 0" }}>

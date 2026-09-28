@@ -172,6 +172,12 @@ export default function Hub() {
     saveTodayDietLog(supabase, todayPicks, next).catch((err) => console.error("Falha ao salvar suplementos:", err));
   }
 
+  function persistTodayPicks(next: DietDayPicks) {
+    if (guardOffline(online)) return;
+    setTodayPicks(next);
+    saveTodayDietLog(supabase, next, todaySupplements).catch((err) => console.error("Falha ao salvar dieta:", err));
+  }
+
   const activeApp = ROUTE_TO_APP[route];
   function handleDockChange(app: OSApp) {
     if (app === "dieta") goDieta();
@@ -248,9 +254,9 @@ export default function Hub() {
           offline={!online || usingCache}
           deload={deload}
           onOpenApp={(app) => (app === "dieta" ? goDieta() : app === "treino" ? goTreino() : app === "ajustes" ? goSettings() : setRoute(APP_TO_ROUTE[app]))}
-          onOpenDietaMeal={(mealKey) => goDieta("hoje", mealKey)}
           onOpenTreino={() => goTreino(nextWorkout?.id)}
           onToggleSupplement={toggleTodaySupplement}
+          onPersistPicks={persistTodayPicks}
         />
       )}
 
