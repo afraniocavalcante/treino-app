@@ -1,14 +1,15 @@
 "use client";
 
 import { styles } from "@/lib/styles";
-import { BarChartIcon, DumbbellIcon, HomeIcon, PlateIcon, SlidersIcon } from "./Icons";
+import { BarChartIcon, DumbbellIcon, HomeIcon, PlaneIcon, PlateIcon, SlidersIcon } from "./Icons";
 
-export type AppTab = "hub" | "dieta" | "treino" | "insights" | "settings";
+export type AppTab = "hub" | "dieta" | "treino" | "viagens" | "insights" | "settings";
 
 export const TABS: { key: AppTab; label: string; Icon: typeof HomeIcon }[] = [
   { key: "hub", label: "Hoje", Icon: HomeIcon },
   { key: "dieta", label: "Dieta", Icon: PlateIcon },
   { key: "treino", label: "Treino", Icon: DumbbellIcon },
+  { key: "viagens", label: "Viagens", Icon: PlaneIcon },
   { key: "insights", label: "Insights", Icon: BarChartIcon },
   { key: "settings", label: "Config", Icon: SlidersIcon },
 ];

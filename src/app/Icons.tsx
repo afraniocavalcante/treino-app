@@ -46,6 +46,10 @@ export function DumbbellIcon({ size = 18, color }: IconProps) {
   );
 }
 
+export function PlaneIcon({ size = 18, color }: IconProps) {
+  return svg(size, color, <path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-3 2v1.5l4.5-1.5 4.5 1.5V21l-3-2v-5.5z" />);
+}
+
 export function BarChartIcon({ size = 18, color }: IconProps) {
   return svg(
     size,

@@ -14,13 +14,14 @@ import WorkoutApp from "./WorkoutApp";
 import DietApp from "./DietApp";
 import Settings from "./Settings";
 import Insights from "./Insights";
+import TravelApp from "./travel/TravelApp";
 import TabBar, { TABS, type AppTab } from "./TabBar";
 import { useHorizontalTabSwipe } from "@/lib/gestures";
 import ConsistencyHeatmap from "./ConsistencyHeatmap";
 import { MealCard, findNextMeal } from "./dietShared";
 import { CheckIcon, DumbbellIcon, PlateIcon, SupplementIcon, WarningIcon } from "./Icons";
 
-type Route = "hub" | "treino" | "dieta" | "settings" | "insights";
+type Route = "hub" | "treino" | "dieta" | "viagens" | "settings" | "insights";
 type DietTab = "hoje" | "progresso" | "compras" | "mais";
 type SettingsTab = "dieta" | "treino";
 
@@ -195,12 +196,13 @@ export default function Hub() {
   }
 
   const activeTab: AppTab =
-    route === "hub" ? "hub" : route === "dieta" ? "dieta" : route === "treino" ? "treino" : route === "insights" ? "insights" : "settings";
+    route === "hub" ? "hub" : route === "dieta" ? "dieta" : route === "treino" ? "treino" : route === "viagens" ? "viagens" : route === "insights" ? "insights" : "settings";
 
   function handleTabChange(tab: AppTab) {
     if (tab === "hub") setRoute("hub");
     else if (tab === "dieta") goDieta();
     else if (tab === "treino") goTreino();
+    else if (tab === "viagens") setRoute("viagens");
     else if (tab === "insights") setRoute("insights");
     else goSettings();
   }
@@ -385,6 +387,10 @@ export default function Hub() {
         onViewSession={goInsightsSession}
         autoStartWorkoutId={autoStartWorkoutId}
       />
+    </div>
+
+    <div style={routeStyle("viagens")}>
+      <TravelApp />
     </div>
 
     <div style={routeStyle("insights")}>
