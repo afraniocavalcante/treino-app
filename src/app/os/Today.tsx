@@ -188,6 +188,7 @@ export default function Today({
         right: 0,
         bottom: "calc(96px + env(safe-area-inset-bottom, 0px))",
         overflowY: "auto",
+        overflowX: "hidden",
         padding: "18px 16px 24px",
         display: "flex",
         flexDirection: "column",
@@ -278,25 +279,27 @@ export default function Today({
       <div style={{ display: "flex", flexDirection: "column" }}>
         {timeline.map((e, i) =>
           e.isNow ? (
-            <div key={`now-${i}`} style={{ display: "grid", gridTemplateColumns: "48px 1fr", alignItems: "center", gap: 8, padding: "4px 0" }}>
+            <div key={`now-${i}`} style={{ display: "grid", gridTemplateColumns: "48px minmax(0,1fr)", alignItems: "center", gap: 8, padding: "4px 0" }}>
               <span style={{ fontSize: 11, fontWeight: 700, color: "#C0392B", textAlign: "right" }}>{clock}</span>
               <div style={{ position: "relative", height: 2, background: "#C0392B", borderRadius: 1 }}>
                 <div style={{ position: "absolute", left: -5, top: -4, width: 10, height: 10, borderRadius: "50%", background: "#C0392B" }} />
               </div>
             </div>
           ) : e.kind === "meal" ? (
-            <div key={`meal-${e.meal.key}`} style={{ display: "grid", gridTemplateColumns: "48px 1fr", gap: 8, padding: "4px 0" }}>
+            <div key={`meal-${e.meal.key}`} style={{ display: "grid", gridTemplateColumns: "48px minmax(0,1fr)", gap: 8, padding: "4px 0" }}>
               <span style={{ fontSize: 12, fontWeight: 600, color: "#4A5866", textAlign: "right", paddingTop: 14, fontVariantNumeric: "tabular-nums" }}>{e.time}</span>
-              <MealCard
-                meal={e.meal}
-                picks={todayPicks}
-                isOpen={expandedMeal === e.meal.key}
-                onToggleOpen={() => setExpandedMeal((k) => (k === e.meal.key ? null : e.meal.key))}
-                onChange={onPersistPicks}
-              />
+              <div style={{ minWidth: 0, overflow: "hidden" }}>
+                <MealCard
+                  meal={e.meal}
+                  picks={todayPicks}
+                  isOpen={expandedMeal === e.meal.key}
+                  onToggleOpen={() => setExpandedMeal((k) => (k === e.meal.key ? null : e.meal.key))}
+                  onChange={onPersistPicks}
+                />
+              </div>
             </div>
           ) : (
-            <div key={`${e.title}-${e.time}`} style={{ display: "grid", gridTemplateColumns: "48px 1fr", gap: 8, padding: "4px 0" }}>
+            <div key={`${e.title}-${e.time}`} style={{ display: "grid", gridTemplateColumns: "48px minmax(0,1fr)", gap: 8, padding: "4px 0" }}>
               <span style={{ fontSize: 12, fontWeight: 600, color: "#4A5866", textAlign: "right", paddingTop: 14, fontVariantNumeric: "tabular-nums" }}>{e.time}</span>
               <div
                 style={{

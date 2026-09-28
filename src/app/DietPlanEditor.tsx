@@ -14,6 +14,7 @@ import {
   scheduleDietPlan,
   updateDietMeal,
   updateDietPlanFields,
+  updateDietSupplement,
   type DietPlanFieldsInput,
 } from "@/lib/dietData";
 import type { DietMeal, DietMealOption, DietMealRadioGroup, DietPlan, DietShoppingCategory, DietSupplement, DietSupplementGroup } from "@/lib/diet";
@@ -425,6 +426,71 @@ function MealEditorCard({
   );
 }
 
+function SupplementRow({
+  supabase,
+  supplement,
+  busy,
+  run,
+}: {
+  supabase: SupabaseClient;
+  supplement: DietSupplement;
+  busy: boolean;
+  run: (fn: () => Promise<void>) => Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [label, setLabel] = useState(supplement.label);
+  const [timing, setTiming] = useState(supplement.timing ?? "");
+  const [scheduledTime, setScheduledTime] = useState(supplement.scheduledTime ?? "");
+
+  if (!editing) {
+    return (
+      <div style={{ ...styles.dietSectionCard, margin: 0, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 600 }}>{supplement.label}</div>
+          <div style={{ fontSize: 11.5, color: C.midGray }}>
+            {supplement.scheduledTime ?? "sem horário"}{supplement.timing ? ` · ${supplement.timing}` : ""}
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 6 }}>
+          <button onClick={() => setEditing(true)} style={{ ...smallDangerBtn, color: C.accent }}>Editar</button>
+          <button disabled={busy} onClick={() => run(async () => deleteDietSupplement(supabase, supplement.id))} style={smallDangerBtn}>Remover</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ ...styles.dietSectionCard, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+      <input placeholder="Nome" value={label} onChange={(e) => setLabel(e.target.value)} style={inputStyle} />
+      <label style={labelStyle}>Horário (usado na linha do tempo de Hoje)
+        <input type="time" value={scheduledTime} onChange={(e) => setScheduledTime(e.target.value)} style={inputStyle} />
+      </label>
+      <input placeholder="Nota (opcional, ex: antes do treino)" value={timing} onChange={(e) => setTiming(e.target.value)} style={inputStyle} />
+      <div style={{ display: "flex", gap: 8 }}>
+        <button onClick={() => setEditing(false)} style={cancelBtn}>Cancelar</button>
+        <button
+          disabled={busy || !label.trim()}
+          onClick={() =>
+            run(async () => {
+              await updateDietSupplement(supabase, supplement.id, {
+                key: supplement.key,
+                label: label.trim(),
+                timing: timing.trim() || null,
+                scheduledTime: scheduledTime || null,
+                orderIndex: supplement.orderIndex,
+              });
+              setEditing(false);
+            })
+          }
+          style={{ ...confirmSmallBtn, flex: 1 }}
+        >
+          Salvar
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function SupplementsSection({
   supabase,
   plan,
@@ -450,19 +516,7 @@ function SupplementsSection({
       <SectionHeader title="Suplementos" />
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {plan.supplements.map((s: DietSupplement) => (
-          <div key={s.id} style={{ ...styles.dietSectionCard, margin: 0, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600 }}>{s.label}</div>
-              {s.timing && <div style={{ fontSize: 11.5, color: C.midGray }}>{s.timing}</div>}
-            </div>
-            <button
-              disabled={busy}
-              onClick={() => run(async () => deleteDietSupplement(supabase, s.id))}
-              style={smallDangerBtn}
-            >
-              Remover
-            </button>
-          </div>
+          <SupplementRow key={s.id} supabase={supabase} supplement={s} busy={busy} run={run} />
         ))}
         {adding ? (
           <div style={{ ...styles.dietSectionCard, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
