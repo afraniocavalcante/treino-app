@@ -49,6 +49,11 @@ struct WidgetEvent: Decodable, Identifiable {
     let sub: String
     let kind: WidgetEventKind
     let done: Bool
+    // Só populado em kind == .suplemento — a única categoria que é um
+    // booleano puro no modelo de dados, e por isso a única "toque e concluiu"
+    // direto do widget. Refeição precisa escolher uma opção de comida, treino
+    // precisa de uma sessão de verdade — nenhum dos dois cabe num toque só.
+    let key: String?
 
     var id: String { "\(time)-\(title)" }
 }
@@ -66,10 +71,10 @@ enum WidgetDataClient {
     // usuário (esse expira; o widget não tem como renovar sozinho). Trocar
     // aqui se WIDGET_API_KEY for regenerada no Vercel (`vercel env ls`).
     private static let apiKey = "21da59377babde3266fb7af455f5757001f27d10baf8008598f91e58d52d9731"
-    private static let endpoint = URL(string: "https://treino-app-snowy.vercel.app/api/widget-data")!
+    private static let base = "https://treino-app-snowy.vercel.app"
 
     static func fetch() async throws -> WidgetPayload {
-        var request = URLRequest(url: endpoint)
+        var request = URLRequest(url: URL(string: "\(base)/api/widget-data")!)
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 15
 
@@ -78,5 +83,19 @@ enum WidgetDataClient {
             throw URLError(.badServerResponse)
         }
         return try JSONDecoder().decode(WidgetPayload.self, from: data)
+    }
+
+    static func toggleSupplement(key: String) async throws {
+        var request = URLRequest(url: URL(string: "\(base)/api/widget-toggle")!)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 15
+        request.httpBody = try JSONEncoder().encode(["supplementKey": key])
+
+        let (_, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            throw URLError(.badServerResponse)
+        }
     }
 }

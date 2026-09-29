@@ -38,6 +38,8 @@ type WidgetEvent = {
   sub: string;
   kind: "treino" | "meal" | "suplemento";
   done: boolean;
+  /** Só em kind:"suplemento" — a key que /api/widget-toggle espera de volta. */
+  key: string | null;
 };
 
 function toMin(hhmm: string): number {
@@ -91,11 +93,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (dietPlan) {
       for (const meal of dietPlan.meals) {
         if (!meal.scheduledTime) continue;
-        events.push({ time: meal.scheduledTime, title: meal.label, sub: isMealDone(meal, todayPicks) ? "Concluída" : "Toque para escolher", kind: "meal", done: isMealDone(meal, todayPicks) });
+        events.push({ time: meal.scheduledTime, title: meal.label, sub: isMealDone(meal, todayPicks) ? "Concluída" : "Toque para escolher", kind: "meal", done: isMealDone(meal, todayPicks), key: null });
       }
       for (const supp of dietPlan.supplements) {
         if (!supp.scheduledTime) continue;
-        events.push({ time: supp.scheduledTime, title: supp.label, sub: supp.timing ?? "Suplemento", kind: "suplemento", done: !!todaySupplements[supp.key] });
+        events.push({ time: supp.scheduledTime, title: supp.label, sub: supp.timing ?? "Suplemento", kind: "suplemento", done: !!todaySupplements[supp.key], key: supp.key });
       }
     }
     if (program && !restToday) {
@@ -106,6 +108,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         sub: trainedToday ? "Concluído" : "Toque pra treinar",
         kind: "treino",
         done: trainedToday,
+        key: null,
       });
     }
     const pending = events.filter((e) => !e.done).sort((a, b) => toMin(a.time) - toMin(b.time));

@@ -68,6 +68,19 @@ private struct EventRow: View {
                     .lineLimit(1)
             }
             Spacer(minLength: 0)
+
+            // Só suplemento é um booleano puro no modelo — o único evento que
+            // dá pra concluir com um toque só, sem abrir o app (ver o
+            // comentário em WidgetEvent.key). Refeição/treino ficam só
+            // informativos aqui.
+            if event.kind == .suplemento, let key = event.key {
+                Button(intent: ToggleSupplementIntent(supplementKey: key)) {
+                    Image(systemName: "circle")
+                        .font(.system(size: 20))
+                        .foregroundStyle(Palette.inkSoft.opacity(0.5))
+                }
+                .buttonStyle(.plain)
+            }
         }
     }
 }
@@ -151,17 +164,12 @@ struct PersonalOSWidgetView: View {
     }
 }
 
-// `containerBackground(for:)` só existe a partir do iOS 17 — esse extension
-// method deixa o resto do código escrever `.widgetBackground(...)` uma vez só
-// e funcionar tanto em iOS 16 (fallback `.background`) quanto 17+.
+// containerBackground(for:) é iOS 17+ — o deployment target da extensão já
+// está em 17.0 (precisa disso pra Button(intent:) nos suplementos funcionar
+// de qualquer forma), então não precisa mais de fallback pra versões antigas.
 private extension View {
-    @ViewBuilder
     func widgetBackground(_ color: Color) -> some View {
-        if #available(iOSApplicationExtension 17.0, *) {
-            self.containerBackground(color, for: .widget)
-        } else {
-            self.background(color)
-        }
+        containerBackground(color, for: .widget)
     }
 }
 

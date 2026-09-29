@@ -491,12 +491,18 @@ export async function getTodayDietLog(supabase: SupabaseClient): Promise<DietDay
 export async function saveTodayDietLog(
   supabase: SupabaseClient,
   picks: DietDayPicks,
-  supplements: Record<string, boolean>
+  supplements: Record<string, boolean>,
+  // Só o endpoint do widget (src/api/widget-toggle.source.ts) precisa disso:
+  // ele grava com a service role, que não tem sessão nenhuma pra alimentar o
+  // `default auth.uid()` da coluna user_id sozinha. O app nunca passa isso —
+  // a sessão do navegador já resolve o default normalmente.
+  userId?: string
 ): Promise<void> {
   const today = formatDietDate(new Date());
-  const { error } = await supabase
-    .from("diet_day_logs")
-    .upsert({ date: today, picks, supplements, updated_at: new Date().toISOString() }, { onConflict: "user_id,date" });
+  const { error } = await supabase.from("diet_day_logs").upsert(
+    { date: today, picks, supplements, updated_at: new Date().toISOString(), ...(userId ? { user_id: userId } : {}) },
+    { onConflict: "user_id,date" }
+  );
   if (error) throw error;
 }
 

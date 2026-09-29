@@ -72,7 +72,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		C6C2D956EC3847B4A837D13A /* Exceptions for "PersonalOSWidget" folder in "PersonalOSWidget" target */ = {
+		C6C2D956EC3847B4A837D13A /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -82,16 +82,7 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		339961675B69451DA351B91A /* PersonalOSWidget */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				C6C2D956EC3847B4A837D13A /* Exceptions for "PersonalOSWidget" folder in "PersonalOSWidget" target */,
-			);
-			explicitFileTypes = {};
-			explicitFolders = ();
-			path = PersonalOSWidget;
-			sourceTree = "<group>";
-		};
+		339961675B69451DA351B91A /* PersonalOSWidget */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C6C2D956EC3847B4A837D13A /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = PersonalOSWidget; sourceTree = "<group>"; };
 		A72123C730574BA90034E37A /* TreinoWatch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "TreinoWatch Watch App"; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
@@ -489,7 +480,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = AM4377UM25;
 				INFOPLIST_FILE = PersonalOSWidget/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -514,7 +505,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = AM4377UM25;
 				INFOPLIST_FILE = PersonalOSWidget/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

@@ -36,8 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
-# gerado por scripts/deploy.mjs a partir de scripts/widget-data.source.ts
+# gerado por scripts/deploy.mjs a partir de scripts/widget-*.source.ts
 /api/widget-data.js
+/api/widget-toggle.js
 
 # typescript
 *.tsbuildinfo
