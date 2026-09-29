@@ -39,6 +39,7 @@ yarn-error.log*
 # gerado por scripts/deploy.mjs a partir de scripts/widget-*.source.ts
 /api/widget-data.js
 /api/widget-toggle.js
+/api/widget-pick-meal.js
 
 # typescript
 *.tsbuildinfo

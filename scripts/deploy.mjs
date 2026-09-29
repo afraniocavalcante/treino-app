@@ -43,7 +43,7 @@ rmSync(OUT_DIR, { recursive: true, force: true });
 // scripts/widget-*.source.ts — ver o comentário no topo daqueles arquivos pra
 // entender por que isso não pode ser só um `tsc`/cópia direta.
 console.log("\nBundling widget API functions...");
-for (const name of ["widget-data", "widget-toggle"]) {
+for (const name of ["widget-data", "widget-toggle", "widget-pick-meal"]) {
   run(`npx esbuild scripts/${name}.source.ts --bundle --platform=node --format=cjs --target=node22 --outfile=api/${name}.js`);
 }
 

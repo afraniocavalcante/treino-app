@@ -38,8 +38,15 @@ type WidgetEvent = {
   sub: string;
   kind: "treino" | "meal" | "suplemento";
   done: boolean;
-  /** Só em kind:"suplemento" — a key que /api/widget-toggle espera de volta. */
+  /** Suplemento: a key que /api/widget-toggle espera de volta.
+   *  Refeição "list" pendente: a key que /api/widget-pick-meal espera de volta.
+   *  Fora isso (treino, refeição "builder"/almoço, já concluída): null. */
   key: string | null;
+  /** Só em refeições "list" pendentes — os rótulos das opções, na ordem que
+   *  /api/widget-pick-meal espera o optionIndex de volta. Almoço (kind
+   *  "builder", grupos de rádio) não cabe num toque só, então nunca aparece
+   *  aqui — fica só informativo, igual treino. */
+  options: string[] | null;
 };
 
 function toMin(hhmm: string): number {
@@ -93,11 +100,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (dietPlan) {
       for (const meal of dietPlan.meals) {
         if (!meal.scheduledTime) continue;
-        events.push({ time: meal.scheduledTime, title: meal.label, sub: isMealDone(meal, todayPicks) ? "Concluída" : "Toque para escolher", kind: "meal", done: isMealDone(meal, todayPicks), key: null });
+        const done = isMealDone(meal, todayPicks);
+        const pickable = meal.kind === "list" && !done;
+        events.push({
+          time: meal.scheduledTime,
+          title: meal.label,
+          sub: done ? "Concluída" : "Toque para escolher",
+          kind: "meal",
+          done,
+          key: pickable ? meal.key : null,
+          options: pickable && meal.options ? meal.options.map((o) => o.label) : null,
+        });
       }
       for (const supp of dietPlan.supplements) {
         if (!supp.scheduledTime) continue;
-        events.push({ time: supp.scheduledTime, title: supp.label, sub: supp.timing ?? "Suplemento", kind: "suplemento", done: !!todaySupplements[supp.key], key: supp.key });
+        events.push({ time: supp.scheduledTime, title: supp.label, sub: supp.timing ?? "Suplemento", kind: "suplemento", done: !!todaySupplements[supp.key], key: supp.key, options: null });
       }
     }
     if (program && !restToday) {
@@ -109,6 +126,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         kind: "treino",
         done: trainedToday,
         key: null,
+        options: null,
       });
     }
     const pending = events.filter((e) => !e.done).sort((a, b) => toMin(a.time) - toMin(b.time));
