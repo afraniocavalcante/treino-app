@@ -36,12 +36,14 @@ enum WidgetEventKind: String, Codable {
     case treino
     case meal
     case suplemento
+    case mala
 
     var icon: String {
         switch self {
         case .treino: return "dumbbell.fill"
         case .meal: return "fork.knife"
         case .suplemento: return "pills.fill"
+        case .mala: return "bag.fill"
         }
     }
 }
@@ -93,6 +95,7 @@ struct WidgetPayload: Codable {
         case .suplemento: rings.suplementos.done = min(rings.suplementos.total, rings.suplementos.done + 1)
         case .meal: rings.refeicoes.done = min(rings.refeicoes.total, rings.refeicoes.done + 1)
         case .treino: rings.treino.done = min(rings.treino.total, rings.treino.done + 1)
+        case .mala: break // não tem anel próprio — só sai da lista mesmo
         }
     }
 }
@@ -142,6 +145,20 @@ enum WidgetDataClient {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.timeoutInterval = 15
         request.httpBody = try JSONEncoder().encode(PickMealBody(mealKey: mealKey, optionIndex: optionIndex))
+
+        let (_, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            throw URLError(.badServerResponse)
+        }
+    }
+
+    static func packTrip(tripId: String) async throws {
+        var request = URLRequest(url: URL(string: "\(base)/api/widget-pack")!)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 15
+        request.httpBody = try JSONEncoder().encode(["tripId": tripId])
 
         let (_, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {

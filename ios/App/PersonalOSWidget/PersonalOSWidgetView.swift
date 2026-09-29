@@ -12,6 +12,7 @@ private enum Palette {
     static let suplementos = Color(red: 0xCF / 255, green: 0xA8 / 255, blue: 0x5F / 255)
     static let card = Color.white.opacity(0.55)
     static let trip = Color(red: 0x00 / 255, green: 0x88 / 255, blue: 0xB0 / 255)
+    static let mala = Color(red: 0x00 / 255, green: 0x88 / 255, blue: 0xB0 / 255)
 }
 
 // ButtonStyle (não gesto solto) porque é a única forma confiável de pegar um
@@ -263,6 +264,10 @@ private struct EventRowContent: View {
                     Image(systemName: "arrow.right")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(Palette.inkSoft)
+                case .mala:
+                    Circle()
+                        .strokeBorder(Palette.inkSoft.opacity(0.5), lineWidth: 1.5)
+                        .frame(width: 20, height: 20)
                 }
             }
             .frame(height: 26)
@@ -315,6 +320,11 @@ private struct EventRow: View {
                     EventRowContent(event: event, subtitle: subtitle, isExpanded: false)
                 }
                 .buttonStyle(CardPressButtonStyle(tint: Palette.suplementos))
+            } else if event.kind == .mala, let key = event.key {
+                Button(intent: PackTripIntent(tripId: key)) {
+                    EventRowContent(event: event, subtitle: subtitle, isExpanded: false)
+                }
+                .buttonStyle(CardPressButtonStyle(tint: Palette.mala))
             } else if isExpandableMeal, let key = event.key {
                 Button(intent: ExpandMealIntent(mealKey: key)) {
                     EventRowContent(event: event, subtitle: subtitle, isExpanded: isExpanded)

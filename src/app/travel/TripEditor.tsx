@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { lookupFlight } from "@/lib/flightLookup";
 import {
   addChecklistItem,
   addFlight,
@@ -113,6 +114,77 @@ function FlightForm({ value, onChange }: { value: FlightFormState; onChange: (v:
         <div className="field" style={fieldStyle}><label>Bagagem de mão (kg)</label><input className="input" type="number" value={value.bagsCabinKg} onChange={set("bagsCabinKg")} placeholder="10" /></div>
         <div className="field" style={fieldStyle}><label>Despachada (kg)</label><input className="input" type="number" value={value.bagsCheckedKg} onChange={set("bagsCheckedKg")} placeholder="23" /></div>
       </div>
+    </div>
+  );
+}
+
+// Busca via AviationStack (plano gratuito — só cobre datas futuras pelo
+// aeroporto de partida, não o número do voo sozinho; ver o comentário em
+// scripts/flight-lookup.source.ts). Preenche o FlightForm por cima; se não
+// achar ou der erro, o formulário continua lá pra preencher na mão.
+function FlightLookup({ onFound }: { onFound: (patch: Partial<FlightFormState>) => void }) {
+  const [flightNumber, setFlightNumber] = useState("");
+  const [departureIata, setDepartureIata] = useState("");
+  const [date, setDate] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function handleLookup() {
+    if (!flightNumber || !departureIata || !date) {
+      setMessage("Preencha número do voo, aeroporto de origem e data.");
+      return;
+    }
+    setLoading(true);
+    setMessage(null);
+    const outcome = await lookupFlight(createClient(), { flightNumber, departureIata, date });
+    setLoading(false);
+    if (outcome.status === "not_found") {
+      setMessage("Voo não encontrado pra essa data — preencha abaixo na mão.");
+      return;
+    }
+    if (outcome.status === "error") {
+      setMessage(outcome.message + " Preencha abaixo na mão.");
+      return;
+    }
+    const f = outcome.flight;
+    onFound({
+      carrier: f.carrier,
+      flightNumber,
+      originIata: f.originIata,
+      originCity: f.originIata,
+      originTerminal: f.originTerminal ?? "",
+      destIata: f.destIata ?? "",
+      destCity: f.destIata ?? "",
+      destTerminal: f.destTerminal ?? "",
+      departureAt: toDatetimeLocal(f.departureAt),
+      arrivalAt: toDatetimeLocal(f.arrivalAt),
+    });
+    setMessage("Encontrado — confira os dados abaixo antes de salvar.");
+  }
+
+  return (
+    <div className="card" style={{ gap: 10 }}>
+      <span style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase" as const, color: "var(--color-neutral-700)" }}>
+        Buscar voo automaticamente
+      </span>
+      <div style={gridRow3}>
+        <div className="field" style={fieldStyle}>
+          <label>Número do voo</label>
+          <input className="input" value={flightNumber} onChange={(e) => setFlightNumber(e.target.value)} placeholder="G3 1682" />
+        </div>
+        <div className="field" style={fieldStyle}>
+          <label>Origem (IATA)</label>
+          <input className="input" value={departureIata} onChange={(e) => setDepartureIata(e.target.value.toUpperCase())} placeholder="GRU" maxLength={3} />
+        </div>
+        <div className="field" style={fieldStyle}>
+          <label>Data</label>
+          <input className="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        </div>
+      </div>
+      {message && <span style={{ fontSize: 12.5, color: "var(--color-neutral-700)" }}>{message}</span>}
+      <button className="btn btn-secondary" onClick={handleLookup} disabled={loading} style={{ alignSelf: "flex-start" }}>
+        {loading ? "Buscando…" : "Buscar"}
+      </button>
     </div>
   );
 }
@@ -318,6 +390,7 @@ export default function TripEditor({ tripId, onClose, onSaved }: { tripId: strin
       {isNew && (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <span style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase" as const, color: "var(--color-neutral-700)" }}>Voo</span>
+          <FlightLookup onFound={(patch) => setNewFlightForm((prev) => ({ ...prev, ...patch }))} />
           <FlightForm value={newFlightForm} onChange={setNewFlightForm} />
           <button className="btn btn-primary btn-block" onClick={handleCreate} disabled={saving} style={{ minHeight: 48 }}>Criar viagem</button>
         </div>
@@ -358,6 +431,7 @@ export default function TripEditor({ tripId, onClose, onSaved }: { tripId: strin
             ))}
             {addingFlight ? (
               <div className="card" style={{ gap: 10 }}>
+                <FlightLookup onFound={(patch) => setNewFlightForm((prev) => ({ ...prev, ...patch }))} />
                 <FlightForm value={newFlightForm} onChange={setNewFlightForm} />
                 <div style={{ display: "flex", gap: 8 }}>
                   <button className="btn btn-primary" onClick={handleAddFlight} disabled={saving}>Adicionar voo</button>
