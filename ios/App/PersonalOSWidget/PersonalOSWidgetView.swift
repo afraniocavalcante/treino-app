@@ -35,9 +35,11 @@ private struct CardPressButtonStyle: ButtonStyle {
     var tint: Color
 
     func makeBody(configuration: Configuration) -> some View {
+        // O padding mora em EventRowContent (aplicado a todo mundo igual,
+        // Button/Link/estático) — aqui só o fundo e o encolhimento no toque,
+        // senão o card de treino (que usa Link, sem essa ButtonStyle) fica
+        // com um respiro diferente dos outros e some o alinhamento.
         configuration.label
-            .padding(6)
-            .padding(.horizontal, 2)
             .background(RoundedRectangle(cornerRadius: 12).fill(tint.opacity(configuration.isPressed ? 0.4 : 0)))
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
@@ -216,11 +218,16 @@ private struct EventRowContent: View {
     let isExpanded: Bool
 
     var body: some View {
-        HStack(spacing: 10) {
+        // .top (não o .center padrão de HStack) — coluna do horário e o
+        // selo do ícone alinhados com a PRIMEIRA linha (o título), não
+        // centralizados contra o bloco título+subtítulo inteiro, que é o
+        // que fazia o horário parecer flutuando mais baixo que o título.
+        HStack(alignment: .top, spacing: 10) {
             Text(event.time)
                 .font(.system(size: 12, weight: .semibold, design: .monospaced))
                 .foregroundStyle(Palette.inkSoft)
                 .frame(width: 38, alignment: .trailing)
+                .padding(.top, 2)
 
             Image(systemName: event.kind.icon)
                 .font(.system(size: 12))
@@ -240,21 +247,32 @@ private struct EventRowContent: View {
             }
             Spacer(minLength: 0)
 
-            switch event.kind {
-            case .suplemento:
-                Circle()
-                    .strokeBorder(Palette.inkSoft.opacity(0.5), lineWidth: 1.5)
-                    .frame(width: 20, height: 20)
-            case .meal:
-                Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(Palette.inkSoft)
-            case .treino:
-                Image(systemName: "arrow.right")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(Palette.inkSoft)
+            // Centralizado contra a altura do selo do ícone (26pt), não
+            // contra o .top do HStack — senão fica alto demais.
+            Group {
+                switch event.kind {
+                case .suplemento:
+                    Circle()
+                        .strokeBorder(Palette.inkSoft.opacity(0.5), lineWidth: 1.5)
+                        .frame(width: 20, height: 20)
+                case .meal:
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Palette.inkSoft)
+                case .treino:
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Palette.inkSoft)
+                }
             }
+            .frame(height: 26)
         }
+        // Fica aqui (não na ButtonStyle) de propósito: precisa ser idêntico
+        // pro card de treino (Link, sem ButtonStyle nenhuma) e pros outros
+        // (Button + CardPressButtonStyle) — senão os cards ficam com alturas
+        // diferentes e tudo desalinha entre uma linha e outra.
+        .padding(6)
+        .padding(.horizontal, 2)
         .contentShape(Rectangle())
     }
 }
