@@ -45,6 +45,22 @@ function toIso(dateTimeNoZone: string | undefined): string | null {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Diferente dos endpoints do widget (chamados por Swift/URLSession, onde
+  // CORS não existe), isso é chamado de dentro do WebView do app — via
+  // fetch() do navegador — que SEMPRE aplica CORS num pedido cross-origin
+  // (o app carrega de capacitor://localhost ou de outro domínio, nunca do
+  // domínio de produção). Sem isso, o navegador manda um OPTIONS de
+  // pre-flight, não recebe os headers certos, e nunca chega a mandar o GET
+  // de verdade — era exatamente o erro reportado, confirmado pelos logs (só
+  // OPTIONS, nenhum GET).
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
+  if (req.method === "OPTIONS") {
+    res.status(204).end();
+    return;
+  }
+
   const token = (req.headers.authorization ?? "").replace(/^Bearer\s+/i, "");
   if (!token) {
     res.status(401).json({ error: "unauthorized" });
