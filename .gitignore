@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# gerado por scripts/deploy.mjs a partir de scripts/widget-data.source.ts
+/api/widget-data.js
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

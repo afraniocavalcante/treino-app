@@ -39,6 +39,14 @@ console.log(`Building version ${version}...`);
 rmSync(path.join(ROOT, ".vercel", "output"), { recursive: true, force: true });
 rmSync(OUT_DIR, { recursive: true, force: true });
 
+// api/widget-data.js: bundle único (CJS, deps inclusas) gerado a partir de
+// scripts/widget-data.source.ts — ver o comentário no topo daquele arquivo
+// pra entender por que isso não pode ser só um `tsc`/cópia direta.
+console.log("\nBundling widget API function...");
+run(
+  "npx esbuild scripts/widget-data.source.ts --bundle --platform=node --format=cjs --target=node22 --outfile=api/widget-data.js"
+);
+
 run("npx vercel pull --yes --environment production");
 run("npx vercel build --prod --yes", { env: { NEXT_PUBLIC_BUILD_VERSION: version } });
 
