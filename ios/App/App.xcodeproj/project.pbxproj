@@ -16,17 +16,17 @@
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 		9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9582B6822FE993A50072D4E8 /* SceneDelegate.swift */; };
+		A2689B511B834C37A83421B1 /* PersonalOSWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 854B528F4CAA48C39EEE8B20 /* PersonalOSWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A72123C130574A230034E37A /* WatchBridgePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A72123C030574A230034E37A /* WatchBridgePlugin.swift */; };
-		A72123D030574BAA0034E37A /* TreinoWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = A72123C630574BA90034E37A /* TreinoWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		A72123CE30574BAA0034E37A /* PBXContainerItemProxy */ = {
+		5F4D5AC9231248EE96A973B9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = A72123C530574BA90034E37A;
-			remoteInfo = "TreinoWatch Watch App";
+			remoteGlobalIDString = CE8D81424FC544A1AEA3C0F9;
+			remoteInfo = PersonalOSWidget;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -37,9 +37,19 @@
 			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
 			dstSubfolderSpec = 16;
 			files = (
-				A72123D030574BAA0034E37A /* TreinoWatch Watch App.app in Embed Watch Content */,
 			);
 			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		ED3227B392B14458B41CD333 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				A2689B511B834C37A83421B1 /* PersonalOSWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -54,14 +64,34 @@
 		504EC3111FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		504EC3131FED79650016851F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
+		854B528F4CAA48C39EEE8B20 /* PersonalOSWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PersonalOSWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		9582B6822FE993A50072D4E8 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
 		A72123C030574A230034E37A /* WatchBridgePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchBridgePlugin.swift; sourceTree = "<group>"; };
-		A72123C630574BA90034E37A /* TreinoWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "TreinoWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A72123DA30574DC00034E37A /* TreinoWatch-Watch-App-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "TreinoWatch-Watch-App-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		C6C2D956EC3847B4A837D13A /* Exceptions for "PersonalOSWidget" folder in "PersonalOSWidget" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = CE8D81424FC544A1AEA3C0F9 /* PersonalOSWidget */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		339961675B69451DA351B91A /* PersonalOSWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C6C2D956EC3847B4A837D13A /* Exceptions for "PersonalOSWidget" folder in "PersonalOSWidget" target */,
+			);
+			explicitFileTypes = {};
+			explicitFolders = ();
+			path = PersonalOSWidget;
+			sourceTree = "<group>";
+		};
 		A72123C730574BA90034E37A /* TreinoWatch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "TreinoWatch Watch App"; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
@@ -74,7 +104,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		A72123C330574BA90034E37A /* Frameworks */ = {
+		B344C325F1AB4A62B367A6B9 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -91,6 +121,7 @@
 				958DCC722DB07C7200EA8C5F /* debug.xcconfig */,
 				504EC3061FED79650016851F /* App */,
 				A72123C730574BA90034E37A /* TreinoWatch Watch App */,
+				339961675B69451DA351B91A /* PersonalOSWidget */,
 				504EC3051FED79650016851F /* Products */,
 			);
 			sourceTree = "<group>";
@@ -99,7 +130,7 @@
 			isa = PBXGroup;
 			children = (
 				504EC3041FED79650016851F /* App.app */,
-				A72123C630574BA90034E37A /* TreinoWatch Watch App.app */,
+				854B528F4CAA48C39EEE8B20 /* PersonalOSWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -132,11 +163,12 @@
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
 				A72123D430574BAA0034E37A /* Embed Watch Content */,
+				ED3227B392B14458B41CD333 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				A72123CF30574BAA0034E37A /* PBXTargetDependency */,
+				1191E08249884018BD61A396 /* PBXTargetDependency */,
 			);
 			name = App;
 			packageProductDependencies = (
@@ -146,27 +178,25 @@
 			productReference = 504EC3041FED79650016851F /* App.app */;
 			productType = "com.apple.product-type.application";
 		};
-		A72123C530574BA90034E37A /* TreinoWatch Watch App */ = {
+		CE8D81424FC544A1AEA3C0F9 /* PersonalOSWidget */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A72123D130574BAA0034E37A /* Build configuration list for PBXNativeTarget "TreinoWatch Watch App" */;
+			buildConfigurationList = BAB2E03466734F43A77F8354 /* Build configuration list for PBXNativeTarget "PersonalOSWidget" */;
 			buildPhases = (
-				A72123C230574BA90034E37A /* Sources */,
-				A72123C330574BA90034E37A /* Frameworks */,
-				A72123C430574BA90034E37A /* Resources */,
+				84996126119245B0AA6CE9BF /* Sources */,
+				B344C325F1AB4A62B367A6B9 /* Frameworks */,
+				CCEF55F18AC04186B3144BD6 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				A72123C730574BA90034E37A /* TreinoWatch Watch App */,
+				339961675B69451DA351B91A /* PersonalOSWidget */,
 			);
-			name = "TreinoWatch Watch App";
-			packageProductDependencies = (
-			);
-			productName = "TreinoWatch Watch App";
-			productReference = A72123C630574BA90034E37A /* TreinoWatch Watch App.app */;
-			productType = "com.apple.product-type.application";
+			name = PersonalOSWidget;
+			productName = PersonalOSWidget;
+			productReference = 854B528F4CAA48C39EEE8B20 /* PersonalOSWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -183,8 +213,9 @@
 						LastSwiftMigration = 1100;
 						ProvisioningStyle = Automatic;
 					};
-					A72123C530574BA90034E37A = {
-						CreatedOnToolsVersion = 27.0;
+					CE8D81424FC544A1AEA3C0F9 = {
+						CreatedOnToolsVersion = 2700;
+						ProvisioningStyle = Automatic;
 					};
 				};
 			};
@@ -205,7 +236,7 @@
 			projectRoot = "";
 			targets = (
 				504EC3031FED79650016851F /* App */,
-				A72123C530574BA90034E37A /* TreinoWatch Watch App */,
+				CE8D81424FC544A1AEA3C0F9 /* PersonalOSWidget */,
 			);
 		};
 /* End PBXProject section */
@@ -224,7 +255,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		A72123C430574BA90034E37A /* Resources */ = {
+		CCEF55F18AC04186B3144BD6 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -244,7 +275,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		A72123C230574BA90034E37A /* Sources */ = {
+		84996126119245B0AA6CE9BF /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -254,10 +285,10 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		A72123CF30574BAA0034E37A /* PBXTargetDependency */ = {
+		1191E08249884018BD61A396 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = A72123C530574BA90034E37A /* TreinoWatch Watch App */;
-			targetProxy = A72123CE30574BAA0034E37A /* PBXContainerItemProxy */;
+			target = CE8D81424FC544A1AEA3C0F9 /* PersonalOSWidget */;
+			targetProxy = 5F4D5AC9231248EE96A973B9 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -450,95 +481,55 @@
 			};
 			name = Release;
 		};
-		A72123D230574BAA0034E37A /* Debug */ = {
+		A03AC2A3ABC64C03A76E9A10 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CODE_SIGN_ENTITLEMENTS = "TreinoWatch Watch App/TreinoWatch Watch App.entitlements";
+				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				ENABLE_PREVIEWS = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "TreinoWatch-Watch-App-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = TreinoWatch;
-				INFOPLIST_KEY_LSApplicationCategoryType = "";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Usado pra registrar seu treino e calorias no app Saúde.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Usado pra salvar seu treino como exercício no app Saúde.";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.afranio.treinoapp;
-				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
+				DEVELOPMENT_TEAM = AM4377UM25;
+				INFOPLIST_FILE = PersonalOSWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
 				);
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MARKETING_VERSION = 1.0;
-				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
-				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.afranio.treinoapp.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.afranio.treinoapp.PersonalOSWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 27.0;
-			};
-			name = Debug;
-		};
-		A72123D330574BAA0034E37A /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CODE_SIGN_ENTITLEMENTS = "TreinoWatch Watch App/TreinoWatch Watch App.entitlements";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				ENABLE_PREVIEWS = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "TreinoWatch-Watch-App-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = TreinoWatch;
-				INFOPLIST_KEY_LSApplicationCategoryType = "";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Usado pra registrar seu treino e calorias no app Saúde.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Usado pra salvar seu treino como exercício no app Saúde.";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.afranio.treinoapp;
-				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0;
-				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.afranio.treinoapp.watchkitapp;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = watchos;
-				SKIP_INSTALL = YES;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 27.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
+		};
+		FC7BCFE67646419D8B119F64 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = AM4377UM25;
+				INFOPLIST_FILE = PersonalOSWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.afranio.treinoapp.PersonalOSWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
 		};
 /* End XCBuildConfiguration section */
 
@@ -561,11 +552,11 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		A72123D130574BAA0034E37A /* Build configuration list for PBXNativeTarget "TreinoWatch Watch App" */ = {
+		BAB2E03466734F43A77F8354 /* Build configuration list for PBXNativeTarget "PersonalOSWidget" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				A72123D230574BAA0034E37A /* Debug */,
-				A72123D330574BAA0034E37A /* Release */,
+				FC7BCFE67646419D8B119F64 /* Debug */,
+				A03AC2A3ABC64C03A76E9A10 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
