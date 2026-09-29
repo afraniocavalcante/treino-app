@@ -108,6 +108,75 @@ private struct MealOptionChip: View {
     }
 }
 
+// Almoço anda um grupo de rádio por vez (carboidrato → leguminosa →
+// proteína → extra opcional sim/não), lendo o progresso salvo localmente
+// em AlmocoWizard (ver o comentário lá pra por quê isso não pode ser
+// @State comum). Cada toque é o passo seguinte — nunca volta.
+private struct AlmocoWizardRow: View {
+    let groups: [BuilderGroup]
+    let extraLabel: String?
+
+    var body: some View {
+        let (step, _) = AlmocoWizard.currentState()
+
+        if step < groups.count {
+            let group = groups[step]
+            let isFinal = step == groups.count - 1 && extraLabel == nil
+            VStack(alignment: .leading, spacing: 4) {
+                Text(group.title)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(Palette.inkSoft)
+                    .padding(.leading, 48)
+                FlowLayout {
+                    ForEach(Array(group.items.enumerated()), id: \.offset) { index, label in
+                        Button(intent: AlmocoChooseIntent(optionIndex: index, isFinalStep: isFinal)) {
+                            Text(label)
+                                .font(.system(size: 10.5, weight: .medium))
+                                .foregroundStyle(Palette.ink)
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .frame(maxWidth: 130, alignment: .leading)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(Palette.card, in: Capsule())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.leading, 48)
+            }
+        } else if let extraLabel {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(extraLabel)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(Palette.inkSoft)
+                    .padding(.leading, 48)
+                HStack(spacing: 6) {
+                    Button(intent: AlmocoExtraIntent(wantsExtra: true)) {
+                        Text("Sim")
+                            .font(.system(size: 10.5, weight: .medium))
+                            .foregroundStyle(Palette.ink)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 6)
+                            .background(Palette.card, in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    Button(intent: AlmocoExtraIntent(wantsExtra: false)) {
+                        Text("Não")
+                            .font(.system(size: 10.5, weight: .medium))
+                            .foregroundStyle(Palette.ink)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 6)
+                            .background(Palette.card, in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.leading, 48)
+            }
+        }
+    }
+}
+
 private struct EventRow: View {
     let event: WidgetEvent
     // Puramente visual, local a este render — não vem do backend. O toque no
@@ -116,6 +185,16 @@ private struct EventRow: View {
     // feedback imediato de "marcado" sem esperar a volta, e o -
     // .simultaneousGesture roda em paralelo com o intent, não no lugar dele.
     @State private var justCompleted = false
+
+    /// Igual event.sub, exceto pro almoço em andamento — aí mostra quantos
+    /// passos faltam, já que "Toque para escolher" não faz mais sentido uma
+    /// vez que os grupos já estão visíveis embaixo.
+    private var subtitle: String {
+        guard let groups = event.builderGroups, !groups.isEmpty else { return event.sub }
+        let (step, _) = AlmocoWizard.currentState()
+        let total = groups.count + (event.builderExtraLabel != nil ? 1 : 0)
+        return "Passo \(min(step, total) + 1) de \(total)"
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -136,7 +215,7 @@ private struct EventRow: View {
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(Palette.ink)
                         .lineLimit(1)
-                    Text(event.sub)
+                    Text(subtitle)
                         .font(.system(size: 11))
                         .foregroundStyle(Palette.inkSoft)
                         .lineLimit(1)
@@ -175,7 +254,9 @@ private struct EventRow: View {
                 }
             }
 
-            if event.kind == .meal, let key = event.key, let options = event.options, !options.isEmpty {
+            if event.kind == .meal, let groups = event.builderGroups, !groups.isEmpty {
+                AlmocoWizardRow(groups: groups, extraLabel: event.builderExtraLabel)
+            } else if event.kind == .meal, let key = event.key, let options = event.options, !options.isEmpty {
                 FlowLayout {
                     ForEach(Array(options.enumerated()), id: \.offset) { index, label in
                         MealOptionChip(mealKey: key, index: index, label: label)

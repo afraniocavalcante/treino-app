@@ -43,6 +43,12 @@ enum WidgetEventKind: String, Decodable {
     }
 }
 
+struct BuilderGroup: Decodable {
+    let key: String
+    let title: String
+    let items: [String]
+}
+
 struct WidgetEvent: Decodable, Identifiable {
     let time: String
     let title: String
@@ -51,12 +57,17 @@ struct WidgetEvent: Decodable, Identifiable {
     let done: Bool
     // Suplemento: a key que toggleSupplement espera de volta.
     // Refeição "list" pendente (café/lanche/jantar/sobremesa): a key que
-    // pickMealOption espera de volta. Fora isso (treino, almoço — kind
-    // "builder", já concluída): nil.
+    // pickMealOption espera de volta. Refeição "builder" pendente (almoço):
+    // a própria key. Fora isso (treino, já concluída): nil.
     let key: String?
     // Só em refeições "list" pendentes — os rótulos das opções, na mesma
     // ordem que pickMealOption espera o índice de volta.
     let options: [String]?
+    // Só em refeições "builder" pendentes (hoje: só almoço) — um grupo de
+    // rádio por vez (carboidrato, depois leguminosa, depois proteína...),
+    // ver AlmocoWizard.swift pra como o widget percorre isso.
+    let builderGroups: [BuilderGroup]?
+    let builderExtraLabel: String?
 
     var id: String { "\(time)-\(title)" }
 }
@@ -114,6 +125,27 @@ enum WidgetDataClient {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.timeoutInterval = 15
         request.httpBody = try JSONEncoder().encode(PickMealBody(mealKey: mealKey, optionIndex: optionIndex))
+
+        let (_, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            throw URLError(.badServerResponse)
+        }
+    }
+
+    private struct PickAlmocoBody: Encodable {
+        let carb: Int
+        let leg: Int
+        let prot: Int
+        let fruta: Bool
+    }
+
+    static func submitAlmoco(carb: Int, leg: Int, prot: Int, fruta: Bool) async throws {
+        var request = URLRequest(url: URL(string: "\(base)/api/widget-pick-almoco")!)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 15
+        request.httpBody = try JSONEncoder().encode(PickAlmocoBody(carb: carb, leg: leg, prot: prot, fruta: fruta))
 
         let (_, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
