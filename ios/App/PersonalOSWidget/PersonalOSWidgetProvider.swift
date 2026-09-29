@@ -16,21 +16,29 @@ struct PersonalOSWidgetProvider: TimelineProvider {
         completion(PersonalOSEntry(date: Date(), payload: nil))
     }
 
-    // Busca de verdade. iOS decide o intervalo real de atualização (o budget
-    // do sistema pra widgets gira em torno de a cada 15-60min); `.after` só
-    // dá uma sugestão de quando tentar de novo.
     func getTimeline(in context: Context, completion: @escaping (Timeline<PersonalOSEntry>) -> Void) {
+        let nextRefresh = Calendar.current.date(byAdding: .minute, value: 30, to: Date()) ?? Date()
+
+        // Reload chamado por um AppIntent logo após um toque: usa o que
+        // aquele toque já escreveu localmente (ver WidgetCache.swift) em vez
+        // de esperar outra ida à rede — é isso que faz o toque parecer
+        // instantâneo em vez de travado por alguns segundos.
+        if let optimistic = WidgetCache.recentOptimistic() {
+            completion(Timeline(entries: [PersonalOSEntry(date: Date(), payload: optimistic)], policy: .after(nextRefresh)))
+            return
+        }
+
         Task {
             let entry: PersonalOSEntry
             do {
                 let payload = try await WidgetDataClient.fetch()
+                WidgetCache.save(payload, optimistic: false)
                 entry = PersonalOSEntry(date: Date(), payload: payload)
             } catch {
-                // Mantém o widget mostrando o que já tinha (o SwiftUI cuida do
-                // "sem dado nenhum ainda" no placeholder) em vez de travar.
-                entry = PersonalOSEntry(date: Date(), payload: nil)
+                // Sem rede agora: prefere mostrar o último estado conhecido
+                // (mesmo que não seja recente) a travar no "carregando".
+                entry = PersonalOSEntry(date: Date(), payload: WidgetCache.load())
             }
-            let nextRefresh = Calendar.current.date(byAdding: .minute, value: 30, to: Date()) ?? Date()
             completion(Timeline(entries: [entry], policy: .after(nextRefresh)))
         }
     }

@@ -21,8 +21,23 @@ struct ToggleSupplementIntent: AppIntent {
     }
 
     func perform() async throws -> some IntentResult {
-        try await WidgetDataClient.toggleSupplement(key: supplementKey)
+        // Marca concluído localmente e pede reload ANTES de esperar a rede —
+        // ver o comentário grande em WidgetCache.swift pra por que isso é o
+        // que faz o toque parecer instantâneo em vez de travado.
+        if var cached = WidgetCache.load() {
+            cached.markDone(key: supplementKey, kind: .suplemento)
+            WidgetCache.save(cached, optimistic: true)
+        }
         WidgetCenter.shared.reloadTimelines(ofKind: "PersonalOSWidget")
+
+        do {
+            try await WidgetDataClient.toggleSupplement(key: supplementKey)
+        } catch {
+            // Não gravou de verdade — desfaz o otimismo e recarrega, o que
+            // busca o estado real e traz o item de volta pra lista.
+            WidgetCache.clearOptimisticFlag()
+            WidgetCenter.shared.reloadTimelines(ofKind: "PersonalOSWidget")
+        }
         return .result()
     }
 }

@@ -2,34 +2,37 @@ import Foundation
 
 // Espelha exatamente o JSON de GET /api/widget-data (ver
 // scripts/widget-data.source.ts, a fonte de verdade dessa forma).
+// Codable (não só Decodable) porque WidgetCache precisa salvar isso de volta
+// em disco pra reaparecer instantaneamente logo após um toque — ver o
+// comentário em WidgetCache.swift.
 
-struct WidgetRing: Decodable {
-    let done: Double
-    let total: Double
+struct WidgetRing: Codable {
+    var done: Double
+    var total: Double
 
     var fraction: Double { total > 0 ? min(1, done / total) : 0 }
     var label: String { "\(Int(done))/\(Int(total))" }
 }
 
-struct WidgetRings: Decodable {
-    let treino: WidgetRing
-    let refeicoes: WidgetRing
-    let suplementos: WidgetRing
+struct WidgetRings: Codable {
+    var treino: WidgetRing
+    var refeicoes: WidgetRing
+    var suplementos: WidgetRing
 }
 
-struct WidgetStreak: Decodable {
-    let days: Int
-    let todayFullyDone: Bool
+struct WidgetStreak: Codable {
+    var days: Int
+    var todayFullyDone: Bool
 }
 
-struct WidgetTrip: Decodable {
-    let city: String
-    let daysAway: Int
-    let carrier: String
-    let flightNumber: String
+struct WidgetTrip: Codable {
+    var city: String
+    var daysAway: Int
+    var carrier: String
+    var flightNumber: String
 }
 
-enum WidgetEventKind: String, Decodable {
+enum WidgetEventKind: String, Codable {
     case treino
     case meal
     case suplemento
@@ -43,41 +46,55 @@ enum WidgetEventKind: String, Decodable {
     }
 }
 
-struct BuilderGroup: Decodable {
-    let key: String
-    let title: String
-    let items: [String]
+struct BuilderGroup: Codable {
+    var key: String
+    var title: String
+    var items: [String]
 }
 
-struct WidgetEvent: Decodable, Identifiable {
-    let time: String
-    let title: String
-    let sub: String
-    let kind: WidgetEventKind
-    let done: Bool
+struct WidgetEvent: Codable, Identifiable {
+    var time: String
+    var title: String
+    var sub: String
+    var kind: WidgetEventKind
+    var done: Bool
     // Suplemento: a key que toggleSupplement espera de volta.
     // Refeição "list" pendente (café/lanche/jantar/sobremesa): a key que
     // pickMealOption espera de volta. Refeição "builder" pendente (almoço):
     // a própria key. Fora isso (treino, já concluída): nil.
-    let key: String?
+    var key: String?
     // Só em refeições "list" pendentes — os rótulos das opções, na mesma
     // ordem que pickMealOption espera o índice de volta.
-    let options: [String]?
+    var options: [String]?
     // Só em refeições "builder" pendentes (hoje: só almoço) — um grupo de
     // rádio por vez (carboidrato, depois leguminosa, depois proteína...),
-    // ver AlmocoWizard.swift pra como o widget percorre isso.
-    let builderGroups: [BuilderGroup]?
-    let builderExtraLabel: String?
+    // ver MealFlow.swift pra como o widget percorre isso.
+    var builderGroups: [BuilderGroup]?
+    var builderExtraLabel: String?
 
     var id: String { "\(time)-\(title)" }
 }
 
-struct WidgetPayload: Decodable {
-    let generatedAt: String
-    let rings: WidgetRings
-    let streak: WidgetStreak
-    let trip: WidgetTrip?
-    let events: [WidgetEvent]
+struct WidgetPayload: Codable {
+    var generatedAt: String
+    var rings: WidgetRings
+    var streak: WidgetStreak
+    var trip: WidgetTrip?
+    var events: [WidgetEvent]
+
+    // Aplicadas localmente, na hora do toque, antes de qualquer confirmação
+    // do servidor — ver o comentário grande em WidgetCache.swift sobre por
+    // que isso é necessário (não dá pra simplesmente "esperar a resposta"
+    // sem o widget parecer travado por vários segundos).
+    mutating func markDone(key: String, kind: WidgetEventKind) {
+        guard let idx = events.firstIndex(where: { $0.key == key && $0.kind == kind }) else { return }
+        events.remove(at: idx)
+        switch kind {
+        case .suplemento: rings.suplementos.done = min(rings.suplementos.total, rings.suplementos.done + 1)
+        case .meal: rings.refeicoes.done = min(rings.refeicoes.total, rings.refeicoes.done + 1)
+        case .treino: rings.treino.done = min(rings.treino.total, rings.treino.done + 1)
+        }
+    }
 }
 
 enum WidgetDataClient {

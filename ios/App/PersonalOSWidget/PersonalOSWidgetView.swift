@@ -14,6 +14,43 @@ private enum Palette {
     static let trip = Color(red: 0x00 / 255, green: 0x88 / 255, blue: 0xB0 / 255)
 }
 
+// ButtonStyle (não gesto solto) porque é a única forma confiável de pegar um
+// retorno visual de "pressionado" num widget — reage assim que o dedo
+// encosta, sem depender de perform() já ter terminado.
+private struct PressScaleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.94 : 1)
+            .opacity(configuration.isPressed ? 0.8 : 1)
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+    }
+}
+
+// O check do suplemento pinta de verde assim que o dedo aperta — não espera
+// o perform() terminar nem a rede confirmar (ver o comentário grande em
+// WidgetCache.swift pra como o "some da lista" fica rápido por outro
+// caminho, sem depender dessa animação de toque).
+private struct SupplementCheckButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        ZStack {
+            Circle()
+                .fill(Palette.suplementos)
+                .frame(width: 22, height: 22)
+                .opacity(configuration.isPressed ? 1 : 0)
+            Circle()
+                .strokeBorder(Palette.inkSoft.opacity(0.5), lineWidth: 1.5)
+                .frame(width: 20, height: 20)
+                .opacity(configuration.isPressed ? 0 : 1)
+            Image(systemName: "checkmark")
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(.white)
+                .opacity(configuration.isPressed ? 1 : 0)
+        }
+        .scaleEffect(configuration.isPressed ? 1.12 : 1)
+        .animation(.spring(duration: 0.15), value: configuration.isPressed)
+    }
+}
+
 private struct RingView: View {
     let title: String
     let color: Color
@@ -43,11 +80,9 @@ private struct RingView: View {
 
 // Widgets na Home Screen não suportam gesto de rolagem de verdade — um
 // ScrollView ali renderiza mas não rola, e o conteúdo que não cabe vaza pra
-// fora dos limites arredondados do widget (foi exatamente o bug visto: texto
-// longo de opção de refeição vazando embaixo). Layout que quebra linha em vez
-// de rolar evita isso de raiz — o que não couber no espaço fixo do widget
-// simplesmente fica de fora, cortado pelo próprio widget, igual ao resto do
-// conteúdo (mesmo espírito do "mostra até 4 eventos e ponto").
+// fora dos limites arredondados do widget. Layout que quebra linha em vez de
+// rolar evita isso de raiz — o que não couber no espaço fixo do widget
+// simplesmente fica de fora, cortado pelo próprio widget.
 private struct FlowLayout: Layout {
     var spacing: CGFloat = 6
 
@@ -87,37 +122,55 @@ private struct FlowLayout: Layout {
     }
 }
 
-private struct MealOptionChip: View {
-    let mealKey: String
-    let index: Int
+private struct OptionChip: View {
     let label: String
 
     var body: some View {
-        Button(intent: PickMealOptionIntent(mealKey: mealKey, optionIndex: index)) {
-            Text(label)
-                .font(.system(size: 10.5, weight: .medium))
-                .foregroundStyle(Palette.ink)
-                .lineLimit(1)
-                .truncationMode(.tail)
-                .frame(maxWidth: 130, alignment: .leading)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(Palette.card, in: Capsule())
+        Text(label)
+            .font(.system(size: 10.5, weight: .medium))
+            .foregroundStyle(Palette.ink)
+            .lineLimit(1)
+            .truncationMode(.tail)
+            .frame(maxWidth: 130, alignment: .leading)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Palette.card, in: Capsule())
+    }
+}
+
+// Só some quando MealFlow.expandedMealKey == a key dessa refeição — por
+// padrão toda refeição pendente fica fechada (só horário/nome, igual um
+// suplemento); tocar nela chama ExpandMealIntent, que é o que revela isso.
+private struct ExpandedMealOptions: View {
+    let event: WidgetEvent
+
+    var body: some View {
+        if let groups = event.builderGroups, !groups.isEmpty {
+            AlmocoStepRow(groups: groups, extraLabel: event.builderExtraLabel)
+        } else if let key = event.key, let options = event.options, !options.isEmpty {
+            FlowLayout {
+                ForEach(Array(options.enumerated()), id: \.offset) { index, label in
+                    Button(intent: PickMealOptionIntent(mealKey: key, optionIndex: index)) {
+                        OptionChip(label: label)
+                    }
+                    .buttonStyle(PressScaleButtonStyle())
+                }
+            }
+            .padding(.leading, 48)
         }
-        .buttonStyle(.plain)
     }
 }
 
 // Almoço anda um grupo de rádio por vez (carboidrato → leguminosa →
-// proteína → extra opcional sim/não), lendo o progresso salvo localmente
-// em AlmocoWizard (ver o comentário lá pra por quê isso não pode ser
-// @State comum). Cada toque é o passo seguinte — nunca volta.
-private struct AlmocoWizardRow: View {
+// proteína → extra opcional sim/não), lendo o progresso salvo localmente em
+// MealFlow (ver o comentário lá pra por quê isso não pode ser @State comum).
+// Cada toque é o passo seguinte — nunca volta.
+private struct AlmocoStepRow: View {
     let groups: [BuilderGroup]
     let extraLabel: String?
 
     var body: some View {
-        let (step, _) = AlmocoWizard.currentState()
+        let step = MealFlow.step
 
         if step < groups.count {
             let group = groups[step]
@@ -130,17 +183,9 @@ private struct AlmocoWizardRow: View {
                 FlowLayout {
                     ForEach(Array(group.items.enumerated()), id: \.offset) { index, label in
                         Button(intent: AlmocoChooseIntent(optionIndex: index, isFinalStep: isFinal)) {
-                            Text(label)
-                                .font(.system(size: 10.5, weight: .medium))
-                                .foregroundStyle(Palette.ink)
-                                .lineLimit(1)
-                                .truncationMode(.tail)
-                                .frame(maxWidth: 130, alignment: .leading)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 6)
-                                .background(Palette.card, in: Capsule())
+                            OptionChip(label: label)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(PressScaleButtonStyle())
                     }
                 }
                 .padding(.leading, 48)
@@ -153,23 +198,13 @@ private struct AlmocoWizardRow: View {
                     .padding(.leading, 48)
                 HStack(spacing: 6) {
                     Button(intent: AlmocoExtraIntent(wantsExtra: true)) {
-                        Text("Sim")
-                            .font(.system(size: 10.5, weight: .medium))
-                            .foregroundStyle(Palette.ink)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 6)
-                            .background(Palette.card, in: Capsule())
+                        OptionChip(label: "Sim")
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(PressScaleButtonStyle())
                     Button(intent: AlmocoExtraIntent(wantsExtra: false)) {
-                        Text("Não")
-                            .font(.system(size: 10.5, weight: .medium))
-                            .foregroundStyle(Palette.ink)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 6)
-                            .background(Palette.card, in: Capsule())
+                        OptionChip(label: "Não")
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(PressScaleButtonStyle())
                 }
                 .padding(.leading, 48)
             }
@@ -179,19 +214,22 @@ private struct AlmocoWizardRow: View {
 
 private struct EventRow: View {
     let event: WidgetEvent
-    // Puramente visual, local a este render — não vem do backend. O toque no
-    // círculo já dispara o Button(intent:) de verdade (grava e recarrega a
-    // timeline), mas isso pode levar um instante (rede); esse estado dá o
-    // feedback imediato de "marcado" sem esperar a volta, e o -
-    // .simultaneousGesture roda em paralelo com o intent, não no lugar dele.
-    @State private var justCompleted = false
 
-    /// Igual event.sub, exceto pro almoço em andamento — aí mostra quantos
-    /// passos faltam, já que "Toque para escolher" não faz mais sentido uma
-    /// vez que os grupos já estão visíveis embaixo.
+    private var isExpandableMeal: Bool {
+        event.kind == .meal && event.key != nil
+    }
+
+    private var isExpanded: Bool {
+        isExpandableMeal && MealFlow.expandedMealKey == event.key
+    }
+
+    /// Igual event.sub, exceto pro almoço com passos em andamento — aí mostra
+    /// quantos faltam. "Toque para escolher" some assim que abre.
     private var subtitle: String {
-        guard let groups = event.builderGroups, !groups.isEmpty else { return event.sub }
-        let (step, _) = AlmocoWizard.currentState()
+        guard isExpanded, let groups = event.builderGroups, !groups.isEmpty else {
+            return isExpanded ? "Toque pra fechar" : event.sub
+        }
+        let step = MealFlow.step
         let total = groups.count + (event.builderExtraLabel != nil ? 1 : 0)
         return "Passo \(min(step, total) + 1) de \(total)"
     }
@@ -222,55 +260,33 @@ private struct EventRow: View {
                 }
                 Spacer(minLength: 0)
 
-                // Só suplemento é um booleano puro no modelo — o único evento
-                // que dá pra concluir com um toque só sem escolher nada (ver
-                // o comentário em WidgetEvent.key). Refeição "list" pendente
-                // ganha os chips de opção logo abaixo; treino e almoço
-                // (kind "builder") ficam só informativos.
                 if event.kind == .suplemento, let key = event.key {
+                    // Suplemento é um booleano puro — concluído com um único
+                    // toque no círculo, sem nenhuma etapa a mais.
                     Button(intent: ToggleSupplementIntent(supplementKey: key)) {
-                        ZStack {
-                            Circle()
-                                .fill(Palette.suplementos)
-                                .frame(width: 22, height: 22)
-                                .opacity(justCompleted ? 1 : 0)
-                            Circle()
-                                .strokeBorder(Palette.inkSoft.opacity(0.5), lineWidth: 1.5)
-                                .frame(width: 20, height: 20)
-                                .opacity(justCompleted ? 0 : 1)
-                            Image(systemName: "checkmark")
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundStyle(.white)
-                                .opacity(justCompleted ? 1 : 0)
-                        }
-                        .scaleEffect(justCompleted ? 1.08 : 1)
+                        Color.clear.frame(width: 22, height: 22)
                     }
-                    .buttonStyle(.plain)
-                    .simultaneousGesture(TapGesture().onEnded {
-                        withAnimation(.spring(duration: 0.25)) {
-                            justCompleted = true
-                        }
-                    })
+                    .buttonStyle(SupplementCheckButtonStyle())
+                } else if isExpandableMeal, let key = event.key {
+                    // Refeição pendente: qualquer lugar da linha abre (ou
+                    // fecha, se já tiver aberta) as opções abaixo.
+                    Button(intent: ExpandMealIntent(mealKey: key)) {
+                        Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(Palette.inkSoft)
+                            .frame(width: 28, height: 28)
+                    }
+                    .buttonStyle(PressScaleButtonStyle())
                 }
             }
 
-            if event.kind == .meal, let groups = event.builderGroups, !groups.isEmpty {
-                AlmocoWizardRow(groups: groups, extraLabel: event.builderExtraLabel)
-            } else if event.kind == .meal, let key = event.key, let options = event.options, !options.isEmpty {
-                FlowLayout {
-                    ForEach(Array(options.enumerated()), id: \.offset) { index, label in
-                        MealOptionChip(mealKey: key, index: index, label: label)
-                    }
-                }
-                .padding(.leading, 48)
+            if isExpanded {
+                ExpandedMealOptions(event: event)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        // O item de verdade só some da lista quando a timeline recarrega com
-        // os dados novos (a escrita precisa confirmar no servidor primeiro) —
-        // esse fade local cobre o intervalo até lá, pra não parecer que nada
-        // aconteceu enquanto isso.
-        .opacity(justCompleted ? 0.35 : 1)
-        .animation(.easeOut(duration: 0.3), value: justCompleted)
+        .animation(.easeOut(duration: 0.22), value: isExpanded)
+        .animation(.easeOut(duration: 0.22), value: MealFlow.step)
     }
 }
 
@@ -356,8 +372,8 @@ struct PersonalOSWidgetView: View {
 }
 
 // containerBackground(for:) é iOS 17+ — o deployment target da extensão já
-// está em 17.0 (precisa disso pra Button(intent:) nos suplementos funcionar
-// de qualquer forma), então não precisa mais de fallback pra versões antigas.
+// está em 17.0 (precisa disso pra Button(intent:) funcionar de qualquer
+// forma), então não precisa de fallback pra versões antigas.
 private extension View {
     func widgetBackground(_ color: Color) -> some View {
         containerBackground(color, for: .widget)
