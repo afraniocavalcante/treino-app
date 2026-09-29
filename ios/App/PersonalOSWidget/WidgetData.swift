@@ -49,11 +49,14 @@ struct WidgetEvent: Decodable, Identifiable {
     let sub: String
     let kind: WidgetEventKind
     let done: Bool
-    // Só populado em kind == .suplemento — a única categoria que é um
-    // booleano puro no modelo de dados, e por isso a única "toque e concluiu"
-    // direto do widget. Refeição precisa escolher uma opção de comida, treino
-    // precisa de uma sessão de verdade — nenhum dos dois cabe num toque só.
+    // Suplemento: a key que toggleSupplement espera de volta.
+    // Refeição "list" pendente (café/lanche/jantar/sobremesa): a key que
+    // pickMealOption espera de volta. Fora isso (treino, almoço — kind
+    // "builder", já concluída): nil.
     let key: String?
+    // Só em refeições "list" pendentes — os rótulos das opções, na mesma
+    // ordem que pickMealOption espera o índice de volta.
+    let options: [String]?
 
     var id: String { "\(time)-\(title)" }
 }
@@ -92,6 +95,25 @@ enum WidgetDataClient {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.timeoutInterval = 15
         request.httpBody = try JSONEncoder().encode(["supplementKey": key])
+
+        let (_, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            throw URLError(.badServerResponse)
+        }
+    }
+
+    private struct PickMealBody: Encodable {
+        let mealKey: String
+        let optionIndex: Int
+    }
+
+    static func pickMealOption(mealKey: String, optionIndex: Int) async throws {
+        var request = URLRequest(url: URL(string: "\(base)/api/widget-pick-meal")!)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 15
+        request.httpBody = try JSONEncoder().encode(PickMealBody(mealKey: mealKey, optionIndex: optionIndex))
 
         let (_, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {

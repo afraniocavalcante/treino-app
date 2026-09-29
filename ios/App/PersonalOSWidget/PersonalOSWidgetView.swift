@@ -41,45 +41,78 @@ private struct RingView: View {
     }
 }
 
+private struct MealOptionChip: View {
+    let mealKey: String
+    let index: Int
+    let label: String
+
+    var body: some View {
+        Button(intent: PickMealOptionIntent(mealKey: mealKey, optionIndex: index)) {
+            Text(label)
+                .font(.system(size: 10.5, weight: .medium))
+                .foregroundStyle(Palette.ink)
+                .lineLimit(1)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Palette.card, in: Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 private struct EventRow: View {
     let event: WidgetEvent
 
     var body: some View {
-        HStack(spacing: 10) {
-            Text(event.time)
-                .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                .foregroundStyle(Palette.inkSoft)
-                .frame(width: 38, alignment: .trailing)
-
-            Image(systemName: event.kind.icon)
-                .font(.system(size: 12))
-                .foregroundStyle(.white)
-                .frame(width: 26, height: 26)
-                .background(Palette.ink.opacity(0.85), in: RoundedRectangle(cornerRadius: 8))
-
-            VStack(alignment: .leading, spacing: 1) {
-                Text(event.title)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(Palette.ink)
-                    .lineLimit(1)
-                Text(event.sub)
-                    .font(.system(size: 11))
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 10) {
+                Text(event.time)
+                    .font(.system(size: 12, weight: .semibold, design: .monospaced))
                     .foregroundStyle(Palette.inkSoft)
-                    .lineLimit(1)
-            }
-            Spacer(minLength: 0)
+                    .frame(width: 38, alignment: .trailing)
 
-            // Só suplemento é um booleano puro no modelo — o único evento que
-            // dá pra concluir com um toque só, sem abrir o app (ver o
-            // comentário em WidgetEvent.key). Refeição/treino ficam só
-            // informativos aqui.
-            if event.kind == .suplemento, let key = event.key {
-                Button(intent: ToggleSupplementIntent(supplementKey: key)) {
-                    Image(systemName: "circle")
-                        .font(.system(size: 20))
-                        .foregroundStyle(Palette.inkSoft.opacity(0.5))
+                Image(systemName: event.kind.icon)
+                    .font(.system(size: 12))
+                    .foregroundStyle(.white)
+                    .frame(width: 26, height: 26)
+                    .background(Palette.ink.opacity(0.85), in: RoundedRectangle(cornerRadius: 8))
+
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(event.title)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Palette.ink)
+                        .lineLimit(1)
+                    Text(event.sub)
+                        .font(.system(size: 11))
+                        .foregroundStyle(Palette.inkSoft)
+                        .lineLimit(1)
                 }
-                .buttonStyle(.plain)
+                Spacer(minLength: 0)
+
+                // Só suplemento é um booleano puro no modelo — o único evento
+                // que dá pra concluir com um toque só sem escolher nada (ver
+                // o comentário em WidgetEvent.key). Refeição "list" pendente
+                // ganha os chips de opção logo abaixo; treino e almoço
+                // (kind "builder") ficam só informativos.
+                if event.kind == .suplemento, let key = event.key {
+                    Button(intent: ToggleSupplementIntent(supplementKey: key)) {
+                        Image(systemName: "circle")
+                            .font(.system(size: 20))
+                            .foregroundStyle(Palette.inkSoft.opacity(0.5))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            if event.kind == .meal, let key = event.key, let options = event.options, !options.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(Array(options.enumerated()), id: \.offset) { index, label in
+                            MealOptionChip(mealKey: key, index: index, label: label)
+                        }
+                    }
+                    .padding(.leading, 48)
+                }
             }
         }
     }
