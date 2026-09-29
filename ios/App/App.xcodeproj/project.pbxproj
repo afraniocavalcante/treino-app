@@ -18,6 +18,7 @@
 		9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9582B6822FE993A50072D4E8 /* SceneDelegate.swift */; };
 		A2689B511B834C37A83421B1 /* PersonalOSWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 854B528F4CAA48C39EEE8B20 /* PersonalOSWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A72123C130574A230034E37A /* WatchBridgePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A72123C030574A230034E37A /* WatchBridgePlugin.swift */; };
+		45D021B892F24884A71B4737 /* AppIntents.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FB7A603C54B245ECA6863EB1 /* AppIntents.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -69,6 +70,7 @@
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
 		A72123C030574A230034E37A /* WatchBridgePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchBridgePlugin.swift; sourceTree = "<group>"; };
 		A72123DA30574DC00034E37A /* TreinoWatch-Watch-App-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "TreinoWatch-Watch-App-Info.plist"; sourceTree = "<group>"; };
+		FB7A603C54B245ECA6863EB1 /* AppIntents.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppIntents.framework; path = System/Library/Frameworks/AppIntents.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -99,6 +101,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				45D021B892F24884A71B4737 /* AppIntents.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
