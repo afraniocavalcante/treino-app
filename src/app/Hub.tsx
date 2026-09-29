@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { App as CapacitorApp } from "@capacitor/app";
 import { createClient } from "@/lib/supabase/client";
 import { getActiveProgram, getHistory, getLastWeights, persistWorkoutSession } from "@/lib/data";
 import { getCurrentWeek, getNextWorkoutIndex, getPhaseInfo, isRestDay, formatDate, type Program, type HistoryEntry } from "@/lib/program";
@@ -142,6 +143,48 @@ export default function Hub() {
       listenerPromise.then((handle) => handle.remove());
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Deep link do widget de iPhone (ver ios/App/PersonalOSWidget) — tocar no
+  // card de treino do widget abre o app direto no treino, em vez de cair no
+  // Hoje igual todo o resto. `getLaunchUrl` cobre abrir o app do zero por
+  // esse link; `appUrlOpen` cobre o app já estar rodando em segundo plano.
+  const skipNextHomeResetRef = useRef(false);
+  useEffect(() => {
+    function handleDeepLink(url: string) {
+      try {
+        const parsed = new URL(url);
+        if (parsed.protocol === "personalos:" && parsed.hostname === "treino") {
+          skipNextHomeResetRef.current = true;
+          goTreino();
+        }
+      } catch {
+        // URL não reconhecida — ignora.
+      }
+    }
+
+    CapacitorApp.getLaunchUrl().then((launch) => {
+      if (launch?.url) handleDeepLink(launch.url);
+    });
+    const urlListenerPromise = CapacitorApp.addListener("appUrlOpen", (data) => handleDeepLink(data.url));
+
+    // Sempre que o app volta pro primeiro plano (reabrir depois de
+    // minimizado, trocar de app e voltar...), reseta pro Hoje — a Biblioteca
+    // não deve ser o que você vê de novo só porque foi a última coisa aberta
+    // antes de sair. O deep link acima é a única exceção (guardada pelo ref).
+    const resumeListenerPromise = CapacitorApp.addListener("resume", () => {
+      if (skipNextHomeResetRef.current) {
+        skipNextHomeResetRef.current = false;
+        return;
+      }
+      setRoute("hub");
+      setLibraryOpen(false);
+    });
+
+    return () => {
+      urlListenerPromise.then((handle) => handle.remove());
+      resumeListenerPromise.then((handle) => handle.remove());
+    };
   }, []);
 
   function goTreino(workoutId?: string) {

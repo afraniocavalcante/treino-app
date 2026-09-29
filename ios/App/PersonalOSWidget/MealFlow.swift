@@ -85,6 +85,10 @@ struct ExpandMealIntent: AppIntent {
         } else {
             MealFlow.expand(mealKey)
         }
+        // Nada mudou no payload (isso é só UI local), mas sem isso o próximo
+        // getTimeline não teria motivo pra pular a busca de rede — reabrir
+        // ficaria lento igual o toque de concluir ficava antes.
+        WidgetCache.markRecent()
         WidgetCenter.shared.reloadTimelines(ofKind: "PersonalOSWidget")
         return .result()
     }
@@ -175,6 +179,10 @@ struct AlmocoChooseIntent: AppIntent {
                 return .result()
             }
         }
+        // Passo intermediário (não é o final) — mesma razão do
+        // ExpandMealIntent acima: sem WidgetCache.markRecent() aqui, avançar
+        // de carboidrato pra leguminosa (por exemplo) ficaria lento.
+        WidgetCache.markRecent()
         WidgetCenter.shared.reloadTimelines(ofKind: "PersonalOSWidget")
         return .result()
     }

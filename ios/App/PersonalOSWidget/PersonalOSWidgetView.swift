@@ -26,28 +26,21 @@ private struct PressScaleButtonStyle: ButtonStyle {
     }
 }
 
-// O check do suplemento pinta de verde assim que o dedo aperta — não espera
-// o perform() terminar nem a rede confirmar (ver o comentário grande em
-// WidgetCache.swift pra como o "some da lista" fica rápido por outro
-// caminho, sem depender dessa animação de toque).
-private struct SupplementCheckButtonStyle: ButtonStyle {
+// O cartão inteiro pinta com a cor da categoria assim que o dedo aperta —
+// não só um círculo pequeno — porque agora é o cartão inteiro que é o alvo
+// do toque (ver comentário em EventRow). Não espera o perform() terminar nem
+// a rede confirmar (ver WidgetCache.swift pra como o "some da lista" fica
+// rápido por outro caminho, sem depender dessa animação).
+private struct CardPressButtonStyle: ButtonStyle {
+    var tint: Color
+
     func makeBody(configuration: Configuration) -> some View {
-        ZStack {
-            Circle()
-                .fill(Palette.suplementos)
-                .frame(width: 22, height: 22)
-                .opacity(configuration.isPressed ? 1 : 0)
-            Circle()
-                .strokeBorder(Palette.inkSoft.opacity(0.5), lineWidth: 1.5)
-                .frame(width: 20, height: 20)
-                .opacity(configuration.isPressed ? 0 : 1)
-            Image(systemName: "checkmark")
-                .font(.system(size: 10, weight: .bold))
-                .foregroundStyle(.white)
-                .opacity(configuration.isPressed ? 1 : 0)
-        }
-        .scaleEffect(configuration.isPressed ? 1.12 : 1)
-        .animation(.spring(duration: 0.15), value: configuration.isPressed)
+        configuration.label
+            .padding(6)
+            .padding(.horizontal, 2)
+            .background(RoundedRectangle(cornerRadius: 12).fill(tint.opacity(configuration.isPressed ? 0.4 : 0)))
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
 }
 
@@ -212,6 +205,60 @@ private struct AlmocoStepRow: View {
     }
 }
 
+// Conteúdo visual puro da linha — sem nenhum toque próprio. EventRow decide
+// como envolver isso (Button de um intent, Link pro app, ou nada) conforme o
+// tipo de evento; .contentShape(Rectangle()) aqui garante que a área
+// clicável cobre a linha inteira, incluindo o espaço vazio do Spacer, não só
+// onde tem texto/ícone visível.
+private struct EventRowContent: View {
+    let event: WidgetEvent
+    let subtitle: String
+    let isExpanded: Bool
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Text(event.time)
+                .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                .foregroundStyle(Palette.inkSoft)
+                .frame(width: 38, alignment: .trailing)
+
+            Image(systemName: event.kind.icon)
+                .font(.system(size: 12))
+                .foregroundStyle(.white)
+                .frame(width: 26, height: 26)
+                .background(Palette.ink.opacity(0.85), in: RoundedRectangle(cornerRadius: 8))
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(event.title)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Palette.ink)
+                    .lineLimit(1)
+                Text(subtitle)
+                    .font(.system(size: 11))
+                    .foregroundStyle(Palette.inkSoft)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 0)
+
+            switch event.kind {
+            case .suplemento:
+                Circle()
+                    .strokeBorder(Palette.inkSoft.opacity(0.5), lineWidth: 1.5)
+                    .frame(width: 20, height: 20)
+            case .meal:
+                Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Palette.inkSoft)
+            case .treino:
+                Image(systemName: "arrow.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Palette.inkSoft)
+            }
+        }
+        .contentShape(Rectangle())
+    }
+}
+
 private struct EventRow: View {
     let event: WidgetEvent
 
@@ -236,48 +283,27 @@ private struct EventRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 10) {
-                Text(event.time)
-                    .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                    .foregroundStyle(Palette.inkSoft)
-                    .frame(width: 38, alignment: .trailing)
-
-                Image(systemName: event.kind.icon)
-                    .font(.system(size: 12))
-                    .foregroundStyle(.white)
-                    .frame(width: 26, height: 26)
-                    .background(Palette.ink.opacity(0.85), in: RoundedRectangle(cornerRadius: 8))
-
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(event.title)
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(Palette.ink)
-                        .lineLimit(1)
-                    Text(subtitle)
-                        .font(.system(size: 11))
-                        .foregroundStyle(Palette.inkSoft)
-                        .lineLimit(1)
+            // O cartão inteiro é o alvo do toque — não só um ícone pequeno —
+            // então cada ramo abaixo envolve TODO o conteúdo, não só um canto
+            // dele. Treino usa Link (abre o app direto no treino, sem rodar
+            // um intent); suplemento e refeição usam Button(intent:), que é
+            // o único jeito de rodar código num widget sem abrir o app.
+            if event.kind == .treino {
+                Link(destination: URL(string: "personalos://treino")!) {
+                    EventRowContent(event: event, subtitle: subtitle, isExpanded: false)
                 }
-                Spacer(minLength: 0)
-
-                if event.kind == .suplemento, let key = event.key {
-                    // Suplemento é um booleano puro — concluído com um único
-                    // toque no círculo, sem nenhuma etapa a mais.
-                    Button(intent: ToggleSupplementIntent(supplementKey: key)) {
-                        Color.clear.frame(width: 22, height: 22)
-                    }
-                    .buttonStyle(SupplementCheckButtonStyle())
-                } else if isExpandableMeal, let key = event.key {
-                    // Refeição pendente: qualquer lugar da linha abre (ou
-                    // fecha, se já tiver aberta) as opções abaixo.
-                    Button(intent: ExpandMealIntent(mealKey: key)) {
-                        Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(Palette.inkSoft)
-                            .frame(width: 28, height: 28)
-                    }
-                    .buttonStyle(PressScaleButtonStyle())
+            } else if event.kind == .suplemento, let key = event.key {
+                Button(intent: ToggleSupplementIntent(supplementKey: key)) {
+                    EventRowContent(event: event, subtitle: subtitle, isExpanded: false)
                 }
+                .buttonStyle(CardPressButtonStyle(tint: Palette.suplementos))
+            } else if isExpandableMeal, let key = event.key {
+                Button(intent: ExpandMealIntent(mealKey: key)) {
+                    EventRowContent(event: event, subtitle: subtitle, isExpanded: isExpanded)
+                }
+                .buttonStyle(CardPressButtonStyle(tint: Palette.refeicoes))
+            } else {
+                EventRowContent(event: event, subtitle: subtitle, isExpanded: false)
             }
 
             if isExpanded {

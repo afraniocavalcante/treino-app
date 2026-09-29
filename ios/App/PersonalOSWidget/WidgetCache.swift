@@ -49,4 +49,14 @@ enum WidgetCache {
     static func clearOptimisticFlag() {
         defaults.set(false, forKey: isOptimisticKey)
     }
+
+    /// Pra ações puramente locais (abrir/fechar uma refeição, avançar um
+    /// passo do almoço) que não mudam nada no payload em si — sem gravação
+    /// nenhuma no servidor, então não têm um novo payload pra salvar, mas
+    /// ainda assim precisam que o próximo getTimeline use o cache em vez de
+    /// ir buscar na rede, senão o próprio abrir/avançar fica lento.
+    static func markRecent() {
+        guard let payload = load() else { return }
+        save(payload, optimistic: true)
+    }
 }
