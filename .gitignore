@@ -40,6 +40,7 @@ yarn-error.log*
 /api/widget-data.js
 /api/widget-toggle.js
 /api/widget-pick-meal.js
+/api/widget-pick-almoco.js
 
 # typescript
 *.tsbuildinfo

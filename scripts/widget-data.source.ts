@@ -40,13 +40,20 @@ type WidgetEvent = {
   done: boolean;
   /** Suplemento: a key que /api/widget-toggle espera de volta.
    *  Refeição "list" pendente: a key que /api/widget-pick-meal espera de volta.
-   *  Fora isso (treino, refeição "builder"/almoço, já concluída): null. */
+   *  Refeição "builder" (almoço) pendente: a própria key ("almoco").
+   *  Fora isso (treino, já concluída): null. */
   key: string | null;
   /** Só em refeições "list" pendentes — os rótulos das opções, na ordem que
-   *  /api/widget-pick-meal espera o optionIndex de volta. Almoço (kind
-   *  "builder", grupos de rádio) não cabe num toque só, então nunca aparece
-   *  aqui — fica só informativo, igual treino. */
+   *  /api/widget-pick-meal espera o optionIndex de volta. */
   options: string[] | null;
+  /** Só em refeições "builder" pendentes (hoje: só almoço) — os grupos de
+   *  rádio na ordem em que o widget mostra um de cada vez (carboidrato,
+   *  depois leguminosa, depois proteína...). /api/widget-pick-almoco espera
+   *  de volta um índice por grupo, na mesma ordem. */
+  builderGroups: { key: string; title: string; items: string[] }[] | null;
+  /** Só quando a refeição builder tem um extra opcional tipo "+ Fruta" — o
+   *  rótulo pra mostrar no passo final de sim/não. */
+  builderExtraLabel: string | null;
 };
 
 function toMin(hhmm: string): number {
@@ -101,20 +108,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       for (const meal of dietPlan.meals) {
         if (!meal.scheduledTime) continue;
         const done = isMealDone(meal, todayPicks);
-        const pickable = meal.kind === "list" && !done;
+        const pickableList = meal.kind === "list" && !done;
+        const pickableBuilder = meal.kind === "builder" && !done;
         events.push({
           time: meal.scheduledTime,
           title: meal.label,
           sub: done ? "Concluída" : "Toque para escolher",
           kind: "meal",
           done,
-          key: pickable ? meal.key : null,
-          options: pickable && meal.options ? meal.options.map((o) => o.label) : null,
+          key: pickableList || pickableBuilder ? meal.key : null,
+          options: pickableList && meal.options ? meal.options.map((o) => o.label) : null,
+          builderGroups: pickableBuilder && meal.groups ? meal.groups.radioGroups.map((g) => ({ key: g.key, title: g.title, items: g.items })) : null,
+          builderExtraLabel: pickableBuilder && meal.groups ? meal.groups.toggle.label : null,
         });
       }
       for (const supp of dietPlan.supplements) {
         if (!supp.scheduledTime) continue;
-        events.push({ time: supp.scheduledTime, title: supp.label, sub: supp.timing ?? "Suplemento", kind: "suplemento", done: !!todaySupplements[supp.key], key: supp.key, options: null });
+        events.push({ time: supp.scheduledTime, title: supp.label, sub: supp.timing ?? "Suplemento", kind: "suplemento", done: !!todaySupplements[supp.key], key: supp.key, options: null, builderGroups: null, builderExtraLabel: null });
       }
     }
     if (program && !restToday) {
@@ -127,6 +137,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         done: trainedToday,
         key: null,
         options: null,
+        builderGroups: null,
+        builderExtraLabel: null,
       });
     }
     const pending = events.filter((e) => !e.done).sort((a, b) => toMin(a.time) - toMin(b.time));
