@@ -38,7 +38,13 @@ export async function lookupFlight(
   try {
     const res = await fetch(url.toString(), { headers: { Authorization: `Bearer ${token}` } });
     if (res.status === 404) return { status: "not_found" };
-    if (!res.ok) return { status: "error", message: "Falha ao buscar o voo." };
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      if (body?.error === "aviationstack_rate_limited") {
+        return { status: "error", message: "Limite de requisições da API atingido — espera alguns minutos e tenta de novo." };
+      }
+      return { status: "error", message: "Falha ao buscar o voo." };
+    }
     const flight = (await res.json()) as FlightLookupResult;
     return { status: "found", flight };
   } catch {

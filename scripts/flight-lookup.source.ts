@@ -96,7 +96,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const resp = await fetch(url.toString());
     const body = (await resp.json()) as { data?: AviationStackFutureFlight[]; error?: { code: string; message: string } };
     if (body.error) {
-      res.status(502).json({ error: "aviationstack_error", detail: body.error });
+      // "rate_limit_reached" é um limite de taxa próprio do AviationStack
+      // (por minuto/hora), separado da cota de 100/mês — vale destacar isso
+      // pro cliente pra não parecer um erro genérico quebrado.
+      const isRateLimit = body.error.code === "rate_limit_reached";
+      res.status(502).json({ error: isRateLimit ? "aviationstack_rate_limited" : "aviationstack_error", detail: body.error });
       return;
     }
 
