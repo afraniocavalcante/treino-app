@@ -4,6 +4,8 @@ export interface Trip {
   name: string;
   startDate: string;
   endDate: string;
+  /** Tarefa única por viagem ("fiz a mala"), não diária — ver shouldPackFor. */
+  malaFeita: boolean;
 }
 
 export interface Flight {
@@ -202,6 +204,39 @@ export function deriveFlightState(flight: Flight, now: Date): FlightCardState {
 
 export function tripDaysAway(trip: Trip, now: Date): number {
   return Math.max(0, Math.ceil((new Date(trip.startDate).getTime() - now.getTime()) / DAY));
+}
+
+const PACK_REMINDER_DAYS = 3;
+
+/** A data/hora do voo mais próximo (o primeiro a decolar) de uma viagem — é
+ * contra isso, não contra trip.startDate, que o aviso de mala é calculado
+ * (uma viagem sem voo cadastrado ainda não tem o que avisar). */
+function earliestDepartureFor(trip: Trip, flights: Flight[]): Date | null {
+  const tripFlights = flights.filter((f) => f.tripId === trip.id);
+  if (tripFlights.length === 0) return null;
+  const earliest = tripFlights.reduce((min, f) => (new Date(f.departureAt) < new Date(min.departureAt) ? f : min));
+  return new Date(earliest.departureAt);
+}
+
+/** Tarefa única por viagem, não diária: aparece a partir de 3 dias antes do
+ * voo mais próximo e persiste (não some sozinha) até ser marcada feita ou o
+ * voo já ter partido. */
+export function shouldPackFor(trip: Trip, flights: Flight[], now: Date): boolean {
+  if (trip.malaFeita) return false;
+  const departure = earliestDepartureFor(trip, flights);
+  if (!departure) return false;
+  if (departure.getTime() <= now.getTime()) return false;
+  const daysUntil = (departure.getTime() - now.getTime()) / DAY;
+  return daysUntil <= PACK_REMINDER_DAYS;
+}
+
+/** A viagem mais próxima que ainda precisa do aviso de mala, se houver. */
+export function nextTripNeedingPack(trips: Trip[], flights: Flight[], now: Date): Trip | null {
+  const candidates = trips
+    .filter((t) => shouldPackFor(t, flights, now))
+    .map((t) => ({ trip: t, departure: earliestDepartureFor(t, flights)! }))
+    .sort((a, b) => a.departure.getTime() - b.departure.getTime());
+  return candidates[0]?.trip ?? null;
 }
 
 /** O voo que a Home do app Viagens (e a tela Hoje) mostram: o mais próximo cujo estado ainda está "ativo". */

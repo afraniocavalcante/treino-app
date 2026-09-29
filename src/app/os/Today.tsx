@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getAllFlights, getTrips } from "@/lib/travelData";
-import { pickActiveFlight, tripDaysAway, type Flight, type Trip } from "@/lib/travel";
+import { getAllFlights, getTrips, setMalaFeita } from "@/lib/travelData";
+import { nextTripNeedingPack, pickActiveFlight, tripDaysAway, type Flight, type Trip } from "@/lib/travel";
 import { isMealDone, type DietDayPicks, type DietMeal, type DietPlan } from "@/lib/diet";
 import type { Program } from "@/lib/program";
 import { MealCard } from "../dietShared";
@@ -98,6 +98,12 @@ export default function Today({
 
   const activeFlight = pickActiveFlight(flights, now);
   const activeTrip = activeFlight ? trips.find((t) => t.id === activeFlight.flight.tripId) ?? null : null;
+  const packTrip = nextTripNeedingPack(trips, flights, now);
+
+  function togglePack(tripId: string, done: boolean) {
+    setTrips((prev) => prev.map((t) => (t.id === tripId ? { ...t, malaFeita: done } : t)));
+    setMalaFeita(supabase, tripId, done).catch((err) => console.error("Falha ao marcar mala:", err));
+  }
 
   const requiredMeals = dietPlan ? dietPlan.meals.filter((m) => m.key !== "sobremesa") : [];
   const mealsDone = requiredMeals.filter((m) => isMealDone(m, todayPicks)).length;
@@ -135,6 +141,24 @@ export default function Today({
         onToggle: () => onToggleSupplement(supp.key),
       });
     }
+  }
+  if (packTrip) {
+    // Tarefa única por viagem (não diária) — persiste até marcar ou o voo
+    // passar, ver shouldPackFor em src/lib/travel.ts.
+    events.push({
+      kind: "generic",
+      time: "08:00",
+      title: `Fazer a mala · ${packTrip.city}`,
+      sub: "Toque pra marcar quando fizer",
+      icon: "ph-suitcase-rolling",
+      bg: OS_APPS.viagens.bg,
+      fg: OS_APPS.viagens.fg,
+      done: false,
+      checkable: true,
+      cta: null,
+      onOpen: () => onOpenApp("viagens"),
+      onToggle: () => togglePack(packTrip.id, true),
+    });
   }
   if (program && !restToday) {
     const done = trainedToday;

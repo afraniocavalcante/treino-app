@@ -49,13 +49,21 @@ function mapTrip(row: Record<string, unknown>): Trip {
     name: row.name as string,
     startDate: row.start_date as string,
     endDate: row.end_date as string,
+    malaFeita: !!row.mala_feita,
   };
 }
 
+const TRIP_COLUMNS = "id, city, name, start_date, end_date, mala_feita";
+
 export async function getTrips(supabase: SupabaseClient): Promise<Trip[]> {
-  const { data, error } = await supabase.from("trips").select("id, city, name, start_date, end_date").order("start_date", { ascending: true });
+  const { data, error } = await supabase.from("trips").select(TRIP_COLUMNS).order("start_date", { ascending: true });
   if (error) throw error;
   return (data ?? []).map(mapTrip);
+}
+
+export async function setMalaFeita(supabase: SupabaseClient, tripId: string, done: boolean): Promise<void> {
+  const { error } = await supabase.from("trips").update({ mala_feita: done }).eq("id", tripId);
+  if (error) throw error;
 }
 
 export async function getAllFlights(supabase: SupabaseClient): Promise<Flight[]> {
@@ -66,7 +74,7 @@ export async function getAllFlights(supabase: SupabaseClient): Promise<Flight[]>
 
 export async function getTripDetail(supabase: SupabaseClient, tripId: string): Promise<TripDetail | null> {
   const [tripRes, flightsRes, checklistRes] = await Promise.all([
-    supabase.from("trips").select("id, city, name, start_date, end_date").eq("id", tripId).maybeSingle(),
+    supabase.from("trips").select(TRIP_COLUMNS).eq("id", tripId).maybeSingle(),
     supabase.from("flights").select(FLIGHT_COLUMNS).eq("trip_id", tripId).order("sort_order", { ascending: true }),
     supabase.from("checklist_items").select("id, trip_id, flight_id, text, moment, done, sort_order").eq("trip_id", tripId).order("sort_order", { ascending: true }),
   ]);

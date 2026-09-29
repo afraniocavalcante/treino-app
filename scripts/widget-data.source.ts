@@ -26,7 +26,7 @@ import { getDietPlan, getDietDayLogs, getTodayDietLog } from "../src/lib/dietDat
 import { isMealDone, isDayFullyComplete } from "../src/lib/diet";
 import { getPerfectStreak } from "../src/lib/insights";
 import { getTrips, getAllFlights } from "../src/lib/travelData";
-import { pickActiveFlight, tripDaysAway } from "../src/lib/travel";
+import { nextTripNeedingPack, pickActiveFlight, tripDaysAway } from "../src/lib/travel";
 
 // Placeholder fixo — mesmo valor usado em src/app/os/Today.tsx (não existe
 // (ainda) horário configurável pro treino do dia).
@@ -36,11 +36,12 @@ type WidgetEvent = {
   time: string;
   title: string;
   sub: string;
-  kind: "treino" | "meal" | "suplemento";
+  kind: "treino" | "meal" | "suplemento" | "mala";
   done: boolean;
   /** Suplemento: a key que /api/widget-toggle espera de volta.
    *  Refeição "list" pendente: a key que /api/widget-pick-meal espera de volta.
    *  Refeição "builder" (almoço) pendente: a própria key ("almoco").
+   *  Mala pendente: o id da viagem, que /api/widget-pack espera de volta.
    *  Fora isso (treino, já concluída): null. */
   key: string | null;
   /** Só em refeições "list" pendentes — os rótulos das opções, na ordem que
@@ -126,6 +127,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (!supp.scheduledTime) continue;
         events.push({ time: supp.scheduledTime, title: supp.label, sub: supp.timing ?? "Suplemento", kind: "suplemento", done: !!todaySupplements[supp.key], key: supp.key, options: null, builderGroups: null, builderExtraLabel: null });
       }
+    }
+    const packTrip = nextTripNeedingPack(trips, flights, now);
+    if (packTrip) {
+      events.push({
+        time: "08:00",
+        title: `Fazer a mala · ${packTrip.city}`,
+        sub: "Toque pra marcar quando fizer",
+        kind: "mala",
+        done: false,
+        key: packTrip.id,
+        options: null,
+        builderGroups: null,
+        builderExtraLabel: null,
+      });
     }
     if (program && !restToday) {
       const workoutName = program.workouts.length > 0 ? program.workouts[0].name : null;
