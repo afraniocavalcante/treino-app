@@ -41,6 +41,52 @@ private struct RingView: View {
     }
 }
 
+// Widgets na Home Screen não suportam gesto de rolagem de verdade — um
+// ScrollView ali renderiza mas não rola, e o conteúdo que não cabe vaza pra
+// fora dos limites arredondados do widget (foi exatamente o bug visto: texto
+// longo de opção de refeição vazando embaixo). Layout que quebra linha em vez
+// de rolar evita isso de raiz — o que não couber no espaço fixo do widget
+// simplesmente fica de fora, cortado pelo próprio widget, igual ao resto do
+// conteúdo (mesmo espírito do "mostra até 4 eventos e ponto").
+private struct FlowLayout: Layout {
+    var spacing: CGFloat = 6
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let maxWidth = proposal.width ?? .infinity
+        var x: CGFloat = 0
+        var y: CGFloat = 0
+        var rowHeight: CGFloat = 0
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if x > 0, x + size.width > maxWidth {
+                x = 0
+                y += rowHeight + spacing
+                rowHeight = 0
+            }
+            x += size.width + spacing
+            rowHeight = max(rowHeight, size.height)
+        }
+        return CGSize(width: maxWidth, height: y + rowHeight)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var x: CGFloat = bounds.minX
+        var y: CGFloat = bounds.minY
+        var rowHeight: CGFloat = 0
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if x > bounds.minX, x + size.width > bounds.maxX {
+                x = bounds.minX
+                y += rowHeight + spacing
+                rowHeight = 0
+            }
+            subview.place(at: CGPoint(x: x, y: y), proposal: .unspecified)
+            x += size.width + spacing
+            rowHeight = max(rowHeight, size.height)
+        }
+    }
+}
+
 private struct MealOptionChip: View {
     let mealKey: String
     let index: Int
@@ -52,6 +98,8 @@ private struct MealOptionChip: View {
                 .font(.system(size: 10.5, weight: .medium))
                 .foregroundStyle(Palette.ink)
                 .lineLimit(1)
+                .truncationMode(.tail)
+                .frame(maxWidth: 130, alignment: .leading)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
                 .background(Palette.card, in: Capsule())
@@ -62,6 +110,12 @@ private struct MealOptionChip: View {
 
 private struct EventRow: View {
     let event: WidgetEvent
+    // Puramente visual, local a este render — não vem do backend. O toque no
+    // círculo já dispara o Button(intent:) de verdade (grava e recarrega a
+    // timeline), mas isso pode levar um instante (rede); esse estado dá o
+    // feedback imediato de "marcado" sem esperar a volta, e o -
+    // .simultaneousGesture roda em paralelo com o intent, não no lugar dele.
+    @State private var justCompleted = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -96,25 +150,46 @@ private struct EventRow: View {
                 // (kind "builder") ficam só informativos.
                 if event.kind == .suplemento, let key = event.key {
                     Button(intent: ToggleSupplementIntent(supplementKey: key)) {
-                        Image(systemName: "circle")
-                            .font(.system(size: 20))
-                            .foregroundStyle(Palette.inkSoft.opacity(0.5))
+                        ZStack {
+                            Circle()
+                                .fill(Palette.suplementos)
+                                .frame(width: 22, height: 22)
+                                .opacity(justCompleted ? 1 : 0)
+                            Circle()
+                                .strokeBorder(Palette.inkSoft.opacity(0.5), lineWidth: 1.5)
+                                .frame(width: 20, height: 20)
+                                .opacity(justCompleted ? 0 : 1)
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundStyle(.white)
+                                .opacity(justCompleted ? 1 : 0)
+                        }
+                        .scaleEffect(justCompleted ? 1.08 : 1)
                     }
                     .buttonStyle(.plain)
+                    .simultaneousGesture(TapGesture().onEnded {
+                        withAnimation(.spring(duration: 0.25)) {
+                            justCompleted = true
+                        }
+                    })
                 }
             }
 
             if event.kind == .meal, let key = event.key, let options = event.options, !options.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 6) {
-                        ForEach(Array(options.enumerated()), id: \.offset) { index, label in
-                            MealOptionChip(mealKey: key, index: index, label: label)
-                        }
+                FlowLayout {
+                    ForEach(Array(options.enumerated()), id: \.offset) { index, label in
+                        MealOptionChip(mealKey: key, index: index, label: label)
                     }
-                    .padding(.leading, 48)
                 }
+                .padding(.leading, 48)
             }
         }
+        // O item de verdade só some da lista quando a timeline recarrega com
+        // os dados novos (a escrita precisa confirmar no servidor primeiro) —
+        // esse fade local cobre o intervalo até lá, pra não parecer que nada
+        // aconteceu enquanto isso.
+        .opacity(justCompleted ? 0.35 : 1)
+        .animation(.easeOut(duration: 0.3), value: justCompleted)
     }
 }
 
@@ -185,9 +260,11 @@ struct PersonalOSWidgetView: View {
                 } else {
                     ForEach(payload.events.prefix(4)) { event in
                         EventRow(event: event)
+                            .transition(.opacity.combined(with: .move(edge: .leading)))
                     }
                 }
             }
+            .animation(.easeOut(duration: 0.3), value: payload.events.map(\.id))
 
             Spacer(minLength: 0)
         }
